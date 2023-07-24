@@ -9,5 +9,6 @@ COPY . lvmapi
 
 RUN pip3 install -U pip setuptools wheel
 RUN cd lvmapi && pip3 install .
+RUN rm -Rf lvmapi
 
-CMD ["uvicorn", "lvmapi.app:app", "--host", "0.0.0.0", "--port", "80"]
+ENTRYPOINT gunicorn lvmapi.app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:80
