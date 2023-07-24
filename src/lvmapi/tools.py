@@ -20,13 +20,17 @@ class Gort:
     def __init__(self):
         from gort import Gort
 
-        gort_host = os.environ.get("RABBITMQ_HOST", "localhost")
-        gort_port = os.environ.get("RABBITMQ_port", "5672")
+        gort_host: str = os.environ.get("RABBITMQ_HOST", "localhost")
+        gort_port: int = int(os.environ.get("RABBITMQ_port", "5672"))
 
-        self.g = Gort(host=gort_host, port=int(gort_port))
+        self.g = Gort(host=gort_host, port=gort_port)
+        self.initialised: bool = False
 
     async def __aenter__(self):
-        await self.g.init()
+        if not self.initialised:
+            await self.g.init()
+            self.initialised = True
+
         return self.g
 
     async def __aexit__(self, exc_type, exc, tb):
