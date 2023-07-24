@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import os
+
 
 __all__ = ["Gort"]
 
@@ -18,7 +20,10 @@ class Gort:
     def __init__(self):
         from gort import Gort
 
-        self.g = Gort(host="localhost", port=5672)
+        gort_host = os.environ.get("RABBITMQ_HOST", "localhost")
+        gort_port = os.environ.get("RABBITMQ_port", "5672")
+
+        self.g = Gort(host=gort_host, port=int(gort_port))
 
     async def __aenter__(self):
         await self.g.init()
