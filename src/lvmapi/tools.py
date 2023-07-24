@@ -18,7 +18,7 @@ class Gort:
     def __init__(self):
         from gort import Gort
 
-        self.g = Gort(host="localhost", port=25672)
+        self.g = Gort(host="localhost", port=5672)
 
     async def __aenter__(self):
         await self.g.init()
