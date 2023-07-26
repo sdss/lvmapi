@@ -10,28 +10,28 @@ from __future__ import annotations
 
 import os
 
+from clu import AMQPClient
 
-__all__ = ["Gort"]
+
+__all__ = ["CluClient"]
 
 
-class Gort:
-    """Yields an initialised GORT client."""
+class CluClient:
+    """Yields an initialised AMQP client."""
 
     def __init__(self):
-        from gort import Gort
+        host: str = os.environ.get("RABBITMQ_HOST", "localhost")
+        port: int = int(os.environ.get("RABBITMQ_port", "5672"))
 
-        gort_host: str = os.environ.get("RABBITMQ_HOST", "localhost")
-        gort_port: int = int(os.environ.get("RABBITMQ_port", "5672"))
-
-        self.g = Gort(host=gort_host, port=gort_port)
+        self.client = AMQPClient(host=host, port=port)
         self.initialised: bool = False
 
     async def __aenter__(self):
         if not self.initialised:
-            await self.g.init()
+            await self.client.start()
             self.initialised = True
 
-        return self.g
+        return self.client
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.g.stop()
+        await self.client.stop()

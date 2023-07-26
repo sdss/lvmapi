@@ -29,9 +29,9 @@ python = "^3.10,<4.0"
 sdsstools = "^1.1.0"
 typing-extensions = "^4.5.0"
 fastapi = "^0.100.0"
-lvmgort = "^0.2.2"
 gunicorn = "^21.2.0"
 uvicorn = {extras = ["standard"], version = "^0.23.1"}
+sdss-clu = "^2.1.2"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.0.0"

@@ -12,7 +12,7 @@ from typing import Literal
 
 from fastapi import FastAPI
 
-from lvmapi.tools import Gort
+from lvmapi.tools import CluClient
 
 
 TELESCOPES_TYPE = Literal["sci", "spec", "skye", "skyw"]
@@ -33,15 +33,15 @@ async def get_pointing(
     """Gets the pointing of a telescope."""
 
     try:
-        async with Gort() as g:
-            status = await g.telescopes[telescope].status()
+        async with CluClient() as client:
+            status_cmd = await client.send_command(f"lvm.{telescope}.pwi", "status")
 
         if frame == "radec":
-            ax0 = status.get("ra_apparent_hours", -999 / 15) * 15
-            ax1 = status.get("dec_apparent_degs", -999)
+            ax0 = status_cmd.replies.get("ra_apparent_hours") * 15
+            ax1 = status_cmd.replies.get("dec_apparent_degs")
         elif frame == "altaz":
-            ax0 = status.get("altitude_degs", -999)
-            ax1 = status.get("azimuth_degs", -999)
+            ax0 = status_cmd.replies.get("altitude_degs")
+            ax1 = status_cmd.replies.get("azimuth_degs")
         else:
             raise ValueError(f"Invalid frame {frame}")
 
