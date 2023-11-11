@@ -12,26 +12,73 @@ import os
 
 from clu import AMQPClient
 
+from . import config
+
 
 __all__ = ["CluClient"]
 
 
 class CluClient:
-    """Yields an initialised AMQP client."""
+    """AMQP client asynchronous generator.
+
+    Returns an object with an ``AMQPClient`` instance. The normal way to
+    use it is to do ::
+
+        async with CluClient() as client:
+            await client.send_command(...)
+
+    Alternatively one can do ::
+
+        client = await anext(CluClient())
+        await client.send_command(...)
+
+    The asynchronous generator differs from the one in ``AMQPClient`` in that
+    it does not close the connection on exit.
+
+    This class is a singleton, which effectively means the AMQP client is reused
+    during the life of the worker. The singleton can be cleared by calling
+    `.clear`.
+
+    """
+
+    __initialised: bool = False
+    __instance: CluClient | None = None
+
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super(CluClient, cls).__new__(cls)
+            cls.__instance.__initialised = False
+
+        return cls.__instance
 
     def __init__(self):
-        host: str = os.environ.get("RABBITMQ_HOST", "localhost")
-        port: int = int(os.environ.get("RABBITMQ_port", "5672"))
+        if self.__initialised is True:
+            return
+
+        host: str = os.environ.get("RABBITMQ_HOST", config["rabbitmq.host"])
+        port: int = int(os.environ.get("RABBITMQ_port", config["rabbitmq.port"]))
 
         self.client = AMQPClient(host=host, port=port)
-        self.initialised: bool = False
+        self.__initialised = True
 
     async def __aenter__(self):
-        if not self.initialised:
+        if not self.client.is_connected():
             await self.client.start()
-            self.initialised = True
 
         return self.client
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.client.stop()
+        pass
+
+    async def __anext__(self):
+        if not self.client.is_connected():
+            await self.client.start()
+
+        return self.client
+
+    @classmethod
+    def clear(cls):
+        """Clears the current instance."""
+
+        cls.__instance = None
+        cls.__initialised = False
