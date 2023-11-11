@@ -15,14 +15,16 @@ from fastapi import APIRouter, HTTPException
 from lvmapi.tools import CluClient
 
 
+Telescopes = Literal["sci", "spec", "skye", "skyw"]
+Frames = Literal["radec", "altaz"]
+Coordinates = Literal["ra", "dec", "alt", "az"]
+
+
 router = APIRouter(prefix="/telescopes", tags=["telescopes"])
 
 
 @router.get("/{telescope}/pointing")
-async def get_pointing(
-    telescope: Literal["sci", "spec", "skye", "skyw"],
-    frame: Literal["radec", "altaz"] = "radec",
-):
+async def get_pointing(telescope: Telescopes, frame: Frames = "radec"):
     """Gets the pointing of a telescope."""
 
     try:
@@ -48,3 +50,13 @@ async def get_pointing(
         return {"ra": ax0, "dec": ax1}
     else:
         return {"alt": ax0, "az": ax1}
+
+
+@router.get("/{telescope}/{coordinate}")
+async def get_ra(telescope: Telescopes, coordinate: Coordinates):
+    """Returns a given coordinate for a telescope."""
+
+    frame = "radec" if coordinate in ["ra", "dec"] else "altaz"
+
+    pointing = await get_pointing(telescope, frame=frame)
+    return pointing[coordinate]
