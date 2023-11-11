@@ -37,8 +37,6 @@ async def get_pointing(telescope: Telescopes, frame: Frames = "radec"):
         elif frame == "altaz":
             ax0 = status_cmd.replies.get("altitude_degs")
             ax1 = status_cmd.replies.get("azimuth_degs")
-        else:
-            raise ValueError(f"Invalid frame {frame}")
 
     except Exception:
         raise HTTPException(
