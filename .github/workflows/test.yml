@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,17 +36,12 @@ jobs:
           pip install --upgrade wheel pip setuptools
           pip install .
 
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
-          pip install flake8
-          flake8 src/lvmapi --count --show-source --statistics
+          pip install ruff
+          ruff src/lvmapi
 
       - name: Lint with black
         run: |
           pip install black
           black --check src/lvmapi
-
-      - name: Lint with isort
-        run: |
-          pip install isort
-          isort -c src/lvmapi
