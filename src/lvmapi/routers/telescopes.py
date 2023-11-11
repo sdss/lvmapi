@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, get_args
 
 from fastapi import APIRouter, HTTPException
 
@@ -21,6 +21,13 @@ Coordinates = Literal["ra", "dec", "alt", "az"]
 
 
 router = APIRouter(prefix="/telescopes", tags=["telescopes"])
+
+
+@router.get("/")
+async def get_telescopes():
+    """Returns the list of telescopes."""
+
+    return list(get_args(Telescopes))
 
 
 @router.get("/{telescope}/pointing")
