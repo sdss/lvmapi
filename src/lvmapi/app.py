@@ -10,12 +10,13 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from lvmapi.routers import spectrographs, telescopes
+from lvmapi.routers import slack, spectrographs, telescopes
 
 
 app = FastAPI()
 app.include_router(telescopes.router)
 app.include_router(spectrographs.router)
+app.include_router(slack.router)
 
 
 @app.get("/")

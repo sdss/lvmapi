@@ -7,3 +7,7 @@ influxdb:
   host: lvm-webapp.lco.cl
   port: 9999
   org: LVM
+
+slack:
+  token: null
+  channel: lvm-alerts
