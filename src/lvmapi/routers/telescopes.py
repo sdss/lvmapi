@@ -8,42 +8,48 @@
 
 from __future__ import annotations
 
-from typing import Literal, get_args
+from typing import get_args
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from lvmapi.tools import CluClient
+from lvmapi.types import Coordinates, Telescopes
 
 
-Telescopes = Literal["sci", "spec", "skye", "skyw"]
-Frames = Literal["radec", "altaz"]
-Coordinates = Literal["ra", "dec", "alt", "az"]
+class PointingResponse(BaseModel):
+    ra: float
+    dec: float
+    alt: float
+    az: float
 
 
 router = APIRouter(prefix="/telescopes", tags=["telescopes"])
 
 
-@router.get("/")
-async def get_telescopes():
+@router.get("/", summary="List of telescopes")
+async def get_telescopes() -> list[str]:
     """Returns the list of telescopes."""
 
     return list(get_args(Telescopes))
 
 
-@router.get("/{telescope}/pointing")
-async def get_pointing(telescope: Telescopes, frame: Frames = "radec"):
+@router.get(
+    "/{telescope}/pointing",
+    summary="Telescope pointing",
+    response_model=PointingResponse,
+)
+async def get_pointing(telescope: Telescopes) -> PointingResponse:
     """Gets the pointing of a telescope."""
 
     try:
         async with CluClient() as client:
             status_cmd = await client.send_command(f"lvm.{telescope}.pwi", "status")
 
-        if frame == "radec":
-            ax0 = status_cmd.replies.get("ra_apparent_hours") * 15
-            ax1 = status_cmd.replies.get("dec_apparent_degs")
-        elif frame == "altaz":
-            ax0 = status_cmd.replies.get("altitude_degs")
-            ax1 = status_cmd.replies.get("azimuth_degs")
+        ra = status_cmd.replies.get("ra_apparent_hours") * 15
+        dec = status_cmd.replies.get("dec_apparent_degs")
+        alt = status_cmd.replies.get("altitude_degs")
+        az = status_cmd.replies.get("azimuth_degs")
 
     except Exception:
         raise HTTPException(
@@ -51,17 +57,12 @@ async def get_pointing(telescope: Telescopes, frame: Frames = "radec"):
             detail="Error retrieving telescope information.",
         )
 
-    if frame == "radec":
-        return {"ra": ax0, "dec": ax1}
-    else:
-        return {"alt": ax0, "az": ax1}
+    return PointingResponse(ra=ra, dec=dec, alt=alt, az=az)
 
 
-@router.get("/{telescope}/{coordinate}")
-async def get_ra(telescope: Telescopes, coordinate: Coordinates):
+@router.get("/{telescope}/{coordinate}", summary="Telescope coordinates")
+async def get_ra(telescope: Telescopes, coordinate: Coordinates) -> float:
     """Returns a given coordinate for a telescope."""
 
-    frame = "radec" if coordinate in ["ra", "dec"] else "altaz"
-
-    pointing = await get_pointing(telescope, frame=frame)
-    return pointing[coordinate]
+    pointing = await get_pointing(telescope)
+    return getattr(pointing, coordinate)
