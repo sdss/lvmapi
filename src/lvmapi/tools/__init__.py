@@ -8,5 +8,6 @@
 
 from __future__ import annotations
 
-from .generic import *
+from .influxdb import *
+from .rabbitmq import *
 from .spectrograph import *

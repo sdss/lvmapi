@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lvmapi.tools.generic import CluClient
+from lvmapi.tools import CluClient
 from lvmapi.types import Cameras, Sensors
 
 

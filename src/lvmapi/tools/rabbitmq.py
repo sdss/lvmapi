@@ -3,15 +3,14 @@
 #
 # @Author: José Sánchez-Gallego (gallegoj@uw.edu)
 # @Date: 2023-11-12
-# @Filename: generic.py
+# @Filename: rabbitmq.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
 from __future__ import annotations
 
 import os
-import warnings
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from clu import AMQPClient
 
@@ -19,10 +18,10 @@ from lvmapi import config
 
 
 if TYPE_CHECKING:
-    import pandas
+    from clu import Command
 
 
-__all__ = ["CluClient", "query_influxdb"]
+__all__ = ["CluClient", "send_command"]
 
 
 class CluClient:
@@ -91,28 +90,76 @@ class CluClient:
         cls.__initialised = False
 
 
-async def query_influxdb(query: str) -> pandas.DataFrame:
-    """Runs a query in InfluxDB and returns a Pandas dataframe."""
+@overload
+async def send_command(
+    command_string: str,
+    *,
+    raw: Literal[False],
+) -> list[dict[str, Any]]:
+    ...
 
-    from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
-    from influxdb_client.client.warnings import MissingPivotFunction
 
-    warnings.simplefilter("ignore", MissingPivotFunction)  # noqa: F821
+@overload
+async def send_command(
+    command_string: str,
+    *,
+    raw: Literal[True],
+) -> Command:
+    ...
 
-    host = config["influxdb.host"]
-    port = config["influxdb.port"]
 
-    token = config["influxdb.token"] or os.environ.get("INFLUXDB_V2_TOKEN")
-    if token is None:
-        raise ValueError("$INFLUXDB_V2_TOKEN not defined.")
+@overload
+async def send_command(
+    command_string: str,
+    *,
+    raw: bool,
+) -> list[dict[str, Any]] | Command:
+    ...
 
-    async with InfluxDBClientAsync(
-        url=f"http://{host}:{port}",
-        token=token,
-        org=config["influxdb.org"],
-    ) as client:
-        if not (await client.ping()):
-            raise RuntimeError("InfluxDB client failed to connect.")
 
-        api = client.query_api()
-        return await api.query_data_frame(query)
+async def send_command(
+    command_string: str,
+    *,
+    raw=False,
+) -> list[dict[str, Any]] | Command:
+    """Sends a command to the actor system and returns a list of replies.
+
+    Parameters
+    ----------
+    command_string
+        The command to send to the actor. Must include the name of the actor.
+    raw
+        If `True`, returns the command. Otherwise returns a list of replies.
+
+    Returns
+    -------
+    replies
+        A list of replies, each one a dictionary of keyword to value. Empty
+        replies (e.g., those only changing the status) are not returned. If
+        ``raw=True``, the CLU command is returned after awaiting for it to
+        complete or fail.
+
+    Raises
+    ------
+    RuntimeError
+        If the command fails, times out, or is otherwise not successful.
+
+    """
+
+    consumer, *rest = command_string.split(" ")
+
+    async with CluClient() as client:
+        cmd = await client.send_command(consumer, " ".join(rest))
+
+    if cmd.status.did_succeed:
+        if raw:
+            return cmd
+
+        replies: list[dict[str, Any]] = []
+        for reply in cmd.replies:
+            if len(reply.message) == 0:
+                continue
+            replies.append(reply.message)
+        return replies
+
+    raise RuntimeError(f"Command {command_string!r} failed.")
