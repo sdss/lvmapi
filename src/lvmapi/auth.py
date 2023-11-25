@@ -53,7 +53,7 @@ router = APIRouter(tags=["auth"])
 def verify_password(plain_password: str):
     """Verifies that the password passed matches the hashed one stored in the envvar."""
 
-    PASSWORD = os.getenv("PASSWORD")  # Already hashed.
+    PASSWORD = os.getenv("LVMAPI_PASSWORD")  # Already hashed.
     if not PASSWORD:
         return False
 
