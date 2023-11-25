@@ -8,9 +8,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
+
+import pandas
 
 from lvmapi.tools import CluClient
+from lvmapi.tools.influxdb import query_influxdb
 from lvmapi.types import Cameras, Sensors
 
 
@@ -23,6 +26,7 @@ __all__ = [
     "get_spectrograph_temperatures",
     "get_spectrograph_pressures",
     "get_spectrograph_mechanics",
+    "read_thermistors",
 ]
 
 
@@ -125,3 +129,71 @@ async def get_spectrograph_mechanics(spec: Spectrographs):
                     response[key] = "open" if reply["open"] else "closed"
 
     return response
+
+
+@overload
+async def read_thermistors(interval: float) -> pandas.DataFrame:
+    ...
+
+
+@overload
+async def read_thermistors(interval: None) -> dict[str, bool]:
+    ...
+
+
+async def read_thermistors(
+    interval: float | None = None,
+) -> pandas.DataFrame | dict[str, bool]:
+    """Returns thermistor states from InfluxDB.
+
+    Parameters
+    ----------
+    interval
+        How far to look back in seconds. If None, returns the latest value.
+
+    Returns
+    -------
+    states
+        If ``interval=None``, a dictionary of thermistor states. Otherwise a
+        Pandas dataframe with the thermistor states, one row per measurement
+        within the interval.
+
+    """
+
+    if interval is None:
+        start = "-1m"
+        last = "|> last()"
+    else:
+        start = f"-{interval}s"
+        last = ""
+
+    query = f"""
+from(bucket: "spec")
+  |> range(start: {start}, stop: now())
+  |> filter(fn: (r) => r["_measurement"] == "thermistors")
+  |> filter(fn: (r) => r["channel_name"] != "")
+  {last}
+  |> group(columns: ["_field"])
+  |> keep(columns: ["_time", "channel_name", "_value"])
+"""
+
+    data = await query_influxdb(query)
+
+    if interval is None:
+        result: dict[str, bool] = {}
+        for _, row in data.iterrows():
+            result[row.channel_name] = bool(row._value)
+        return result
+
+    df = pandas.DataFrame(
+        {
+            "time": data._time,
+            "channel": data.channel_name,
+            "state": pandas.Series(data._value, dtype="int8"),
+        }
+    )
+    df.sort_values(["channel", "time"], inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df["time"] = pandas.to_datetime(df["time"])
+
+    return df

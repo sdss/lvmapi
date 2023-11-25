@@ -21,10 +21,11 @@ from lvmapi.tools import (
     get_spectrograph_temperatures,
     query_influxdb,
 )
+from lvmapi.tools.spectrograph import read_thermistors
 from lvmapi.types import Cameras, CamSpec, Sensors, Spectrographs
 
 
-class TemperaturesDataFrame(BaseModel):
+class SplitDataFrameToDict(BaseModel):
     columns: list[str]
     data: list[list]
 
@@ -42,7 +43,7 @@ async def get_cryostats() -> list[str]:
 @router.get(
     "/temperatures",
     summary="Cryostat temperatures",
-    response_model=TemperaturesDataFrame,
+    response_model=SplitDataFrameToDict,
 )
 async def get_temperatures(
     start: str = Query("-30m", description="Flux-compatible start time"),
@@ -107,6 +108,31 @@ async def get_temperatures(
         results = results.loc[results.sensor == sensor, :]
 
     return results.to_dict(orient="split", index=False)
+
+
+@router.get("/thermistors")
+@router.get(
+    "/thermistors/{thermistor}",
+    summary="Reads the thermistors",
+    response_model=SplitDataFrameToDict | dict[str, bool] | bool,
+)
+async def get_thermistors(
+    thermistor: str | None = None,
+    interval=Query(None, description="Interval in seconds"),
+):
+    """Reads the thermistors and returns their states."""
+
+    data = await read_thermistors(interval=interval)
+
+    if isinstance(data, pandas.DataFrame):
+        if thermistor is not None:
+            data = data.loc[data.channel == thermistor.lower(), :]
+        return data.to_dict(orient="split", index=False)
+
+    if thermistor:
+        return data[thermistor]
+
+    return data
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
