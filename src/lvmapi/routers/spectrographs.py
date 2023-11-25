@@ -24,11 +24,9 @@ from lvmapi.tools import (
 from lvmapi.types import Cameras, CamSpec, Sensors, Spectrographs
 
 
-class Temperatures(BaseModel):
-    time: str
-    camera: str
-    sensor: str
-    temperature: float
+class TemperaturesDataFrame(BaseModel):
+    columns: list[str]
+    data: list[list]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
@@ -44,7 +42,7 @@ async def get_cryostats() -> list[str]:
 @router.get(
     "/temperatures",
     summary="Cryostat temperatures",
-    response_model=list[Temperatures],
+    response_model=TemperaturesDataFrame,
 )
 async def get_temperatures(
     start: str = Query("-30m", description="Flux-compatible start time"),
@@ -80,7 +78,7 @@ async def get_temperatures(
         raise HTTPException(500, detail="Failed querying InfluxDB.")
 
     if len(results) == 0:
-        return []
+        return {"columns": ["time", "camera", "sensor", "temperature"], "data": []}
 
     results.loc[:, "time"] = results["_time"].map(lambda tt: tt.isoformat())
     results.loc[:, "camera"] = pandas.Series("", dtype="S3")
@@ -108,7 +106,7 @@ async def get_temperatures(
     if sensor:
         results = results.loc[results.sensor == sensor, :]
 
-    return list(results.itertuples(index=False))
+    return results.to_dict(orient="split", index=False)
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
