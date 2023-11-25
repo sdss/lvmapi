@@ -62,7 +62,7 @@ class CluClient:
             return
 
         host: str = os.environ.get("RABBITMQ_HOST", config["rabbitmq.host"])
-        port: int = int(os.environ.get("RABBITMQ_port", config["rabbitmq.port"]))
+        port: int = int(os.environ.get("RABBITMQ_PORT", config["rabbitmq.port"]))
 
         self.client = AMQPClient(host=host, port=port)
         self.__initialised = True
