@@ -1,0 +1,170 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# @Author: José Sánchez-Gallego (gallegoj@uw.edu)
+# @Date: 2024-03-24
+# @Filename: schedule.py
+# @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
+
+from __future__ import annotations
+
+import pathlib
+
+import astroplan
+import numpy
+import polars
+from astropy import units as uu
+from astropy.time import Time
+
+from sdsstools import get_sjd
+
+
+EPHEMERIS_FILE = pathlib.Path(__file__).parent / "../data/ephemeris.parquet"
+
+
+def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
+    """Returns the ephemeris for a given SJD."""
+
+    observer = astroplan.Observer.at_site("Las Campanas Observatory")
+    observer.pressure = 0.75 * uu.bar
+
+    # Calculate Elevation of True Horizon. Astroplan does not provide this directly.
+    # See https://github.com/astropy/astroplan/issues/242
+    h_observer = observer.elevation
+    R_earth = 6378100.0 * uu.m
+    dd = numpy.sqrt(h_observer * (2 * R_earth + h_observer))
+    phi = (numpy.arccos((dd / R_earth).value) * uu.radian).to(uu.deg)
+    hzel = phi - 90 * uu.deg
+
+    # Calculate time at ~15UT, which corresponds to about noon at LCO, so always
+    # before the beginning of the night.
+    time = Time(sjd - 0.35, format="mjd")
+
+    sunset = observer.sun_set_time(
+        time,
+        which="next",
+        horizon=hzel - 0.25 * uu.deg,  # Half the apparent size of the Sun.
+    )
+    sunset_twilight = observer.sun_set_time(
+        time,
+        which="next",
+        horizon=twilight_horizon * uu.deg,
+    )
+
+    sunrise = observer.sun_rise_time(
+        time,
+        which="next",
+        horizon=hzel - 0.25 * uu.deg,
+    )
+    sunrise_twilight = observer.sun_rise_time(
+        time,
+        which="next",
+        horizon=twilight_horizon * uu.deg,
+    )
+
+    df = polars.DataFrame(
+        [
+            (
+                sjd,
+                time.isot.split("T")[0],
+                sunset.jd,
+                sunset_twilight.jd,
+                sunrise_twilight.jd,
+                sunrise.jd,
+            )
+        ],
+        schema={
+            "SJD": polars.Int32,
+            "date": polars.String,
+            "sunset": polars.Float64,
+            "twilight_end": polars.Float64,
+            "twilight_start": polars.Float64,
+            "sunrise": polars.Float64,
+        },
+    )
+
+    return df
+
+
+def create_schedule(
+    end_sjd: int,
+    start_sjd: int | None = None,
+    twilight_horizon: float = -18,
+) -> polars.DataFrame:
+    """Creates a schedule for the given time range.
+
+    Parameters
+    ----------
+    end_sjd
+        The final SJD of the schedule.
+    start_sjd
+        Optionally, the initial SJD. If not provided, the current time will be used.
+
+    Returns
+    -------
+    schedule
+        The schedule as a Polars dataframe.
+
+    """
+
+    start_sjd = start_sjd or get_sjd("LCO")
+
+    ephemeris: list[polars.DataFrame] = []
+    for sjd in range(start_sjd, end_sjd + 1):
+        sjd_eph = sjd_ephemeris(sjd, twilight_horizon=twilight_horizon)
+        ephemeris.append(sjd_eph)
+
+    return polars.concat(ephemeris)
+
+
+def get_ephemeris_summary(sjd: int | None = None) -> dict:
+    """Returns a summary of the ephemeris for a given SJD."""
+
+    sjd = sjd or get_sjd("LCO")
+
+    from_file = True
+    eph = polars.read_parquet(EPHEMERIS_FILE)
+
+    data = eph.filter(polars.col("SJD") == sjd)
+    if len(data) == 0:
+        data = sjd_ephemeris(sjd)
+        from_file = False
+
+    is_night = (
+        Time(data["sunset"][0], format="jd")
+        < Time.now()
+        < Time(data["sunrise"][0], format="jd")
+    )
+
+    sunset = Time(data["sunset"][0], format="jd")
+    sunrise = Time(data["sunrise"][0], format="jd")
+    twilight_end = Time(data["twilight_end"][0], format="jd")
+    twilight_start = Time(data["twilight_start"][0], format="jd")
+
+    time_to_sunset = (sunset - Time.now()).to(uu.h).value
+    if time_to_sunset < 0:
+        time_to_sunset = numpy.nan
+
+    time_to_sunrise = (sunrise - Time.now()).to(uu.h).value
+    if time_to_sunrise < 0:
+        time_to_sunrise = numpy.nan
+
+    is_twilight = (
+        Time(data["twilight_end"][0], format="jd")
+        < Time.now()
+        < Time(data["twilight_start"][0], format="jd")
+    )
+
+    return {
+        "SJD": sjd,
+        "date": data["date"][0],
+        "sunset": sunset.jd,
+        "twilight_end": twilight_end.jd,
+        "twilight_start": twilight_start.jd,
+        "sunrise": sunrise.jd,
+        "is_night": is_night,
+        "is_twilight": is_twilight,
+        "time_to_sunset": round(time_to_sunset, 3),
+        "time_to_sunrise": round(time_to_sunrise, 3),
+        "from_file": from_file,
+    }
