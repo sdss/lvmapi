@@ -95,8 +95,7 @@ async def send_command(
     command_string: str,
     *,
     raw: Literal[False],
-) -> list[dict[str, Any]]:
-    ...
+) -> list[dict[str, Any]]: ...
 
 
 @overload
@@ -104,8 +103,7 @@ async def send_command(
     command_string: str,
     *,
     raw: Literal[True],
-) -> Command:
-    ...
+) -> Command: ...
 
 
 @overload
@@ -113,8 +111,7 @@ async def send_command(
     command_string: str,
     *,
     raw: bool,
-) -> list[dict[str, Any]] | Command:
-    ...
+) -> list[dict[str, Any]] | Command: ...
 
 
 async def send_command(

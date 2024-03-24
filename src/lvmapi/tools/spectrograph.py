@@ -132,13 +132,11 @@ async def get_spectrograph_mechanics(spec: Spectrographs):
 
 
 @overload
-async def read_thermistors(interval: float) -> pandas.DataFrame:
-    ...
+async def read_thermistors(interval: float) -> pandas.DataFrame: ...
 
 
 @overload
-async def read_thermistors(interval: None) -> dict[str, bool]:
-    ...
+async def read_thermistors(interval: None) -> dict[str, bool]: ...
 
 
 async def read_thermistors(
