@@ -142,12 +142,7 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
     twilight_start = Time(data["twilight_start"][0], format="jd")
 
     time_to_sunset = (sunset - Time.now()).to(uu.h).value
-    if time_to_sunset < 0:
-        time_to_sunset = numpy.nan
-
     time_to_sunrise = (sunrise - Time.now()).to(uu.h).value
-    if time_to_sunrise < 0:
-        time_to_sunrise = numpy.nan
 
     is_twilight = (
         Time(data["twilight_end"][0], format="jd")
