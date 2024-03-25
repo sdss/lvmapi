@@ -42,6 +42,7 @@ python-multipart = "^0.0.6"
 astropy = "^6.0.0"
 astroplan = "^0.9.1"
 polars = "^0.20.16"
+redis = {version = "^5.0.3", extras = ["hiredis"]}
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.0.0"

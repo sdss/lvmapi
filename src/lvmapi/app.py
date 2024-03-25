@@ -11,7 +11,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from lvmapi import auth
-from lvmapi.routers import ephemeris, slack, spectrographs, telescopes
+from lvmapi.routers import ephemeris, overwatcher, slack, spectrographs, telescopes
 
 
 app = FastAPI()
@@ -20,6 +20,7 @@ app.include_router(telescopes.router)
 app.include_router(spectrographs.router)
 app.include_router(slack.router)
 app.include_router(ephemeris.router)
+app.include_router(overwatcher.router)
 
 
 @app.get("/")
