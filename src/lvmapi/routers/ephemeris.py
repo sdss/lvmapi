@@ -39,7 +39,7 @@ router = APIRouter(prefix="/ephemeris", tags=["ephemeris"])
     description="Summary of the ephemeris",
     response_model=EphemerisSummaryOut,
 )
-async def get_summary():
+async def get_summary(sjd: int | None = None):
     """Returns a summary of the ephemeris."""
 
-    return get_ephemeris_summary()
+    return get_ephemeris_summary(sjd=sjd)
