@@ -13,7 +13,7 @@ import polars
 from astropy.time import Time, TimeDelta
 
 
-__all__ = ['get_weather_data']
+__all__ = ["get_weather_data"]
 
 
 WEATHER_URL = "http://dataservice.lco.cl/vaisala/data"
@@ -99,7 +99,7 @@ async def get_weather_data(
     )
 
     # Delete rows with all null values.
-    df = df.filter(~polars.all_horizontal(polars.exclude("ts").is_null()))
+    df = df.filter(~polars.all_horizontal(polars.exclude("ts", "station").is_null()))
 
     # Sort by timestamp
     df = df.sort("ts")
