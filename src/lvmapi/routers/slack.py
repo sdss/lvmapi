@@ -19,6 +19,8 @@ import lvmapi.tools.slack
 class Message(BaseModel):
     text: str
     channel: str | None = None
+    username: str | None = None
+    icon_url: str | None = None
 
 
 class MessageOut(BaseModel):
@@ -44,7 +46,12 @@ async def post_message(message: Message) -> Any:
     """Sends a message to the Slack channel."""
 
     try:
-        await lvmapi.tools.slack.post_message(message.text, channel=message.channel)
+        await lvmapi.tools.slack.post_message(
+            message.text,
+            channel=message.channel,
+            username=message.username,
+            icon_url=message.icon_url,
+        )
     except Exception as err:
         raise HTTPException(500, detail=str(err))
 
@@ -55,9 +62,18 @@ async def post_message(message: Message) -> Any:
 async def get_message(
     text: str = Query(description="Text to be sent"),
     channel: str | None = Query(None, description="Channel where to send the message"),
+    username: str | None = Query(None, description="Username to send the message as"),
+    icon_url: str | None = Query(None, description="URL for the icon to use"),
 ) -> str:
     """Sends a message to the Slack channel."""
 
-    message: MessageOut = await post_message(Message(text=text, channel=channel))
+    message: MessageOut = await post_message(
+        Message(
+            text=text,
+            channel=channel,
+            username=username,
+            icon_url=icon_url,
+        )
+    )
 
     return message.text

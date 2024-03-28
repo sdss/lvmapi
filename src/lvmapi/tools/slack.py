@@ -19,7 +19,7 @@ from lvmapi import config
 __all__ = ["post_message"]
 
 
-async def post_message(text: str, channel: str | None = None):
+async def post_message(text: str, channel: str | None = None, **kwargs):
     token = config["slack.token"] or os.environ["SLACK_API_TOKEN"]
 
     channel = channel or config["slack.channel"]
@@ -28,6 +28,6 @@ async def post_message(text: str, channel: str | None = None):
     client = AsyncWebClient(token=token)
 
     try:
-        await client.chat_postMessage(channel=channel, text=text)
+        await client.chat_postMessage(channel=channel, text=text, **kwargs)
     except SlackApiError as e:
         raise RuntimeError(f"Slack returned an error: {e.response['error']}")
