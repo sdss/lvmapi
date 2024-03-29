@@ -8,23 +8,29 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 import lvmapi.tools.slack
 
 
 class Message(BaseModel):
     text: str
+    blocks: list[dict] | None = None
     channel: str | None = None
     username: str | None = None
     icon_url: str | None = None
+    mentions: list[str] = []
 
+    @model_validator(mode="after")
+    def validate_message(self):
+        if self.text is None and self.blocks is None:
+            raise ValueError("Must specify either text or blocks.")
 
-class MessageOut(BaseModel):
-    text: str
+        if self.text is not None and self.blocks is not None:
+            raise ValueError("Cannot specify both text and blocks.")
+
+        return self
 
 
 router = APIRouter(prefix="/slack", tags=["slack"])
@@ -37,25 +43,23 @@ async def get_slack():
     return {}
 
 
-@router.post(
-    "/message",
-    description="Send a message to Slack",
-    response_model=MessageOut,
-)
-async def post_message(message: Message) -> Any:
+@router.post("/message", description="Send a message to Slack")
+async def post_message(message: Message) -> None:
     """Sends a message to the Slack channel."""
 
     try:
         await lvmapi.tools.slack.post_message(
             message.text,
+            blocks=message.blocks,
             channel=message.channel,
             username=message.username,
             icon_url=message.icon_url,
+            mentions=message.mentions,
         )
     except Exception as err:
         raise HTTPException(500, detail=str(err))
 
-    return message
+    return None
 
 
 @router.get("/message", description="Send a simple text message to Slack")
@@ -64,10 +68,10 @@ async def get_message(
     channel: str | None = Query(None, description="Channel where to send the message"),
     username: str | None = Query(None, description="Username to send the message as"),
     icon_url: str | None = Query(None, description="URL for the icon to use"),
-) -> str:
+) -> None:
     """Sends a message to the Slack channel."""
 
-    message: MessageOut = await post_message(
+    await post_message(
         Message(
             text=text,
             channel=channel,
@@ -76,4 +80,18 @@ async def get_message(
         )
     )
 
-    return message.text
+    return None
+
+
+@router.get("/user_id/{user}", description="Gets the userID for a user name")
+async def get_user_id(user: str) -> str | None:
+    """Gets the ``userID`` of the user whose ``name`` or ``real_name`` matches."""
+
+    try:
+        user_id = await lvmapi.tools.slack.get_user_id(user)
+    except NameError:
+        return None
+    except Exception as err:
+        raise HTTPException(500, detail=str(err))
+
+    return user_id
