@@ -29,7 +29,7 @@ python = "^3.11,<3.13"
 sdsstools = "^1.2.0"
 typing-extensions = "^4.5.0"
 fastapi = ">=0.100.0"
-gunicorn = "^21.2.0"
+gunicorn = "^22.0.0"
 uvicorn = {extras = ["standard"], version = ">=0.24.0"}
 sdss-clu = "^2.2.1"
 aiohttp = "^3.9.0"
