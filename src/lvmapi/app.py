@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from lvmapi import auth
 from lvmapi.routers import (
     ephemeris,
+    macros,
     overwatcher,
     slack,
     spectrographs,
@@ -29,6 +30,7 @@ app.include_router(slack.router)
 app.include_router(ephemeris.router)
 app.include_router(overwatcher.router)
 app.include_router(weather.router)
+app.include_router(macros.router)
 
 
 @app.get("/")
