@@ -8,37 +8,88 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from typing import Any
 
-from lvmapi.tools.gort import get_gort_client
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, field_validator
 
-
-class EnclosureStatus(BaseModel):
-    """Status of the telescope enclosure."""
-
-    open: bool
-    moving: bool
+from lvmapi.tools.rabbitmq import send_clu_command
 
 
 router = APIRouter(prefix="/enclosure", tags=["enclosure"])
 
 
+class PLCStatus(BaseModel):
+    """A model to represent a PLC sensor or function."""
+
+    name: str
+    value: int
+    labels: list[str] = []
+
+    @field_validator("value", mode="before")
+    def cast_value(cls, value: str) -> int:
+        return int(value, 16)
+
+    @field_validator("labels", mode="after")
+    def trim_labels(cls, value: list[str]) -> list[str]:
+        return list(map(str.strip, value))
+
+
+class O2Status(BaseModel):
+    """Status of the O2 sensors."""
+
+    utilities_room: float
+    spectrograph_room: float
+
+
+class EnclosureStatus(BaseModel):
+    """A model to represent the status of the enclosure."""
+
+    registers: dict[str, bool | float | int]
+
+    dome_status: PLCStatus
+    safety_status: PLCStatus
+    lights_status: PLCStatus
+
+    o2_status: O2Status
+
+
 @router.get("/")
 @router.get("/status")
-async def status(request: Request) -> EnclosureStatus:
+async def status() -> EnclosureStatus:
     """Performs an emergency shutdown of the enclosure and telescopes."""
 
     try:
-        async with get_gort_client(request.app) as gort:
-            status = await gort.enclosure.status()
+        ecp_status = await send_clu_command("lvmecp status")
     except Exception as ee:
-
         raise HTTPException(status_code=500, detail=str(ee))
 
-    dome_status_labels = status["dome_status_labels"]
+    status_data: dict[str, Any] = {}
+    for reply in ecp_status:
+        if "registers" in reply:
+            status_data["registers"] = reply["registers"]
+        elif "dome_status" in reply:
+            status_data["dome_status"] = {
+                "name": "dome",
+                "value": reply["dome_status"],
+                "labels": reply["dome_status_labels"].split(","),
+            }
+        elif "lights" in reply:
+            status_data["lights_status"] = {
+                "name": "lights",
+                "value": reply["lights"],
+                "labels": reply["lights_labels"].split(","),
+            }
+        elif "safety_status" in reply:
+            status_data["safety_status"] = {
+                "name": "safety",
+                "value": reply["safety_status"],
+                "labels": reply["safety_status_labels"].split(","),
+            }
+        elif "o2_percent_utilities" in reply:
+            status_data["o2_status"] = {
+                "utilities_room": reply["o2_percent_utilities"],
+                "spectrograph_room": reply["o2_percent_spectrograph"],
+            }
 
-    return EnclosureStatus(
-        open=("OPEN" in dome_status_labels),
-        moving=("MOVING" in dome_status_labels),
-    )
+    return EnclosureStatus(**status_data)

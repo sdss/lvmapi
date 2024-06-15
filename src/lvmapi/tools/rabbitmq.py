@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from clu import Command
 
 
-__all__ = ["CluClient", "send_command"]
+__all__ = ["CluClient", "send_clu_command"]
 
 
 class CluClient:
@@ -91,7 +91,11 @@ class CluClient:
 
 
 @overload
-async def send_command(
+async def send_clu_command(command_string: str) -> list[dict[str, Any]]: ...
+
+
+@overload
+async def send_clu_command(
     command_string: str,
     *,
     raw: Literal[False],
@@ -99,7 +103,7 @@ async def send_command(
 
 
 @overload
-async def send_command(
+async def send_clu_command(
     command_string: str,
     *,
     raw: Literal[True],
@@ -107,14 +111,14 @@ async def send_command(
 
 
 @overload
-async def send_command(
+async def send_clu_command(
     command_string: str,
     *,
     raw: bool,
 ) -> list[dict[str, Any]] | Command: ...
 
 
-async def send_command(
+async def send_clu_command(
     command_string: str,
     *,
     raw=False,
