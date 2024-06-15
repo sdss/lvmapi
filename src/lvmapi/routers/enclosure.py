@@ -96,7 +96,7 @@ async def status() -> EnclosureStatus:
 
 
 @router.route("/open")
-async def open_enclosure(force:bool=False):
+async def open_enclosure(force: bool = False):
     """Opens the enclosure."""
 
     force_flag = "--force" if force else ""
@@ -108,14 +108,27 @@ async def open_enclosure(force:bool=False):
 
     return True
 
+
 @router.route("/close")
-async def close_enclosure(force:bool=False):
+async def close_enclosure(force: bool = False):
     """Closes the enclosure."""
 
     force_flag = "--force" if force else ""
 
     try:
         await send_clu_command(f"lvmecp dome close {force_flag}")
+    except Exception as ee:
+        raise HTTPException(status_code=500, detail=str(ee))
+
+    return True
+
+
+@router.route("/stop")
+async def stop_enclosure():
+    """Stops the enclosure."""
+
+    try:
+        await send_clu_command("lvmecp dome stop")
     except Exception as ee:
         raise HTTPException(status_code=500, detail=str(ee))
 
