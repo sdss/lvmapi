@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import get_args
 
-import pandas
+import polars
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
@@ -27,7 +27,7 @@ from lvmapi.types import Cameras, CamSpec, Sensors, Spectrographs
 
 class SplitDataFrameToDict(BaseModel):
     columns: list[str]
-    data: list[list]
+    data: list[tuple]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
@@ -81,33 +81,40 @@ async def get_temperatures(
     if len(results) == 0:
         return {"columns": ["time", "camera", "sensor", "temperature"], "data": []}
 
-    results.loc[:, "time"] = results["_time"].map(lambda tt: tt.isoformat())
-    results.loc[:, "camera"] = pandas.Series("", dtype="S3")
-    results.loc[:, "sensor"] = pandas.Series("", dtype="S3")
-    results.loc[:, "temperature"] = results._value
+    final_df = results.select(
+        time=polars.col._time.dt.to_string("%Y-%m-%dT%H:%M:%S.%3f"),
+        camera=polars.lit(None, dtype=polars.String),
+        sensor=polars.lit(None, dtype=polars.String),
+        temperature=polars.col._value.cast(polars.Float32),
+    )
 
     for spec in ["sp1", "sp2", "sp3"]:
         for cc in get_args(Cameras):
             for ss in get_args(Sensors):
                 label = get_spectrograph_temperature_label(cc, ss)
 
-                results.loc[
-                    (results._measurement == f"lvmscp.{spec}")
-                    & (results._field == f"status.{label}"),
+                _measurement = f"lvmscp.{spec}"
+                _field = f"status.{label}"
+
+                final_df[
+                    (
+                        (results["_measurement"] == _measurement)
+                        & (results["_field"] == _field)
+                    ).arg_true(),
                     "camera",
                 ] = f"{cc}{spec[-1]}"
 
-                results.loc[results._field == f"status.{label}", "sensor"] = ss
+                final_df[(results["_field"] == _field).arg_true(), "sensor"] = ss
 
-    results = results.loc[:, ["time", "camera", "sensor", "temperature"]]
+    final_df = final_df.select(polars.col(["time", "camera", "sensor", "temperature"]))
 
     if camera:
-        results = results.loc[results.camera == camera, :]
+        final_df = final_df.filter(polars.col.camera == camera)
 
     if sensor:
-        results = results.loc[results.sensor == sensor, :]
+        final_df = final_df.filter(polars.col.sensor == sensor)
 
-    return results.to_dict(orient="split", index=False)
+    return {"columns": final_df.columns, "data": final_df.rows()}
 
 
 @router.get("/thermistors")
@@ -124,10 +131,10 @@ async def get_thermistors(
 
     data = await read_thermistors(interval=interval)
 
-    if isinstance(data, pandas.DataFrame):
+    if isinstance(data, polars.DataFrame):
         if thermistor is not None:
-            data = data.loc[data.channel == thermistor.lower(), :]
-        return data.to_dict(orient="split", index=False)
+            data = data.filter(polars.col.channel == thermistor)
+        return {"columns": data.columns, "data": data.rows()}
 
     if thermistor:
         return data[thermistor]

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-import pandas
+import polars
 
 from lvmapi.tools import CluClient
 from lvmapi.tools.influxdb import query_influxdb
@@ -132,7 +132,7 @@ async def get_spectrograph_mechanics(spec: Spectrographs):
 
 
 @overload
-async def read_thermistors(interval: float) -> pandas.DataFrame: ...
+async def read_thermistors(interval: float) -> polars.DataFrame: ...
 
 
 @overload
@@ -141,7 +141,7 @@ async def read_thermistors(interval: None) -> dict[str, bool]: ...
 
 async def read_thermistors(
     interval: float | None = None,
-) -> pandas.DataFrame | dict[str, bool]:
+) -> polars.DataFrame | dict[str, bool]:
     """Returns thermistor states from InfluxDB.
 
     Parameters
@@ -153,7 +153,7 @@ async def read_thermistors(
     -------
     states
         If ``interval=None``, a dictionary of thermistor states. Otherwise a
-        Pandas dataframe with the thermistor states, one row per measurement
+        Polars dataframe with the thermistor states, one row per measurement
         within the interval.
 
     """
@@ -179,19 +179,15 @@ from(bucket: "spec")
 
     if interval is None:
         result: dict[str, bool] = {}
-        for _, row in data.iterrows():
-            result[row.channel_name] = bool(row._value)
+        for row in data.iter_rows(named=True):
+            result[row["channel_name"]] = bool(row["_value"])
         return result
 
-    df = pandas.DataFrame(
-        {
-            "time": data._time,
-            "channel": data.channel_name,
-            "state": pandas.Series(data._value, dtype="int8"),
-        }
+    df = data.select(
+        time=polars.col._time,
+        channel=polars.col.channel_name,
+        state=polars.col._value.cast(polars.Boolean),
     )
-    df.sort_values(["channel", "time"], inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    df["time"] = pandas.to_datetime(df["time"])
+    df = df.sort(["channel", "time"])
 
     return df

@@ -8,23 +8,20 @@
 
 from __future__ import annotations
 
+import json
 import os
 import warnings
 
-from typing import TYPE_CHECKING
+import polars
 
 from lvmapi import config
-
-
-if TYPE_CHECKING:
-    import pandas
 
 
 __all__ = ["query_influxdb"]
 
 
-async def query_influxdb(query: str) -> pandas.DataFrame:
-    """Runs a query in InfluxDB and returns a Pandas dataframe."""
+async def query_influxdb(query: str) -> polars.DataFrame:
+    """Runs a query in InfluxDB and returns a Polars dataframe."""
 
     from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
     from influxdb_client.client.warnings import MissingPivotFunction
@@ -47,4 +44,10 @@ async def query_influxdb(query: str) -> pandas.DataFrame:
             raise RuntimeError("InfluxDB client failed to connect.")
 
         api = client.query_api()
-        return await api.query_data_frame(query)
+
+        query_results = await api.query(query)
+
+    df = polars.DataFrame(json.loads(query_results.to_json()))
+    df = df.with_columns(polars.col._time.cast(polars.Datetime("ms")))
+
+    return df
