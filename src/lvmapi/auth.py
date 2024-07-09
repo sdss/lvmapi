@@ -106,7 +106,7 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     """Validates the password and generates a temporary token.
 
