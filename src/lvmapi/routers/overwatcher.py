@@ -29,7 +29,7 @@ def get_overwatcher_enabled() -> bool:
 
     redis = get_redis_connection()
 
-    enabled = redis.get("overwatcher:enabled")
+    enabled = redis.get("gort:overwatcher:enabled")
     assert enabled is None or isinstance(enabled, str)
 
     if enabled is None:
@@ -43,6 +43,6 @@ def put_overwatcher_enabled(enabled: bool) -> bool:
     """Enables or disables the overwatcher."""
 
     redis = get_redis_connection()
-    redis.set("overwatcher:enabled", int(enabled))
+    redis.set("gort:overwatcher:enabled", int(enabled))
 
     return enabled
