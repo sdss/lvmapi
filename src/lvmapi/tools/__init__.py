@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from .alerts import *
 from .gort import *
 from .influxdb import *
 from .rabbitmq import *
