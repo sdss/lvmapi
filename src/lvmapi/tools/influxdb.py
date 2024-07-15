@@ -48,6 +48,8 @@ async def query_influxdb(query: str) -> polars.DataFrame:
         query_results = await api.query(query)
 
     df = polars.DataFrame(json.loads(query_results.to_json()))
-    df = df.with_columns(polars.col._time.cast(polars.Datetime("ms")))
+
+    if len(df) > 0:
+        df = df.with_columns(polars.col._time.cast(polars.Datetime("ms")))
 
     return df
