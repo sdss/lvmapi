@@ -47,15 +47,15 @@ async def summary() -> AlertsSummary:
         enclosure_alerts_response = await enclosure_alerts()
     except Exception as err:
         warnings.warn(f"Error getting enclosure alerts: {err}")
-        o2_alert = None
+        enclosure_alerts_response = {}
 
     o2_alerts = {
         key: value
         for key, value in enclosure_alerts_response.items()
         if "o2_percentage" in key
     }
-    o2_alert = any(o2_alerts.values())
 
+    o2_alert = any(o2_alerts.values())
     rain_sensor_alarm = enclosure_alerts_response.get("rain_sensor_alarm", None)
 
     return AlertsSummary(
