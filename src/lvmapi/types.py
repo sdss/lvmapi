@@ -12,6 +12,7 @@ from typing import Literal
 
 
 Spectrographs = Literal["sp1", "sp2", "sp3"]
+SpecStatus = Literal["idle", "exposing", "reading", "error", "unknown"]
 Cameras = Literal["r", "z", "b"]
 CamSpec = Literal["r1", "z1", "b1", "r2", "z2", "b2", "r3", "z3", "b3"]
 Sensors = Literal["ccd", "ln2"]

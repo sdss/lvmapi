@@ -1473,13 +1473,13 @@ unclick = ">=0.1.0,<0.2.0"
 
 [[package]]
 name = "makefun"
-version = "1.15.3"
+version = "1.15.4"
 description = "Small library to dynamically create python functions."
 optional = false
 python-versions = "*"
 files = [
-    {file = "makefun-1.15.3-py2.py3-none-any.whl", hash = "sha256:2d692b46c284db54a54897fa3df3b2443b39eb6711bd7c7d2149322bffca0cc3"},
-    {file = "makefun-1.15.3.tar.gz", hash = "sha256:72039743135dd44ba5037d08e9c6fe4b29dfee7f2eb8106951f9a20ca7d6d1fa"},
+    {file = "makefun-1.15.4-py2.py3-none-any.whl", hash = "sha256:945d078a7e01a903f2cbef738b33e0ebc52b8d35fb7e20c528ed87b5c80db5b7"},
+    {file = "makefun-1.15.4.tar.gz", hash = "sha256:9f9b9904e7c397759374a88f4c57781fbab2a458dec78df4b3ee6272cd9fb010"},
 ]
 
 [[package]]
@@ -2782,13 +2782,13 @@ websocket = ["websockets (>=11.0.3,<12.0.0)"]
 
 [[package]]
 name = "sdsstools"
-version = "1.7.1"
+version = "1.8.1"
 description = "Small tools for SDSS products"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "sdsstools-1.7.1-py3-none-any.whl", hash = "sha256:55d4e36f5bd4ea03aa6722ed37dd05cab23182d943cc454b0a63924f774a2734"},
-    {file = "sdsstools-1.7.1.tar.gz", hash = "sha256:c07ce6748a5e4399e7b90d5838cb7ab269669b1115f83ad5662e4999b2925a3c"},
+    {file = "sdsstools-1.8.1-py3-none-any.whl", hash = "sha256:8cad44a3da74ade52fdac2aba37cb504d99ad1700f05eae042dc389062a5a1b5"},
+    {file = "sdsstools-1.8.1.tar.gz", hash = "sha256:b2956830774f18e68ce537ba7d536a7b43b6407fc23357a72e08de28b67b22c9"},
 ]
 
 [package.dependencies]
@@ -3457,4 +3457,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11,<4"
-content-hash = "25488d795536ab05e093b42ddbb62662043956e996585ed4e593e955f33bd394"
+content-hash = "428ef5b4cf814ef47b49355aa2949cf5146b5f8bf4fab63a45e7221755d902e7"

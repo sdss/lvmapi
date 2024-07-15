@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from lvmapi import auth
 from lvmapi.routers import (
+    alerts,
     enclosure,
     ephemeris,
     macros,
@@ -33,6 +34,7 @@ app.include_router(overwatcher.router)
 app.include_router(weather.router)
 app.include_router(macros.router)
 app.include_router(enclosure.router)
+app.include_router(alerts.router)
 
 
 @app.get("/")
