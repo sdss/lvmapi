@@ -8,17 +8,19 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, get_args, overload
 
 import polars
 
-from lvmapi.tools import CluClient
+from sdsstools import GatheringTaskGroup
+
 from lvmapi.tools.influxdb import query_influxdb
-from lvmapi.types import Cameras, Sensors
+from lvmapi.tools.rabbitmq import CluClient
+from lvmapi.types import Cameras, Sensors, Spectrographs
 
 
 if TYPE_CHECKING:
-    from lvmapi.routers.spectrographs import Spectrographs
+    from lvmapi.types import SpecStatus
 
 
 __all__ = [
@@ -27,6 +29,7 @@ __all__ = [
     "get_spectrograph_pressures",
     "get_spectrograph_mechanics",
     "read_thermistors",
+    "get_spectrogaph_status",
 ]
 
 
@@ -78,6 +81,81 @@ async def get_spectrograph_temperatures(spec: Spectrographs):
             response[f"{camera}{spec[-1]}_{sensor}"] = status[label]
 
     return response
+
+
+async def get_spectrograph_temperatures_history(
+    start: str = "-30m",
+    stop: str = "now()",
+    camera: str | None = None,
+    sensor: str | None = None,
+):
+    time_range = f"|> range(start: {start}, stop: {stop})"
+
+    spec_filter = r'|> filter(fn: (r) => r["_measurement"] =~ /lvmscp\.sp[1-3]/)'
+    if camera is not None:
+        spec_filter = (
+            f'|> filter(fn: (r) => r["_measurement"] == "lvmscp.sp{camera[-1]}")'
+        )
+
+    sensor_filter = r'|> filter(fn: (r) => r["_field"] =~ /mod(2|12)\/temp[abc]/)'
+    if camera is not None and sensor is not None:
+        field = get_spectrograph_temperature_label(camera[0], sensor)
+        sensor_filter = f'|> filter(fn: (r) => r["_field"] == "status.{field}")'
+
+    query = rf"""
+    from(bucket: "actors")
+        {time_range}
+        {spec_filter}
+        {sensor_filter}
+    """
+
+    results = await query_influxdb(query)
+
+    if len(results) == 0:
+        return polars.DataFrame(
+            None,
+            schema={
+                "time": polars.Datetime,
+                "camera": polars.String,
+                "sensor": polars.String,
+                "temperature": polars.Float32,
+            },
+        )
+
+    final_df = results.select(
+        time=polars.col._time.dt.to_string("%Y-%m-%dT%H:%M:%S.%3f"),
+        camera=polars.lit(None, dtype=polars.String),
+        sensor=polars.lit(None, dtype=polars.String),
+        temperature=polars.col._value.cast(polars.Float32),
+    )
+
+    for spec in ["sp1", "sp2", "sp3"]:
+        for cc in get_args(Cameras):
+            for ss in get_args(Sensors):
+                label = get_spectrograph_temperature_label(cc, ss)
+
+                _measurement = f"lvmscp.{spec}"
+                _field = f"status.{label}"
+
+                final_df[
+                    (
+                        (results["_measurement"] == _measurement)
+                        & (results["_field"] == _field)
+                    ).arg_true(),
+                    "camera",
+                ] = f"{cc}{spec[-1]}"
+
+                final_df[(results["_field"] == _field).arg_true(), "sensor"] = ss
+
+    final_df = final_df.select(polars.col(["time", "camera", "sensor", "temperature"]))
+
+    if camera:
+        final_df = final_df.filter(polars.col.camera == camera)
+
+    if sensor:
+        final_df = final_df.filter(polars.col.sensor == sensor)
+
+    return final_df
 
 
 async def get_spectrograph_pressures(spec: Spectrographs):
@@ -191,3 +269,47 @@ from(bucket: "spec")
     df = df.sort(["channel", "time"])
 
     return df
+
+
+async def get_spectrogaph_status():
+    """Returns the status of the spectrograph (integrating, reading, etc.)"""
+
+    spec_names = get_args(Spectrographs)
+
+    async with CluClient() as client:
+        async with GatheringTaskGroup() as group:
+            for spec in spec_names:
+                group.create_task(
+                    client.send_command(
+                        f"lvmscp.{spec}",
+                        "status -s",
+                        internal=True,
+                    )
+                )
+
+    result: dict[Spectrographs, SpecStatus] = {}
+
+    for task in group.results():
+        if task.status.did_fail:
+            continue
+
+        status = task.replies.get("status")
+        controller: Spectrographs = status["controller"]
+        status_names: str = status["status_names"]
+
+        if "ERROR" in status_names:
+            result[controller] = "error"
+        elif "IDLE" in status_names:
+            result[controller] = "idle"
+        elif "EXPOSING" in status_names:
+            result[controller] = "exposing"
+        elif "READING" in status_names:
+            result[controller] = "reading"
+        else:
+            result[controller] = "unknown"
+
+    for spec in spec_names:
+        if spec not in result:
+            result[spec] = "unknown"
+
+    return result
