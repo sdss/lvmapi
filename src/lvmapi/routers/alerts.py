@@ -13,7 +13,7 @@ import warnings
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from lvmapi.tools.alerts import o2_alerts, spec_temperature_alerts
+from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
 
 
 class AlertsSummary(BaseModel):
@@ -24,6 +24,7 @@ class AlertsSummary(BaseModel):
     o2_alert: bool | None
     heater_alert: bool | None
     heater_camera_alerts: dict[str, bool] | None
+    rain: bool | None
 
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -43,11 +44,19 @@ async def summary() -> AlertsSummary:
         ln2_alert = None
 
     try:
-        o2_camera_alerts = await o2_alerts()
-        o2_alert = any(o2_camera_alerts.values())
+        enclosure_alerts_response = await enclosure_alerts()
     except Exception as err:
-        warnings.warn(f"Error getting O2 level alerts: {err}")
+        warnings.warn(f"Error getting enclosure alerts: {err}")
         o2_alert = None
+
+    o2_alerts = {
+        key: value
+        for key, value in enclosure_alerts_response.items()
+        if "o2_percentage" in key
+    }
+    o2_alert = any(o2_alerts.values())
+
+    rain_sensor_alarm = enclosure_alerts_response.get("rain_sensor_alarm", None)
 
     return AlertsSummary(
         ln2_alert=ln2_alert,
@@ -55,4 +64,5 @@ async def summary() -> AlertsSummary:
         o2_alert=o2_alert,
         heater_alert=False,
         heater_camera_alerts={},
+        rain=rain_sensor_alarm,
     )

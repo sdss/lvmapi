@@ -12,7 +12,7 @@ from lvmapi.tools.rabbitmq import CluClient
 from lvmapi.tools.spectrograph import get_spectrograph_temperatures_history
 
 
-__all__ = ["spec_temperature_alerts", "o2_alerts"]
+__all__ = ["spec_temperature_alerts", "enclosure_alerts"]
 
 
 async def spec_temperature_alerts(
@@ -61,8 +61,8 @@ async def spec_temperature_alerts(
     return temp_alerts_dict
 
 
-async def o2_alerts(threshold: float = 19.5):
-    """Returns an alert if any of the O2 sensors is below the threshold.
+async def enclosure_alerts(threshold: float = 19.5):
+    """Returns O2 and rain sensor enclosure alerts.
 
     Parameters
     ----------
@@ -72,9 +72,9 @@ async def o2_alerts(threshold: float = 19.5):
 
     Returns
     -------
-    o2_alerts_dict
+    enclosure_alerts_dict
         A dictionary of alerts. E.g.,
-        ``{'o2_spec_room': False, 'o2_util_room': False}``.
+        ``{'o2_spec_room': False, 'o2_util_room': False, 'rain_sensor_alarm': True}``.
 
     """
 
@@ -89,9 +89,12 @@ async def o2_alerts(threshold: float = 19.5):
     if status.status.did_fail:
         raise ValueError("Failed retrieving status from ECP.")
 
-    o2_alerts_dict = {
+    registers = status.replies.get("registers")
+
+    enclosure_alerts_dict = {
         "o2_spec_room": status.replies.get("o2_percent_spectrograph") < threshold,
         "o2_util_room": status.replies.get("o2_percent_utilities") < threshold,
+        "rain_sensor_alarm": registers["rain_sensor_alarm"],
     }
 
-    return o2_alerts_dict
+    return enclosure_alerts_dict
