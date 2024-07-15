@@ -271,7 +271,7 @@ from(bucket: "spec")
     return df
 
 
-async def get_spectrogaph_status():
+async def get_spectrogaph_status() -> tuple[dict[Spectrographs, SpecStatus], int]:
     """Returns the status of the spectrograph (integrating, reading, etc.)"""
 
     spec_names = get_args(Spectrographs)
@@ -288,6 +288,7 @@ async def get_spectrogaph_status():
                 )
 
     result: dict[Spectrographs, SpecStatus] = {}
+    last_exposure_no: int = -1
 
     for task in group.results():
         if task.status.did_fail:
@@ -308,8 +309,11 @@ async def get_spectrogaph_status():
         else:
             result[controller] = "unknown"
 
+        if "last_exposure_no" in status and status[last_exposure_no] > last_exposure_no:
+            last_exposure_no = status["last_exposure_no"]
+
     for spec in spec_names:
         if spec not in result:
             result[spec] = "unknown"
 
-    return result
+    return result, last_exposure_no

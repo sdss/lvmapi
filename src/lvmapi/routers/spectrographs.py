@@ -12,7 +12,7 @@ from typing import get_args
 
 import polars
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from lvmapi.tools import (
     get_spectrograph_mechanics,
@@ -32,6 +32,17 @@ class SplitDataFrameToDict(BaseModel):
     data: list[tuple]
 
 
+class SpecStatusResponse(BaseModel):
+    status: dict[Spectrographs, SpecStatus] = Field(
+        ...,
+        description="The status of each spectrograph",
+    )
+    last_exposure_no: int = Field(
+        ...,
+        description="The last exposure number",
+    )
+
+
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
 
 
@@ -42,17 +53,16 @@ async def get_cryostats() -> list[str]:
     return list(get_args(Spectrographs))
 
 
-@router.get("/status", summary="Returns the spectrograph status")
-async def get_status(
-    spec: Spectrographs | None = None,
-) -> dict[Spectrographs, SpecStatus]:
+@router.get(
+    "/status",
+    summary="Returns the spectrograph status",
+    response_model=SpecStatusResponse,
+)
+async def get_status(spec: Spectrographs | None = None) -> SpecStatusResponse:
     """Returns the spectrograph status."""
 
-    status = await get_spectrogaph_status()
-    if spec:
-        return {spec: status[spec]}
-
-    return status
+    spec_status = await get_spectrogaph_status()
+    return SpecStatusResponse(status=spec_status[0], last_exposure_no=spec_status[1])
 
 
 @router.get(
