@@ -15,11 +15,19 @@ import numpy
 import polars
 from astropy import units as uu
 from astropy.time import Time
+from cachetools import TTLCache, cached
 
 from sdsstools import get_sjd
 
 
 EPHEMERIS_FILE = pathlib.Path(__file__).parent / "../data/ephemeris.parquet"
+
+
+@cached(TTLCache(maxsize=3, ttl=3600))
+def get_ephemeris_data(filename: pathlib.Path | str) -> polars.DataFrame:
+    """Returns and caches the data from the ephemeris file."""
+
+    return polars.read_parquet(filename)
 
 
 def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
@@ -62,6 +70,8 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
         horizon=twilight_horizon * uu.deg,
     )
 
+    moon_illumination = observer.moon_illumination(time)
+
     df = polars.DataFrame(
         [
             (
@@ -71,6 +81,7 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
                 sunset_twilight.jd,
                 sunrise_twilight.jd,
                 sunrise.jd,
+                moon_illumination,
             )
         ],
         schema={
@@ -80,7 +91,9 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
             "twilight_end": polars.Float64,
             "twilight_start": polars.Float64,
             "sunrise": polars.Float64,
+            "moon_illumination": polars.Float32,
         },
+        orient="row",
     )
 
     return df
@@ -89,7 +102,7 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
 def create_schedule(
     end_sjd: int,
     start_sjd: int | None = None,
-    twilight_horizon: float = -18,
+    twilight_horizon: float = -15,
 ) -> polars.DataFrame:
     """Creates a schedule for the given time range.
 
@@ -123,7 +136,7 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
     sjd = sjd or get_sjd("LCO")
 
     from_file = True
-    eph = polars.read_parquet(EPHEMERIS_FILE)
+    eph = get_ephemeris_data(EPHEMERIS_FILE)
 
     data = eph.filter(polars.col("SJD") == sjd)
     if len(data) == 0:
@@ -152,6 +165,7 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
 
     return {
         "SJD": sjd,
+        "request_jd": Time.now().jd,
         "date": data["date"][0],
         "sunset": sunset.jd,
         "twilight_end": twilight_end.jd,
@@ -161,5 +175,6 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
         "is_twilight": is_twilight,
         "time_to_sunset": round(time_to_sunset, 3),
         "time_to_sunrise": round(time_to_sunrise, 3),
+        "moon_illumination": round(data["moon_illumination"][0], 3),
         "from_file": from_file,
     }

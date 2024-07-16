@@ -18,6 +18,7 @@ class EphemerisSummaryOut(BaseModel):
     """Summary of the ephemeris."""
 
     SJD: int
+    request_jd: float
     date: str
     sunset: float
     twilight_end: float
@@ -27,6 +28,7 @@ class EphemerisSummaryOut(BaseModel):
     is_twilight: bool
     time_to_sunset: float
     time_to_sunrise: float
+    moon_illumination: float
     from_file: bool
 
 
