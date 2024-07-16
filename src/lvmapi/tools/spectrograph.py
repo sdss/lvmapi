@@ -309,8 +309,9 @@ async def get_spectrogaph_status() -> tuple[dict[Spectrographs, SpecStatus], int
         else:
             result[controller] = "unknown"
 
-        if "last_exposure_no" in status and status[last_exposure_no] > last_exposure_no:
-            last_exposure_no = status["last_exposure_no"]
+        last_exposure_no_key = status.get("last_exposure_no", -1)
+        if last_exposure_no_key > last_exposure_no:
+            last_exposure_no = last_exposure_no_key
 
     for spec in spec_names:
         if spec not in result:
