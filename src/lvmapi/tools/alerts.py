@@ -91,10 +91,14 @@ async def enclosure_alerts(threshold: float = 19.5):
 
     registers = status.replies.get("registers")
 
+    safety_labels = status.replies.get("safety_status_labels")
+    door_alert = not ("DOOR_CLOSED" in safety_labels and "DOOR_LOCKED" in safety_labels)
+
     enclosure_alerts_dict = {
         "o2_spec_room": status.replies.get("o2_percent_spectrograph") < threshold,
         "o2_util_room": status.replies.get("o2_percent_utilities") < threshold,
         "rain_sensor_alarm": registers["rain_sensor_alarm"],
+        "door_alert": door_alert,
     }
 
     return enclosure_alerts_dict
