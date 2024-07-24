@@ -115,7 +115,7 @@ async def get_spectrograph_temperatures_history(
         return polars.DataFrame(
             None,
             schema={
-                "time": polars.Datetime,
+                "time": polars.String,
                 "camera": polars.String,
                 "sensor": polars.String,
                 "temperature": polars.Float32,
@@ -123,7 +123,7 @@ async def get_spectrograph_temperatures_history(
         )
 
     final_df = results.select(
-        time=polars.col._time.dt.to_string("%Y-%m-%dT%H:%M:%S.%3f"),
+        time=polars.col._time,
         camera=polars.lit(None, dtype=polars.String),
         sensor=polars.lit(None, dtype=polars.String),
         temperature=polars.col._value.cast(polars.Float32),
@@ -148,6 +148,7 @@ async def get_spectrograph_temperatures_history(
                 final_df[(results["_field"] == _field).arg_true(), "sensor"] = ss
 
     final_df = final_df.select(polars.col(["time", "camera", "sensor", "temperature"]))
+    final_df = final_df.sort(["time", "camera", "sensor"])
 
     if camera:
         final_df = final_df.filter(polars.col.camera == camera)

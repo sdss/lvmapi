@@ -27,11 +27,6 @@ from lvmapi.tools.spectrograph import (
 from lvmapi.types import CamSpec, Sensors, SpecStatus, Spectrographs
 
 
-class SplitDataFrameToDict(BaseModel):
-    columns: list[str]
-    data: list[tuple]
-
-
 class SpecStatusResponse(BaseModel):
     status: dict[Spectrographs, SpecStatus] = Field(
         ...,
@@ -65,17 +60,14 @@ async def get_status(spec: Spectrographs | None = None) -> SpecStatusResponse:
     return SpecStatusResponse(status=spec_status[0], last_exposure_no=spec_status[1])
 
 
-@router.get(
-    "/temperatures",
-    summary="Cryostat temperatures",
-    response_model=SplitDataFrameToDict,
-)
+@router.get("/temperatures", summary="Cryostat temperatures")
 async def get_temperatures(
     start: str = Query("-30m", description="Flux-compatible start time"),
     stop: str = Query("now()", description="Flux-compatible stop time"),
     camera: CamSpec | None = Query(None, description="Camera to return, or all"),
     sensor: Sensors | None = Query(None, description="Sensor to return, or all"),
-):
+    last: bool = Query(False, description="Return only the last set of temperatures"),
+) -> list[dict]:
     """Returns the temperatures of one or multiple cryostats."""
 
     df = await get_spectrograph_temperatures_history(
@@ -85,14 +77,21 @@ async def get_temperatures(
         sensor=sensor,
     )
 
-    return {"columns": df.columns, "data": df.rows()}
+    if last:
+        df = df.group_by(["camera", "sensor"]).last()
+
+    df = df.with_columns(time=polars.col.time.dt.to_string("%Y-%m-%dT%H:%M:%S.%3f"))
+    df = df.select(polars.col(["time", "camera", "sensor", "temperature"]))
+    df = df.sort(["camera", "sensor"])
+
+    return df.to_dicts()
 
 
 @router.get("/thermistors")
 @router.get(
     "/thermistors/{thermistor}",
     summary="Reads the thermistors",
-    response_model=SplitDataFrameToDict | dict[str, bool] | bool,
+    response_model=list[dict] | dict[str, bool] | bool,
 )
 async def get_thermistors(
     thermistor: str | None = None,
@@ -103,9 +102,14 @@ async def get_thermistors(
     data = await read_thermistors(interval=interval)
 
     if isinstance(data, polars.DataFrame):
+        data = data.with_columns(
+            time=polars.col.time.dt.to_string("%Y-%m-%dT%H:%M:%S.%3f")
+        )
+
         if thermistor is not None:
             data = data.filter(polars.col.channel == thermistor)
-        return {"columns": data.columns, "data": data.rows()}
+
+        return data.to_dicts()
 
     if thermistor:
         return data[thermistor]
