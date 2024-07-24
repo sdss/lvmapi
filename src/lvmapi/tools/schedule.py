@@ -143,12 +143,6 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
         data = sjd_ephemeris(sjd)
         from_file = False
 
-    is_night = (
-        Time(data["sunset"][0], format="jd")
-        < Time.now()
-        < Time(data["sunrise"][0], format="jd")
-    )
-
     sunset = Time(data["sunset"][0], format="jd")
     sunrise = Time(data["sunrise"][0], format="jd")
     twilight_end = Time(data["twilight_end"][0], format="jd")
@@ -157,7 +151,19 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
     time_to_sunset = (sunset - Time.now()).to(uu.h).value
     time_to_sunrise = (sunrise - Time.now()).to(uu.h).value
 
-    is_twilight = (
+    is_twilight_evening = (
+        Time(data["sunset"][0], format="jd")
+        < Time.now()
+        < Time(data["twilight_end"][0], format="jd")
+    )
+
+    is_twilight_morning = (
+        Time(data["twilight_start"][0], format="jd")
+        < Time.now()
+        < Time(data["sunrise"][0], format="jd")
+    )
+
+    is_night = (
         Time(data["twilight_end"][0], format="jd")
         < Time.now()
         < Time(data["twilight_start"][0], format="jd")
@@ -172,7 +178,7 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
         "twilight_start": twilight_start.jd,
         "sunrise": sunrise.jd,
         "is_night": is_night,
-        "is_twilight": is_twilight,
+        "is_twilight": is_twilight_evening or is_twilight_morning,
         "time_to_sunset": round(time_to_sunset, 3),
         "time_to_sunrise": round(time_to_sunrise, 3),
         "moon_illumination": round(data["moon_illumination"][0], 3),
