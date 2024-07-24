@@ -8,11 +8,14 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, field_validator
 
+from lvmapi.tools.gort import get_gort_client
 from lvmapi.tools.rabbitmq import send_clu_command
 
 
@@ -95,35 +98,43 @@ async def status() -> EnclosureStatus:
     return EnclosureStatus(**status_data)
 
 
-@router.route("/open")
-async def open_enclosure(force: bool = False):
+@router.get("/open")
+async def open_enclosure(request: Request, block: bool = True):
     """Opens the enclosure."""
 
-    force_flag = "--force" if force else ""
-
     try:
-        await send_clu_command(f"lvmecp dome open {force_flag}")
+        # We use GORT here even if it's a bit slower because it will make sure
+        # the telescopes are pointing down before moving the dome.
+        async with get_gort_client(request.app) as gort:
+            task = asyncio.create_task(gort.enclosure.open())
+
+            if block:
+                await task
+
     except Exception as ee:
         raise HTTPException(status_code=500, detail=str(ee))
 
     return True
 
 
-@router.route("/close")
-async def close_enclosure(force: bool = False):
+@router.get("/close")
+async def close_enclosure(request: Request, block: bool = True, force: bool = False):
     """Closes the enclosure."""
 
-    force_flag = "--force" if force else ""
-
     try:
-        await send_clu_command(f"lvmecp dome close {force_flag}")
+        async with get_gort_client(request.app) as gort:
+            task = asyncio.create_task(gort.enclosure.close(force=force))
+
+            if block:
+                await task
+
     except Exception as ee:
         raise HTTPException(status_code=500, detail=str(ee))
 
     return True
 
 
-@router.route("/stop")
+@router.get("/stop")
 async def stop_enclosure():
     """Stops the enclosure."""
 
