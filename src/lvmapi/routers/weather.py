@@ -19,9 +19,16 @@ router = APIRouter(prefix="/weather", tags=["weather"])
 
 @router.get("/")
 @router.get("/report")
-async def get_weather(station: str = "DuPont", delta_time: float = 3600) -> list[dict]:
+async def get_weather(
+    station: str = "DuPont",
+    delta_time: float = 3600,
+    last: bool = False,
+) -> list[dict]:
     """Returns the weather report from a weather station."""
 
     df = await get_weather_data(station=station, start_time=delta_time)
+
+    if last and len(df) > 0:
+        df = df.tail(1)
 
     return df.with_columns(ts=polars.col.ts.dt.to_string("%FT%X")).to_dicts()
