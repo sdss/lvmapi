@@ -14,9 +14,11 @@ from fastapi import FastAPI
 from lvmapi import auth
 from lvmapi.broker import broker, broker_shutdown, broker_startup
 from lvmapi.routers import (
+    actors,
     alerts,
     enclosure,
     ephemeris,
+    kubernetes,
     macros,
     overwatcher,
     slack,
@@ -25,6 +27,7 @@ from lvmapi.routers import (
     telescopes,
     weather,
 )
+from lvmapi.tools.kubernetes import Kubernetes
 
 
 app = FastAPI()
@@ -40,6 +43,8 @@ app.include_router(macros.router)
 app.include_router(enclosure.router)
 app.include_router(alerts.router)
 app.include_router(tasks.router)
+app.include_router(kubernetes.router)
+app.include_router(actors.router)
 
 
 # Lifecycle events for the broker.
@@ -48,6 +53,9 @@ app.add_event_handler("shutdown", broker_shutdown)
 
 # Integration with FastAPI.
 taskiq_fastapi.init(broker, "lvmapi.app:app")
+
+# Add kubernetes API instance to state.
+app.state.kubernetes = Kubernetes()
 
 
 @app.get("/")

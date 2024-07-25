@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import Literal
 
 from lvmapi.app import broker
@@ -43,3 +45,23 @@ async def shutdown_task():
         await gort.shutdown(park_telescopes=True)
 
     return True
+
+
+@broker.task()
+async def restart_kubernetes_deployment_task(deployment: str, confirm: bool = True):
+    """Restarts a Kubernetes deployment."""
+
+    from lvmapi.app import app
+
+    app.state.kubernetes.restart_deployment(deployment)
+
+    if confirm:
+        for _ in range(15):
+            if deployment in app.state.kubernetes.list_deployments():
+                return True
+            await asyncio.sleep(1)
+
+    else:
+        return True
+
+    raise TimeoutError(f"Timed out waiting for {deployment} to start.")

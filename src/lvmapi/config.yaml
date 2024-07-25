@@ -11,3 +11,56 @@ influxdb:
 slack:
   token: null
   channel: lvm-alerts
+
+actors:
+  list:
+    - lvm.sci.agcam
+    - lvm.spec.agcam
+    - lvm.skye.agcam
+    - lvm.skyw.agcam
+    - lvmscp.sp1
+    - lvmscp.sp2
+    - lvmscp.sp3
+    - lvmecp
+    - lvm.sci.pwi
+    - lvm.spec.pwi
+    - lvm.skye.pwi
+    - lvm.skyw.pwi
+    - lvm.sci.foc
+    - lvm.spec.foc
+    - lvm.skye.foc
+    - lvm.skyw.foc
+    - lvm.sci.km
+    - lvm.skye.km
+    - lvm.skyw.km
+    - lvm.sci.guider
+    - lvm.spec.guider
+    - lvm.skye.guider
+    - lvm.skyw.guider
+  actor_to_deployment:
+    lvm.sci.agcam: lvmagcam
+    lvm.spec.agcam: lvmagcam
+    lvm.skye.agcam: lvmagcam
+    lvm.skyw.agcam: lvmagcam
+    lvmscp.sp1: lvmscp
+    lvmscp.sp2: lvmscp
+    lvmscp.sp3: lvmscp
+    lvmecp: lvmecp
+    lvm.sci.pwi: lvmpwi-sci
+    lvm.spec.pwi: lvmpwi-spec
+    lvm.skye.pwi: lvmpwi-skye
+    lvm.skyw.pwi: lvmpwi-skyw
+    lvm.sci.foc: lvmtan
+    lvm.spec.foc: lvmtan
+    lvm.skye.foc: lvmtan
+    lvm.skyw.foc: lvmtan
+    lvm.sci.km: lvmtan
+    lvm.skye.km: lvmtan
+    lvm.skyw.km: lvmtan
+    lvm.sci.guider: lvmguider
+    lvm.spec.guider: lvmguider
+    lvm.skye.guider: lvmguider
+    lvm.skyw.guider: lvmguider
+
+kubernetes:
+  deployments_path: /home/sdss5/config/kube
