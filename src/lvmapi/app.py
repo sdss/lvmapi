@@ -8,9 +8,11 @@
 
 from __future__ import annotations
 
+import taskiq_fastapi
 from fastapi import FastAPI
 
 from lvmapi import auth
+from lvmapi.broker import broker, broker_shutdown, broker_startup
 from lvmapi.routers import (
     alerts,
     enclosure,
@@ -19,12 +21,14 @@ from lvmapi.routers import (
     overwatcher,
     slack,
     spectrographs,
+    tasks,
     telescopes,
     weather,
 )
 
 
 app = FastAPI()
+
 app.include_router(auth.router)
 app.include_router(telescopes.router)
 app.include_router(spectrographs.router)
@@ -35,6 +39,15 @@ app.include_router(weather.router)
 app.include_router(macros.router)
 app.include_router(enclosure.router)
 app.include_router(alerts.router)
+app.include_router(tasks.router)
+
+
+# Lifecycle events for the broker.
+app.add_event_handler("startup", broker_startup)
+app.add_event_handler("shutdown", broker_shutdown)
+
+# Integration with FastAPI.
+taskiq_fastapi.init(broker, "lvmapi.app:app")
 
 
 @app.get("/")
