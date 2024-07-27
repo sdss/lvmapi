@@ -18,7 +18,7 @@ __all__ = ["spec_temperature_alerts", "enclosure_alerts"]
 async def spec_temperature_alerts(
     start: str = "-5m",
     ccd_threshold: float = -85,
-    ln2_threshold: float = -175,
+    ln2_threshold: float = -160,
 ):
     """Returns a dictionary of spectrograph temperature alerts for each camera.
 
@@ -57,6 +57,8 @@ async def spec_temperature_alerts(
             temp_alerts_dict[f"{camera}_ccd"] = mean_temp > ccd_threshold
         elif sensor == "ln2":
             temp_alerts_dict[f"{camera}_ln2"] = mean_temp > ln2_threshold
+
+    temp_alerts_dict = {key: temp_alerts_dict[key] for key in sorted(temp_alerts_dict)}
 
     return temp_alerts_dict
 

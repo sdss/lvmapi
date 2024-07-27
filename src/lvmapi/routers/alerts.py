@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import warnings
 
 from fastapi import APIRouter
@@ -37,18 +38,22 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 async def summary() -> AlertsSummary:
     """Summary of alerts."""
 
-    try:
-        camera_alerts = await spec_temperature_alerts()
-        temperature_alert = any(camera_alerts.values())
-    except Exception as err:
-        warnings.warn(f"Error getting temperature alerts: {err}")
+    tasks: list[asyncio.Task] = []
+    tasks.append(asyncio.create_task(spec_temperature_alerts()))
+    tasks.append(asyncio.create_task(enclosure_alerts()))
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    camera_alerts = results[0]
+    if isinstance(camera_alerts, BaseException):
+        warnings.warn(f"Error getting temperature alerts: {camera_alerts}")
         camera_alerts = None
         temperature_alert = None
+    else:
+        temperature_alert = any(camera_alerts.values())
 
-    try:
-        enclosure_alerts_response = await enclosure_alerts()
-    except Exception as err:
-        warnings.warn(f"Error getting enclosure alerts: {err}")
+    enclosure_alerts_response = results[1]
+    if isinstance(enclosure_alerts_response, BaseException):
         enclosure_alerts_response = {}
 
     o2_alerts = {
