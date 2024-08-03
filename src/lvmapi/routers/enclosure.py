@@ -175,19 +175,21 @@ async def set_lights(
 ):
     """Turns a lamp on/off."""
 
-    if lamp != "all" and lamp not in LightsStatus.model_fields:
-        raise HTTPException(status_code=400, detail="Invalid lamp.")
+    lamp_str = lamp.value
 
-    if mode == "on" or (mode == "off" and lamp != "all"):
-        if lamp == "all":
+    if mode == "on" or (mode == "off" and lamp_str != "all"):
+        if lamp_str == "all":
             raise HTTPException(
                 status_code=400,
                 detail="Lamp must be specified when turning lights on.",
             )
-        await send_clu_command(f"lvmecp lights {mode} {lamp}")
+        await send_clu_command(f"lvmecp lights {mode} {lamp_str}")
 
     else:
-        all_lamps = list(LightsStatus.model_fields)
         await asyncio.gather(
-            *[send_clu_command(f"lvmecp lights off {lamp}") for lamp in all_lamps]
+            *[
+                send_clu_command(f"lvmecp lights off {lamp}")
+                for lamp in Lights.__members__
+                if lamp != "all"
+            ]
         )
