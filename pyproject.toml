@@ -27,7 +27,7 @@ include = ["src/lvmapi/data/*"]
 [tool.poetry.dependencies]
 python = "^3.11,<4"
 sdsstools = "^1.8.1"
-fastapi = ">=0.100.0"
+fastapi = { version = ">=0.112.0", extras = ["standard"] }
 gunicorn = "^22.0.0"
 uvicorn = {extras = ["standard"], version = ">=0.24.0"}
 sdss-clu = "^2.2.1"
@@ -47,6 +47,7 @@ taskiq = {extras = ["reload"], version = "^0"}
 taskiq-redis = "^1"
 taskiq-aio-pika = "^0"
 taskiq-fastapi = "^0"
+python-multipart = "^0.0.9"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.0.0"

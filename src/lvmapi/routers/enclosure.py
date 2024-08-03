@@ -8,10 +8,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+import asyncio
+import enum
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, field_validator
+from typing import Annotated, Any, Literal
+
+from fastapi import APIRouter, HTTPException, Path
+from pydantic import BaseModel, create_model, field_validator
 
 from lvmapi.tasks import move_dome_task
 from lvmapi.tools.rabbitmq import send_clu_command
@@ -53,6 +56,23 @@ class EnclosureStatus(BaseModel):
     lights_status: PLCStatus
 
     o2_status: O2Status
+
+
+class Lights(enum.Enum):
+    control_room = "control_room"
+    spectrograph_room = "spectrograph_room"
+    utilities_room = "utilities_room"
+    uma_room = "uma_room"
+    telescope_bright = "telescope_bright"
+    telescope_red = "telescope_red"
+    all = "all"
+
+
+LightsStatus: type[BaseModel] = create_model(
+    "LightsStatus",
+    __doc__="Model of lights status",
+    **{light: (bool, False) for light in Lights.__members__ if light != "all"},  # type: ignore
+)
 
 
 @router.get("/")
@@ -122,3 +142,52 @@ async def stop_enclosure():
         raise HTTPException(status_code=500, detail=str(ee))
 
     return True
+
+
+@router.get("/lights", response_model=LightsStatus)
+async def get_lights():
+    """Returns the status of the lights."""
+
+    try:
+        ecp_status = await send_clu_command("lvmecp lights")
+    except Exception as ee:
+        raise HTTPException(status_code=500, detail=str(ee))
+
+    lights = ecp_status[0]["lights_labels"]
+
+    response_dict: dict[str, bool] = {}
+    for light in lights:
+        response_dict[light.lower()] = True
+
+    return LightsStatus(**response_dict)
+
+
+@router.get("/lights/{mode}/{lamp}")
+async def set_lights(
+    mode: Literal["on", "off"],
+    lamp: Annotated[
+        Lights,
+        Path(
+            description="The lamp to turn on/off. Can also be 'all' (only allowed "
+            "with mode='off').",
+        ),
+    ],
+):
+    """Turns a lamp on/off."""
+
+    if lamp != "all" and lamp not in LightsStatus.model_fields:
+        raise HTTPException(status_code=400, detail="Invalid lamp.")
+
+    if mode == "on" or (mode == "off" and lamp != "all"):
+        if lamp == "all":
+            raise HTTPException(
+                status_code=400,
+                detail="Lamp must be specified when turning lights on.",
+            )
+        await send_clu_command(f"lvmecp lights {mode} {lamp}")
+
+    else:
+        all_lamps = list(LightsStatus.model_fields)
+        await asyncio.gather(
+            *[send_clu_command(f"lvmecp lights off {lamp}") for lamp in all_lamps]
+        )
