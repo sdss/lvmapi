@@ -162,11 +162,7 @@ class Kubernetes:
             try:
                 file_ = self.get_yaml_file(deployment)
             except ValueError as err:
-                warnings.warn(
-                    f"Failed restarting from file: {err} "
-                    "Doing rollout restart instead."
-                )
-                return self.restart_deployment(deployment, from_file=False)
+                raise RuntimeError(f"Failed restarting from file: {err} ")
 
             if deployment in self.list_deployments():
                 self.delete_deployment(deployment)
