@@ -65,3 +65,14 @@ async def restart_kubernetes_deployment_task(deployment: str, confirm: bool = Tr
         return True
 
     raise TimeoutError(f"Timed out waiting for {deployment} to start.")
+
+
+@broker.task()
+async def get_exposure_data_task(mjd: int):
+    """Returns the list of exposures for a given MJD."""
+
+    from lvmapi.tools.log import get_exposure_data
+
+    exposure_data = get_exposure_data(mjd)
+
+    return exposure_data

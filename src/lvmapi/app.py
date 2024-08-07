@@ -19,6 +19,7 @@ from lvmapi.routers import (
     enclosure,
     ephemeris,
     kubernetes,
+    log,
     macros,
     overwatcher,
     slack,
@@ -45,6 +46,7 @@ app.include_router(alerts.router)
 app.include_router(tasks.router)
 app.include_router(kubernetes.router)
 app.include_router(actors.router)
+app.include_router(log.router)
 
 
 # Lifecycle events for the broker.
