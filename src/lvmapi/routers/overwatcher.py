@@ -75,4 +75,5 @@ async def get_logs_data_route(
     if as_task:
         return task.task_id
 
-    return await task.wait_result()
+    result = await task.wait_result()
+    return result.return_value
