@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import taskiq_fastapi
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from lvmapi import auth
 from lvmapi.broker import broker, broker_shutdown, broker_startup
@@ -47,6 +47,13 @@ app.include_router(tasks.router)
 app.include_router(kubernetes.router)
 app.include_router(actors.router)
 app.include_router(log.router)
+
+
+@app.get("/id")
+async def get_id_route(request: Request):
+    """Returns the ID of the FastAPI app."""
+
+    return id(request.app)
 
 
 # Lifecycle events for the broker.
