@@ -13,7 +13,7 @@ import asyncio
 from fastapi import APIRouter, Path, Query
 
 from lvmapi.tasks import get_exposure_data_task
-from lvmapi.tools.log import get_exposure_data, get_exposures, get_mjds
+from lvmapi.tools.log import get_exposure_data, get_exposures, get_spectro_mjds
 
 
 router = APIRouter(prefix="/log", tags=["log"])
@@ -27,10 +27,10 @@ async def get_log():
 
 
 @router.get("/mjds")
-async def get_mjds_route():
+async def get_spectro_mjds_route():
     """Returns a list of MJDs with spectrograph data (or at least a folder)."""
 
-    mjds = await asyncio.get_event_loop().run_in_executor(None, get_mjds)
+    mjds = await asyncio.get_event_loop().run_in_executor(None, get_spectro_mjds)
     return mjds
 
 

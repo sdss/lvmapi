@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import asyncio
+import pathlib
 
 from typing import Literal
 
@@ -76,3 +77,23 @@ async def get_exposure_data_task(mjd: int):
     exposure_data = get_exposure_data(mjd)
 
     return exposure_data
+
+
+@broker.task()
+async def get_gort_log_task(logfile: str, n_lines: int | None = None):
+    """Returns the log for a given MJD."""
+
+    if not logfile.endswith(".log"):
+        logfile += ".log"
+
+    PATH = pathlib.Path("/data/logs/lvmgort/")
+
+    if not (PATH / logfile).exists():
+        return ""
+
+    with open(PATH / logfile, "r") as file:
+        if n_lines is None:
+            return file.read()
+
+        data = file.read().splitlines()[-n_lines:]
+        return "\n".join(data)

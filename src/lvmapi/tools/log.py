@@ -32,7 +32,7 @@ class ExposureDataDict(BaseModel):
     object: str = ""
 
 
-def get_mjds():
+def get_spectro_mjds():
     """Returns a list of MJDs with spectrograph data (or at least a folder)."""
 
     paths = list(pathlib.Path("/data/spectro/").glob("*"))

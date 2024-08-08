@@ -8,8 +8,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+import pathlib
 
+from fastapi import APIRouter, Query
+
+from lvmapi.tasks import get_gort_log_task
 from lvmapi.tools import get_redis_connection
 
 
@@ -46,3 +49,30 @@ def put_overwatcher_enabled(enabled: bool) -> bool:
     redis.set("gort:overwatcher:enabled", int(enabled))
 
     return enabled
+
+
+@router.get("/logs", description="Returns a list of log files")
+async def get_logs_files_route():
+    """Returns a list of log files."""
+
+    files = pathlib.Path("/data/logs/lvmgort/").glob("[0-9]*.log")
+
+    return sorted([file.name for file in files])
+
+
+@router.get("/logs/{logfile}", description="Returns a logfile text")
+async def get_logs_data_route(
+    logfile: str,
+    n_lines: int | None = Query(None, description="Returns only the last N lines"),
+    as_task: bool = Query(
+        False,
+        description="Whether to schedule this as a task.",
+    ),
+):
+    """Returns a logfile text."""
+
+    task = await get_gort_log_task.kiq(logfile, n_lines=n_lines)
+    if as_task:
+        return task.task_id
+
+    return await task.wait_result()
