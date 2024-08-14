@@ -10,10 +10,25 @@ from __future__ import annotations
 
 import pathlib
 
-from fastapi import APIRouter, Query
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, Path, Query
+from pydantic import BaseModel, Field
 
 from lvmapi.tasks import get_gort_log_task
-from lvmapi.tools import get_redis_connection
+from lvmapi.tools.rabbitmq import CluClient
+
+
+class OverwatcherStatusModel(BaseModel):
+    """Overwatcher status model."""
+
+    enabled: Annotated[bool, Field(description="Is the overwatcher enabled?")]
+    observing: Annotated[bool, Field(description="Is the overwatcher observing?")]
+    calibrating: Annotated[bool, Field(description="Is the overwatcher taking cals?")]
+    allow_dome_calibrations: Annotated[
+        bool,
+        Field(description="Is the overwatcher allowed to take dome cals?"),
+    ]
 
 
 router = APIRouter(prefix="/overwatcher", tags=["overwatcher"])
@@ -26,29 +41,46 @@ async def get_overwatcher():
     return {}
 
 
-@router.get("/enabled", description="Is the overwatcher enabled?")
-def get_overwatcher_enabled() -> bool:
+@router.get(
+    "/status",
+    description="Returns the status of the overwatcher",
+    response_model=OverwatcherStatusModel,
+)
+async def get_overwatcher_status() -> OverwatcherStatusModel:
+    """Returns the status of the overwatcher."""
+
+    async with CluClient() as clu:
+        status_cmd = await clu.send_command("lvm.overwatcher", "status")
+        status = status_cmd.replies.get("status")
+
+    return status
+
+
+@router.get("/status/enabled", description="Is the overwatcher enabled?")
+async def get_overwatcher_enabled() -> bool:
     """Returns whether the overwatcher is enabled."""
 
-    redis = get_redis_connection()
+    async with CluClient() as clu:
+        status_cmd = await clu.send_command("lvm.overwatcher", "status")
+        status = status_cmd.replies.get("status")
 
-    enabled = redis.get("gort:overwatcher:enabled")
-    assert enabled is None or isinstance(enabled, str)
-
-    if enabled is None:
-        return False
-
-    return bool(int(enabled))
+    return status["enabled"]
 
 
-@router.put("/enabled/{enabled}", description="Enable or disable the overwatcher")
-def put_overwatcher_enabled(enabled: bool) -> bool:
+@router.put(
+    "/status/{enable_or_disable}",
+    description="Enable or disable the overwatcher",
+)
+async def put_overwatcher_enabled(
+    enable_or_disable: Annotated[
+        Literal["enable", "disable"],
+        Path(description="Whether to enable or disable the overwatcher"),
+    ],
+):
     """Enables or disables the overwatcher."""
 
-    redis = get_redis_connection()
-    redis.set("gort:overwatcher:enabled", int(enabled))
-
-    return enabled
+    async with CluClient() as clu:
+        await clu.send_command("lvm.overwatcher", enable_or_disable)
 
 
 @router.get("/logs", description="Returns a list of log files")
