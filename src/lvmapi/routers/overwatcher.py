@@ -22,13 +22,30 @@ from lvmapi.tools.rabbitmq import CluClient
 class OverwatcherStatusModel(BaseModel):
     """Overwatcher status model."""
 
-    enabled: Annotated[bool, Field(description="Is the overwatcher enabled?")]
-    observing: Annotated[bool, Field(description="Is the overwatcher observing?")]
-    calibrating: Annotated[bool, Field(description="Is the overwatcher taking cals?")]
+    running: Annotated[
+        bool,
+        Field(description="Is the overwatcher running?"),
+    ] = False
+
+    enabled: Annotated[
+        bool,
+        Field(description="Is the overwatcher enabled?"),
+    ] = False
+
+    observing: Annotated[
+        bool,
+        Field(description="Is the overwatcher observing?"),
+    ] = False
+
+    calibrating: Annotated[
+        bool,
+        Field(description="Is the overwatcher taking cals?"),
+    ] = False
+
     allow_dome_calibrations: Annotated[
         bool,
         Field(description="Is the overwatcher allowed to take dome cals?"),
-    ]
+    ] = False
 
 
 router = APIRouter(prefix="/overwatcher", tags=["overwatcher"])
@@ -49,22 +66,25 @@ async def get_overwatcher():
 async def get_overwatcher_status() -> OverwatcherStatusModel:
     """Returns the status of the overwatcher."""
 
+    status: dict[str, bool]
     async with CluClient() as clu:
         status_cmd = await clu.send_command("lvm.overwatcher", "status")
-        status = status_cmd.replies.get("status")
 
-    return status
+        try:
+            status = status_cmd.replies.get("status")
+        except KeyError:
+            status = {"running": False}
+
+    return OverwatcherStatusModel(**status)
 
 
 @router.get("/status/enabled", description="Is the overwatcher enabled?")
 async def get_overwatcher_enabled() -> bool:
     """Returns whether the overwatcher is enabled."""
 
-    async with CluClient() as clu:
-        status_cmd = await clu.send_command("lvm.overwatcher", "status")
-        status = status_cmd.replies.get("status")
+    status = await get_overwatcher_status()
 
-    return status["enabled"]
+    return status.enabled
 
 
 @router.put(
