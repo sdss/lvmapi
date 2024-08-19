@@ -8,12 +8,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+import asyncio
+
+from typing import Annotated
+
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
 from lvmapi import config
 from lvmapi.tasks import restart_kubernetes_deployment_task
-from lvmapi.tools.rabbitmq import ping_actors
+from lvmapi.tools.rabbitmq import CluClient, ping_actors
 
 
 class HealthResponse(BaseModel):
@@ -28,14 +32,14 @@ class HealthResponse(BaseModel):
 router = APIRouter(prefix="/actors", tags=["actors"])
 
 
-@router.get("/")
+@router.get("/", summary="List of actors")
 async def get_actors_route() -> list[str]:
     """Returns a list of actors."""
 
     return config["actors"]["list"]
 
 
-@router.get("/health")
+@router.get("/health", summary="Actor health")
 async def get_actor_health(request: Request) -> list[HealthResponse]:
     """Returns the health of all actors."""
 
@@ -61,14 +65,14 @@ async def get_actor_health(request: Request) -> list[HealthResponse]:
     return health
 
 
-@router.get("/ping")
+@router.get("/ping", summary="Actor ping")
 async def ping_route(actors: list[str] | None = None) -> dict[str, bool]:
     """Pings a list of actors."""
 
     return await ping_actors(actors=actors)
 
 
-@router.get("/restart/{actor}")
+@router.get("/restart/{actor}", summary="Restart actor")
 async def restart_actor_route(actor: str) -> str:
     """Restarts an actor. Scheduled as a task and returns the task ID"""
 
@@ -78,3 +82,32 @@ async def restart_actor_route(actor: str) -> str:
 
     task = await restart_kubernetes_deployment_task.kiq(deployment)
     return task.task_id
+
+
+@router.get("/versions", summary="Get actor versions")
+async def get_actor_versions_route(
+    actor: Annotated[
+        str | None,
+        Query(description="Optionally, actor for which to return the version"),
+    ] = None,
+) -> dict[str, str | None]:
+    """Returns the version of an actor."""
+
+    actors: list[str] = config["actors"]["list"]
+    if actor is not None:
+        actors = [actor]
+
+    async with CluClient() as client:
+        version_cmds = await asyncio.gather(
+            *[client.send_command(actor, "version") for actor in actors]
+        )
+
+    versions: dict[str, str | None] = {}
+    for iactor, version_cmd in enumerate(version_cmds):
+        try:
+            version: str | None = version_cmd.replies.get("version")
+        except Exception:
+            version = None
+        versions[actors[iactor]] = version
+
+    return versions
