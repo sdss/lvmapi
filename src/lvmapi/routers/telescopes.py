@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import get_args
 
 from fastapi import APIRouter, HTTPException
@@ -32,6 +34,16 @@ async def get_telescopes() -> list[str]:
     """Returns the list of telescopes."""
 
     return list(get_args(Telescopes))
+
+
+@router.get("/coordinates", summary="Pointing of al ltelescopes")
+async def get_allpointings() -> dict[str, PointingResponse]:
+    """Gets the pointings of all telescopes."""
+
+    telescopes = get_args(Telescopes)
+    pointings = await asyncio.gather(*[get_pointing(tel) for tel in telescopes])
+
+    return {tel: pointing for tel, pointing in zip(telescopes, pointings)}
 
 
 @router.get(

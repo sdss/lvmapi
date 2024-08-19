@@ -31,7 +31,7 @@ from lvmapi.routers import (
 from lvmapi.tools.kubernetes import Kubernetes
 
 
-app = FastAPI()
+app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"})
 
 app.include_router(auth.router)
 app.include_router(telescopes.router)
