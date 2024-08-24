@@ -118,7 +118,14 @@ async def get_weather_data(
             for ws in window_sizes
         },
         **{
-            f"wind_gust_{ws}": polars.col.wind_speed_avg.rolling_max_by(
+            f"wind_gust_{ws}": polars.col.wind_speed_max.rolling_max_by(
+                by="ts",
+                window_size=ws,
+            )
+            for ws in window_sizes
+        },
+        **{
+            f"wind_dir_avg_{ws}": polars.col.wind_dir_avg.rolling_mean_by(
                 by="ts",
                 window_size=ws,
             )
