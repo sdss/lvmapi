@@ -10,7 +10,7 @@ influxdb:
 
 slack:
   token: null
-  channel: lvm-alerts
+  channel: lvm-overwatcher
 
 actors:
   list:
