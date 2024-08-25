@@ -51,7 +51,7 @@ class OverwatcherStatusModel(BaseModel):
 router = APIRouter(prefix="/overwatcher", tags=["overwatcher"])
 
 
-@router.get("/")
+@router.get("/", summary="Overwatcher route")
 async def get_overwatcher():
     """Not implemented."""
 
@@ -60,7 +60,7 @@ async def get_overwatcher():
 
 @router.get(
     "/status",
-    description="Returns the status of the overwatcher",
+    summary="Returns the status of the overwatcher",
     response_model=OverwatcherStatusModel,
 )
 async def get_overwatcher_status() -> OverwatcherStatusModel:
@@ -78,7 +78,7 @@ async def get_overwatcher_status() -> OverwatcherStatusModel:
     return OverwatcherStatusModel(**status)
 
 
-@router.get("/status/enabled", description="Is the overwatcher enabled?")
+@router.get("/status/enabled", summary="Is the overwatcher enabled?")
 async def get_overwatcher_enabled() -> bool:
     """Returns whether the overwatcher is enabled."""
 
@@ -89,7 +89,7 @@ async def get_overwatcher_enabled() -> bool:
 
 @router.put(
     "/status/{enable_or_disable}",
-    description="Enable or disable the overwatcher",
+    summary="Enable or disable the overwatcher",
 )
 async def put_overwatcher_enabled(
     enable_or_disable: Annotated[
@@ -103,7 +103,38 @@ async def put_overwatcher_enabled(
         await clu.send_command("lvm.overwatcher", enable_or_disable)
 
 
-@router.get("/logs", description="Returns a list of log files")
+@router.get("/status/allow_dome_calibrations", summary="Allow dome calibrations?")
+async def get_allow_dome_calibrations() -> bool:
+    """Returns whether the overwatcher can take calibrations inside the dome."""
+
+    status = await get_overwatcher_status()
+
+    return status.allow_dome_calibrations
+
+
+@router.put(
+    "/status/allow_dome_calibrations/{enable_or_disable}",
+    summary="Enable or disable dome calibrations",
+)
+async def put_allow_dome_calibrations_enabled(
+    enable_or_disable: Annotated[
+        Literal["enable", "disable"],
+        Path(description="Whether to enable or disable dome calibrations"),
+    ],
+):
+    """Enables or disables dome calibrations."""
+
+    command: str = "calibrations "
+    if enable_or_disable == "enable":
+        command += "enable-dome-calibrations"
+    else:
+        command += "disable-dome-calibrations"
+
+    async with CluClient() as clu:
+        await clu.send_command("lvm.overwatcher", command)
+
+
+@router.get("/logs", summary="Returns a list of log files")
 async def get_logs_files_route():
     """Returns a list of log files."""
 
@@ -112,7 +143,7 @@ async def get_logs_files_route():
     return sorted([file.name for file in files])
 
 
-@router.get("/logs/{logfile}", description="Returns a logfile text")
+@router.get("/logs/{logfile}", summary="Returns a logfile text")
 async def get_logs_data_route(
     logfile: str,
     n_lines: int | None = Query(None, description="Returns only the last N lines"),
