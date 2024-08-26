@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, get_args, overload
+from typing import TYPE_CHECKING, Any, get_args, overload
 
 import polars
 
@@ -276,7 +276,7 @@ from(bucket: "spec")
     return df
 
 
-async def get_etr() -> float | None:
+async def get_etr() -> tuple[float | None, float | None]:
     """Returns the ETR for the exposure, including readout."""
 
     spec_names = get_args(Spectrographs)
@@ -293,21 +293,23 @@ async def get_etr() -> float | None:
                 )
 
     etrs: list[float] = []
+    total_times: list[float] = []
     for task in group.results():
         if task.status.did_fail:
             continue
 
         etr = task.replies.get("etr")
-        if etr is not None:
-            etrs.append(etr)
+        if all(etr):
+            etrs.append(etr[0])
+            total_times.append(etr[1])
 
-    if len(etrs) == 0:
-        return None
+    if len(etrs) == 0 or len(total_times) == 0:
+        return None, None
 
-    return max(etrs)
+    return max(etrs), max(total_times)
 
 
-async def get_spectrogaph_status() -> tuple[SpecToStatus, int, float | None]:
+async def get_spectrogaph_status() -> dict[str, Any]:
     """Returns the status of the spectrograph (integrating, reading, etc.)"""
 
     spec_names = get_args(Spectrographs)
@@ -326,7 +328,7 @@ async def get_spectrogaph_status() -> tuple[SpecToStatus, int, float | None]:
 
     result: SpecToStatus = {}
     last_exposure_no: int = -1
-    etr: float | None = None
+    etr: tuple[float | None, float | None] = (None, None)
 
     for itask, task in enumerate(group.results()):
         if itask == len(spec_names):
@@ -359,4 +361,4 @@ async def get_spectrogaph_status() -> tuple[SpecToStatus, int, float | None]:
         if spec not in result:
             result[spec] = "unknown"
 
-    return result, last_exposure_no, etr
+    return {"status": result, "last_exposure_no": last_exposure_no, "etr": etr}

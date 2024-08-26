@@ -37,6 +37,10 @@ class SpecStatusResponse(BaseModel):
         ...,
         description="The last exposure number",
     )
+    total_exposure_time: float | None = Field(
+        default=None,
+        description="The total exposure time, including readout",
+    )
     exposure_etr: float | None = Field(
         default=None,
         description="The estimated time remaining for the current exposure, "
@@ -63,10 +67,12 @@ async def route_get_status(spec: Spectrographs | None = None) -> SpecStatusRespo
     """Returns the spectrograph status."""
 
     spec_status = await get_spectrogaph_status()
+
     return SpecStatusResponse(
-        status=spec_status[0],
-        last_exposure_no=spec_status[1],
-        exposure_etr=spec_status[2],
+        status=spec_status["status"],
+        last_exposure_no=spec_status["last_exposure_no"],
+        exposure_etr=spec_status["etr"][0],
+        total_exposure_time=spec_status["etr"][1],
     )
 
 
