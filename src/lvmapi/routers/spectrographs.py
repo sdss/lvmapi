@@ -20,6 +20,7 @@ from lvmapi.tools import (
     get_spectrograph_temperatures,
 )
 from lvmapi.tools.spectrograph import (
+    get_etr,
     get_spectrogaph_status,
     get_spectrograph_temperatures_history,
     read_thermistors,
@@ -36,13 +37,18 @@ class SpecStatusResponse(BaseModel):
         ...,
         description="The last exposure number",
     )
+    exposure_etr: float | None = Field(
+        default=None,
+        description="The estimated time remaining for the current exposure, "
+        "including readout",
+    )
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
 
 
 @router.get("/", summary="List of spectrographs")
-async def get_cryostats() -> list[str]:
+async def route_get_cryostats() -> list[str]:
     """Returns the list of cryostats."""
 
     return list(get_args(Spectrographs))
@@ -53,15 +59,26 @@ async def get_cryostats() -> list[str]:
     summary="Returns the spectrograph status",
     response_model=SpecStatusResponse,
 )
-async def get_status(spec: Spectrographs | None = None) -> SpecStatusResponse:
+async def route_get_status(spec: Spectrographs | None = None) -> SpecStatusResponse:
     """Returns the spectrograph status."""
 
     spec_status = await get_spectrogaph_status()
-    return SpecStatusResponse(status=spec_status[0], last_exposure_no=spec_status[1])
+    return SpecStatusResponse(
+        status=spec_status[0],
+        last_exposure_no=spec_status[1],
+        exposure_etr=spec_status[2],
+    )
+
+
+@router.get("/etr", summary="Estimated time remaining")
+async def route_get_etr():
+    """The estimated time remaining for the current exposure, including readout."""
+
+    return await get_etr()
 
 
 @router.get("/temperatures", summary="Cryostat temperatures")
-async def get_temperatures(
+async def route_get_temperatures(
     start: str = Query("-30m", description="Flux-compatible start time"),
     stop: str = Query("now()", description="Flux-compatible stop time"),
     camera: CamSpec | None = Query(None, description="Camera to return, or all"),
@@ -93,7 +110,7 @@ async def get_temperatures(
     summary="Reads the thermistors",
     response_model=list[dict] | dict[str, bool] | bool,
 )
-async def get_thermistors(
+async def route_get_thermistors(
     thermistor: str | None = None,
     interval=Query(None, description="Interval in seconds"),
 ):
@@ -119,7 +136,7 @@ async def get_thermistors(
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
 @router.get("/{spectrograph}/summary", summary="Cryostat basic information")
-async def get_summary(
+async def route_get_summary(
     spectrograph: Spectrographs,
     mechs: bool = Query(False, description="Return mechanics information?"),
 ) -> dict[str, float | str]:

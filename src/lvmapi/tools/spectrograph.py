@@ -16,11 +16,11 @@ from sdsstools import GatheringTaskGroup
 
 from lvmapi.tools.influxdb import query_influxdb
 from lvmapi.tools.rabbitmq import CluClient
-from lvmapi.types import Cameras, Sensors, Spectrographs
+from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
 
 
 if TYPE_CHECKING:
-    from lvmapi.types import SpecStatus
+    pass
 
 
 __all__ = [
@@ -30,7 +30,11 @@ __all__ = [
     "get_spectrograph_mechanics",
     "read_thermistors",
     "get_spectrogaph_status",
+    "get_etr",
 ]
+
+
+SpecToStatus = dict[Spectrographs, SpecStatus]
 
 
 def get_spectrograph_temperature_label(camera: str, sensor: str = "ccd"):
@@ -272,7 +276,38 @@ from(bucket: "spec")
     return df
 
 
-async def get_spectrogaph_status() -> tuple[dict[Spectrographs, SpecStatus], int]:
+async def get_etr() -> float | None:
+    """Returns the ETR for the exposure, including readout."""
+
+    spec_names = get_args(Spectrographs)
+
+    async with CluClient() as client:
+        async with GatheringTaskGroup() as group:
+            for spec in spec_names:
+                group.create_task(
+                    client.send_command(
+                        f"lvmscp.{spec}",
+                        "get-etr",
+                        internal=True,
+                    )
+                )
+
+    etrs: list[float] = []
+    for task in group.results():
+        if task.status.did_fail:
+            continue
+
+        etr = task.replies.get("etr")
+        if etr is not None:
+            etrs.append(etr)
+
+    if len(etrs) == 0:
+        return None
+
+    return max(etrs)
+
+
+async def get_spectrogaph_status() -> tuple[SpecToStatus, int, float | None]:
     """Returns the status of the spectrograph (integrating, reading, etc.)"""
 
     spec_names = get_args(Spectrographs)
@@ -287,11 +322,17 @@ async def get_spectrogaph_status() -> tuple[dict[Spectrographs, SpecStatus], int
                         internal=True,
                     )
                 )
+            group.create_task(get_etr())
 
-    result: dict[Spectrographs, SpecStatus] = {}
+    result: SpecToStatus = {}
     last_exposure_no: int = -1
+    etr: float | None = None
 
-    for task in group.results():
+    for itask, task in enumerate(group.results()):
+        if itask == len(spec_names):
+            etr = task
+            continue
+
         if task.status.did_fail:
             continue
 
@@ -318,4 +359,4 @@ async def get_spectrogaph_status() -> tuple[dict[Spectrographs, SpecStatus], int
         if spec not in result:
             result[spec] = "unknown"
 
-    return result, last_exposure_no
+    return result, last_exposure_no, etr
