@@ -9,12 +9,14 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import warnings
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
+from lvmapi.tools.weather import get_weather_data
 
 
 class AlertsSummary(BaseModel):
@@ -26,6 +28,7 @@ class AlertsSummary(BaseModel):
     o2_room_alerts: dict[str, bool] | None = None
     heater_alert: bool | None = None
     heater_camera_alerts: dict[str, bool] | None = None
+    wind_alert: bool | None = None
     rain: bool | None = None
     door_alert: bool | None = None
 
@@ -41,6 +44,7 @@ async def summary() -> AlertsSummary:
     tasks: list[asyncio.Task] = []
     tasks.append(asyncio.create_task(spec_temperature_alerts()))
     tasks.append(asyncio.create_task(enclosure_alerts()))
+    tasks.append(asyncio.create_task(get_weather_data(start_time=600)))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -55,6 +59,21 @@ async def summary() -> AlertsSummary:
     enclosure_alerts_response = results[1]
     if isinstance(enclosure_alerts_response, BaseException):
         enclosure_alerts_response = {}
+
+    weather_data = results[2]
+    if isinstance(weather_data, BaseException):
+        wind_alert = None
+    else:
+        last_weather = weather_data[-1]
+        delta = time.time() - last_weather["ts"].dt.timestamp("ms")[0] / 1000
+        if delta > 300:
+            wind_alert = None
+        else:
+            wind_30m = last_weather["wind_speed_avg_30m"][0]
+            if wind_30m > 35:
+                wind_alert = True
+            else:
+                wind_alert = False
 
     o2_alerts = {
         key: value for key, value in enclosure_alerts_response.items() if "o2_" in key
@@ -73,4 +92,5 @@ async def summary() -> AlertsSummary:
         heater_camera_alerts={},
         rain=rain_sensor_alarm,
         door_alert=door_alert,
+        wind_alert=wind_alert,
     )
