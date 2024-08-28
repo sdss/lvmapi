@@ -42,10 +42,69 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is the overwatcher taking cals?"),
     ] = False
 
+    night: Annotated[
+        bool,
+        Field(description="Is currently night (after twilight)?"),
+    ]
+
+    safe: Annotated[
+        bool,
+        Field(description="Is it safe to observe?"),
+    ]
+
     allow_dome_calibrations: Annotated[
         bool,
         Field(description="Is the overwatcher allowed to take dome cals?"),
     ] = False
+
+    running_calibration: Annotated[
+        str | None,
+        Field(description="Name of the currently running calibration"),
+    ] = None
+
+
+class OverwatcherCalibrationModel(BaseModel):
+    """Overwatcher calibration model."""
+
+    name: Annotated[
+        str,
+        Field(description="The name of the calibration"),
+    ]
+
+    start_time: Annotated[
+        str | None,
+        Field(description="The start time of the calibration"),
+    ]
+
+    max_start_time: Annotated[
+        str | None,
+        Field(description="The maximum start time of the calibration"),
+    ]
+
+    after: Annotated[
+        str | None,
+        Field(description="Start the calibration only after this one is complete"),
+    ]
+
+    time_to_cal: Annotated[
+        float | None,
+        Field(description="Number of seconds to the calibration start"),
+    ]
+
+    status: Annotated[
+        str,
+        Field(description="The status of the calibration"),
+    ]
+
+    requires_dome: Annotated[
+        Literal["open", "closed"] | None,
+        Field(description="Required position of the dome"),
+    ]
+
+    close_dome_after: Annotated[
+        bool,
+        Field(description="Close the dome after the calibration"),
+    ]
 
 
 router = APIRouter(prefix="/overwatcher", tags=["overwatcher"])
@@ -75,7 +134,9 @@ async def get_overwatcher_status() -> OverwatcherStatusModel:
         except KeyError:
             status = {"running": False}
 
-    return OverwatcherStatusModel(**status)
+    running_cal = await route_get_calibrations_current()
+
+    return OverwatcherStatusModel(**status, running_calibration=running_cal)
 
 
 @router.get("/status/enabled", summary="Is the overwatcher enabled?")
@@ -160,3 +221,28 @@ async def get_logs_data_route(
 
     result = await task.wait_result()
     return result.return_value
+
+
+@router.get("/calibrations/list", summary="Returns the list of calibrations")
+async def route_get_calibrations_list() -> list[OverwatcherCalibrationModel]:
+    """Returns the list of calibrations."""
+
+    async with CluClient() as clu:
+        calibrations_cmd = await clu.send_command(
+            "lvm.overwatcher",
+            "calibrations list",
+        )
+
+    calibrations = calibrations_cmd.replies.get("calibrations")
+
+    return [OverwatcherCalibrationModel(**calibration) for calibration in calibrations]
+
+
+@router.get("/calibrations/running", summary="Currently running calibration")
+async def route_get_calibrations_current() -> str | None:
+    """Returns the name of the currently running calibration, if any."""
+
+    cals = await route_get_calibrations_list()
+    for cal in cals:
+        if cal.status in ["running", "retrying"]:
+            return cal.name
