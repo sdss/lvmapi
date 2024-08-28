@@ -233,6 +233,9 @@ async def route_get_calibrations_list() -> list[OverwatcherCalibrationModel]:
             "calibrations list",
         )
 
+    if calibrations_cmd.status.did_fail:
+        return []
+
     calibrations = calibrations_cmd.replies.get("calibrations")
 
     return [OverwatcherCalibrationModel(**calibration) for calibration in calibrations]
