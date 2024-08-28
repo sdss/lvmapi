@@ -12,6 +12,11 @@ slack:
   token: null
   channel: lvm-overwatcher
 
+database:
+  uri: postgresql://sdss_user@10.8.38.26:5432/lvmdb
+  tables:
+    exposures: gortdb.exposure
+
 actors:
   list:
     - lvm.sci.agcam

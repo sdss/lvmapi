@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
-import re
 
-from astropy.io import fits
+import polars
 from pydantic import BaseModel
+
+from lvmapi import config
 
 
 class ExposureDataDict(BaseModel):
@@ -35,16 +37,16 @@ class ExposureDataDict(BaseModel):
 def get_spectro_mjds():
     """Returns a list of MJDs with spectrograph data (or at least a folder)."""
 
-    paths = list(pathlib.Path("/data/spectro/").glob("*"))
-    mjds: list[int] = []
-    for path in paths:
-        try:
-            mjd = int(path.parts[-1])
-            mjds.append(mjd)
-        except ValueError:
-            continue
+    uri = config["database.uri"]
+    table = config["database.tables.exposures"]
 
-    return sorted(mjds)
+    df = polars.read_database_uri(
+        f"SELECT DISTINCT(mjd) AS mjd FROM {table}",
+        uri,
+        engine="adbc",
+    )
+
+    return sorted(df["mjd"].unique().to_list())
 
 
 def get_exposures(mjd: int):
@@ -55,38 +57,29 @@ def get_exposures(mjd: int):
     return files
 
 
-def get_exposure_no(file_: pathlib.Path | str):
-    """Returns the exposure number from a file path."""
-
-    file_ = pathlib.Path(file_)
-    name = file_.name
-
-    match = re.match(r"sdR-s-[brz][1-3]-(\d+).fits.gz", name)
-    if not match:
-        return None
-
-    return int(match.group(1))
-
-
-def get_exposure_paths(mjd: int, exposure_no: int):
-    """Returns the path to the exposure file."""
-
-    return pathlib.Path(f"/data/spectro/{mjd}/").glob(f"*{exposure_no}.fits.gz")
-
-
 def get_exposure_data(mjd: int):
     """Returns the data for the exposures from a given MJD."""
 
+    uri = config["database.uri"]
+    table = config["database.tables.exposures"]
+
+    df = polars.read_database_uri(
+        f"""SELECT  exposure_no, image_type, spec, ccd, tile_id,
+                    jsonb_path_query("header", '$')::TEXT as header
+            FROM {table} WHERE mjd = {mjd}
+        """,
+        uri,
+        engine="adbc",
+    ).sort(["exposure_no", "spec", "ccd"])
+
     data: dict[int, ExposureDataDict] = {}
-    files = list(get_exposures(mjd))
+    exposure_nos = df["exposure_no"].unique().to_list()
 
-    exposure_nos = [get_exposure_no(file_) for file_ in files]
-    exposure_nos_set = set([e_no for e_no in exposure_nos if e_no is not None])
+    for exposure_no in exposure_nos:
+        exp_data = df.filter(polars.col.exposure_no == exposure_no)
+        n_cameras = len(exp_data)
 
-    for exposure_no in sorted(exposure_nos_set):
-        exposure_paths = list(get_exposure_paths(mjd, exposure_no))
-
-        if len(exposure_paths) == 0:
+        if n_cameras == 0:
             data[exposure_no] = ExposureDataDict(
                 exposure_no=exposure_no,
                 mjd=mjd,
@@ -94,8 +87,7 @@ def get_exposure_data(mjd: int):
             )
             continue
 
-        with fits.open(exposure_paths[0]) as hdul:
-            header = hdul[0].header
+        header = json.loads(exp_data["header"][0])
 
         obstime = header.get("OBSTIME", "")
         image_type = header.get("IMAGETYP", "")
@@ -103,12 +95,12 @@ def get_exposure_data(mjd: int):
         ra = header.get("TESCIRA", None)
         dec = header.get("TESCIDE", None)
         airmass = header.get("TESCIAM", None)
-        n_standards = sum([header[f"STD{nn}ACQ"] for nn in range(1, 13)])
-        n_cameras = len(exposure_paths)
+        std_acq = [header.get(f"STD{nn}ACQ", None) for nn in range(1, 13)]
+        n_standards = sum([std for std in std_acq if std is not None])
         object = header.get("OBJECT", "")
 
         lamps = {
-            lamp_name: header[lamp_header] == "ON"
+            lamp_name: header.get(lamp_header, None) == "ON"
             for lamp_header, lamp_name in [
                 ("ARGON", "Argon"),
                 ("NEON", "Neon"),
@@ -127,7 +119,7 @@ def get_exposure_data(mjd: int):
             exposure_time=exposure_time,
             ra=ra,
             dec=dec,
-            airmass=airmass,
+            airmass=airmass if airmass < 100 else -1,
             lamps=lamps,
             n_standards=n_standards,
             n_cameras=n_cameras,
