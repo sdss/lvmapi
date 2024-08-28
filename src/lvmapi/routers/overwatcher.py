@@ -43,14 +43,14 @@ class OverwatcherStatusModel(BaseModel):
     ] = False
 
     night: Annotated[
-        bool,
+        bool | None,
         Field(description="Is currently night (after twilight)?"),
-    ]
+    ] = None
 
     safe: Annotated[
-        bool,
+        bool | None,
         Field(description="Is it safe to observe?"),
-    ]
+    ] = None
 
     allow_dome_calibrations: Annotated[
         bool,
