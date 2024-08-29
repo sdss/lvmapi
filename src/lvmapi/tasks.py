@@ -97,3 +97,15 @@ async def get_gort_log_task(logfile: str, n_lines: int | None = None):
 
         data = file.read().splitlines()[-n_lines:]
         return "\n".join(data)
+
+
+@broker.task()
+async def park_telescopes_task():
+    """Parks all telescopes."""
+
+    from lvmapi.app import app
+
+    async with get_gort_client(app) as gort:
+        await gort.telescopes.park(disable=True)
+
+    return True
