@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import park_telescopes_task
 from lvmapi.tools import CluClient
-from lvmapi.tools.telescopes import get_telescope_status
+from lvmapi.tools.telescopes import get_telescope_status, is_telescope_parked
 from lvmapi.types import Coordinates, Telescopes
 
 
@@ -68,6 +68,10 @@ class TelescopeStatusResponse(BaseModel):
     is_enabled: bool | None = Field(
         default=None,
         description="Whether the telescope is enabled",
+    )
+    is_parked: bool | None = Field(
+        default=None,
+        description="Whether the telescope is parked",
     )
 
 
@@ -141,6 +145,9 @@ async def route_get_telescope_status():
         else:
             response[tel] = TelescopeStatusResponse(reachable=True, **stat)
 
+        is_parked = is_telescope_parked(response[tel].model_dump())
+        response[tel].is_parked = is_parked
+
     return response
 
 
@@ -148,29 +155,11 @@ async def route_get_telescope_status():
 async def route_get_parked() -> dict[Telescopes, bool | None]:
     """Returns whether the telescopes are parked or not."""
 
-    park_position = (-60, 90)
     status = await route_get_telescope_status()
 
     response: dict[Telescopes, bool | None] = {}
     for telescope, status in status.items():
-        if (
-            not status.reachable
-            or not status.is_connected
-            or not status.alt
-            or not status.az
-        ):
-            response[telescope] = None
-        else:
-            if status.is_slewing or status.is_tracking:
-                response[telescope] = False
-            else:
-                alt_diff = abs(status.alt - park_position[0])
-                az_diff = abs(status.az - park_position[1])
-
-                if alt_diff > 5 or az_diff > 5:
-                    response[telescope] = False
-                else:
-                    response[telescope] = True
+        response[telescope] = is_telescope_parked(status.model_dump())
 
     return response
 

@@ -33,3 +33,27 @@ async def get_telescope_status(telescope: Telescopes) -> dict[str, Any]:
         "is_slewing": status_cmd.replies.get("is_slewing"),
         "is_enabled": status_cmd.replies.get("is_enabled"),
     }
+
+
+def is_telescope_parked(data: dict[str, Any]):
+    """Returns whether a telescope is parked."""
+
+    park_position = (-60, 90)
+    if (
+        not data["reachable"]
+        or not data["is_connected"]
+        or not data["alt"]
+        or not data["az"]
+    ):
+        return None
+
+    if data["is_slewing"] or data["is_tracking"]:
+        return False
+
+    alt_diff = abs(data["alt"] - park_position[0])
+    az_diff = abs(data["az"] - park_position[1])
+
+    if alt_diff > 5 or az_diff > 5:
+        return False
+
+    return True
