@@ -86,7 +86,7 @@ async def route_get_coordinates() -> dict[str, PointingResponse]:
     """Gets the pointings of all telescopes."""
 
     telescopes = get_args(Telescopes)
-    pointings = await asyncio.gather(*[get_pointing(tel) for tel in telescopes])
+    pointings = await asyncio.gather(*[route_get_pointing(tel) for tel in telescopes])
 
     return {tel: pointing for tel, pointing in zip(telescopes, pointings)}
 
