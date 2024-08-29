@@ -47,9 +47,9 @@ taskiq = {extras = ["reload"], version = "^0"}
 taskiq-redis = "^1"
 taskiq-aio-pika = "^0"
 taskiq-fastapi = "^0"
-python-multipart = "^0.0.9"
+python-multipart = "*"
 adbc-driver-postgresql = "^1.1.0"
-pyarrow = "^17.0.0"
+pyarrow = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.0.0"
