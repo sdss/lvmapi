@@ -8,11 +8,18 @@
 
 from __future__ import annotations
 
+import os
+
 from taskiq_aio_pika import AioPikaBroker
 from taskiq_redis import RedisAsyncResultBackend
 
 
 __all__ = ["broker"]
+
+
+# The RabbitMQ queue name for the broker and workers to use.
+# This allows to create different pools of workers for dev and production.
+QUEUE_NAME: str = os.getenv("TASKIQ_QUEUE_NAME", "lvmapi")
 
 
 async def broker_startup():
@@ -31,4 +38,4 @@ async def broker_shutdown():
 
 # TaskIQ broker.
 backend = RedisAsyncResultBackend("redis://localhost")
-broker = AioPikaBroker().with_result_backend(backend)
+broker = AioPikaBroker(queue_name=QUEUE_NAME).with_result_backend(backend)

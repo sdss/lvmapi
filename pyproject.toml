@@ -65,10 +65,11 @@ env.SECRET_KEY = "33744caf930b8c695ec39221dd158e9c5fda13d0d19d1417ec71cf189aad65
 args = [
   { name = "port", default = "8888" }
 ]
-# deps = ['taskiq']
+deps = ['taskiq']
 
 [tool.poe.tasks.taskiq]
 shell = "taskiq worker -r lvmapi.app:broker lvmapi.tasks --log-level $log_level &"
+env.TASKIQ_QUEUE_NAME = 'lvmapi-dev'
 args = [
     { name = "log-level", default = "ERROR" }
 ]
