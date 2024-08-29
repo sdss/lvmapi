@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from typing import Annotated
 
@@ -24,6 +24,8 @@ from pydantic import BaseModel
 
 __all__ = ["validate_token", "Token", "TokenDepends"]
 
+
+# Adapted from https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
 
 # To get a string like this run: openssl rand -hex 32
 # Secret key and password are expected to be in environment variables.
@@ -47,7 +49,7 @@ class Token(BaseModel):
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-router = APIRouter(tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def verify_password(plain_password: str):
@@ -58,6 +60,12 @@ def verify_password(plain_password: str):
         return False
 
     return pwd_context.verify(plain_password, PASSWORD)
+
+
+def get_password_hash(password: str):
+    """Creates a hashed password."""
+
+    return pwd_context.hash(password)
 
 
 def authenticate(password: str):
@@ -77,9 +85,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now(UTC) + timedelta(minutes=15)
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -104,7 +112,7 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"authorised": True}
 
 
-@router.post("/token", response_model=Token)
+@router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
@@ -130,6 +138,13 @@ async def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/test", dependencies=[Depends(validate_token)])
+async def route_get_test():
+    """A simple route to test validation."""
+
+    return True
 
 
 TokenDepends = Annotated[str, Depends(validate_token)]
