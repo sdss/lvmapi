@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from lvmapi.auth import AuthDependency
 from lvmapi.tasks import shutdown_task
 
 
 router = APIRouter(prefix="/macros", tags=["macros"])
 
 
-@router.get("/shutdown")
+@router.get("/shutdown", dependencies=[AuthDependency])
 async def shutdown_route() -> str:
     """Schedules an emergency shutdown of the enclosure and telescopes."""
 

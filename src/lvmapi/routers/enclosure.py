@@ -16,6 +16,7 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, HTTPException, Path
 from pydantic import BaseModel, create_model, field_validator
 
+from lvmapi.auth import AuthDependency
 from lvmapi.tasks import move_dome_task
 from lvmapi.tools.rabbitmq import send_clu_command
 
@@ -116,7 +117,7 @@ async def status() -> EnclosureStatus:
     return EnclosureStatus(**status_data)
 
 
-@router.get("/open")
+@router.get("/open", dependencies=[AuthDependency])
 async def open_enclosure():
     """Opens the enclosure. Scheduled as a task."""
 
@@ -124,7 +125,7 @@ async def open_enclosure():
     return task.task_id
 
 
-@router.get("/close")
+@router.get("/close", dependencies=[AuthDependency])
 async def close_enclosure(force: bool = False):
     """Closes the enclosure. Scheduled as a task."""
 
@@ -132,7 +133,7 @@ async def close_enclosure(force: bool = False):
     return task.task_id
 
 
-@router.get("/stop")
+@router.get("/stop", dependencies=[AuthDependency])
 async def stop_enclosure():
     """Stops the enclosure."""
 
@@ -162,7 +163,7 @@ async def get_lights():
     return LightsStatus(**response_dict)
 
 
-@router.get("/lights/{mode}/{lamp}")
+@router.get("/lights/{mode}/{lamp}", dependencies=[AuthDependency])
 async def set_lights(
     mode: Literal["on", "off"],
     lamp: Annotated[

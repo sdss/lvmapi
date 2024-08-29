@@ -10,19 +10,20 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 from datetime import UTC, datetime, timedelta
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
 
-__all__ = ["validate_token", "Token", "TokenDepends"]
+__all__ = ["validate_token", "Token", "AuthDependency"]
 
 
 # Adapted from https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
@@ -32,13 +33,16 @@ __all__ = ["validate_token", "Token", "TokenDepends"]
 # For production deployment in Kubernetes with use an opaque secret.
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 180  # 180 days
 
 CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
     detail="Could not validate credentials",
     headers={"WWW-Authenticate": "Bearer"},
 )
+
+# The subnet_or_token allows requests from this domain to bypass the token validation.
+ALLOW_SUBNET: str = "10.8.38.0/24"
 
 
 class Token(BaseModel):
@@ -47,7 +51,7 @@ class Token(BaseModel):
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -112,6 +116,21 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"authorised": True}
 
 
+async def subnet_or_token(request: Request):
+    """Validates a token or allows localhost."""
+
+    if request.client:
+        host = request.client.host
+        if ipaddress.ip_address(host) in ipaddress.ip_network(ALLOW_SUBNET):
+            return {"authorised": True}
+
+    token = await oauth2_scheme(request)
+    if not token:
+        raise CREDENTIALS_EXCEPTION
+
+    return await validate_token(token)
+
+
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -147,4 +166,4 @@ async def route_get_test():
     return True
 
 
-TokenDepends = Annotated[str, Depends(validate_token)]
+AuthDependency = Depends(validate_token)

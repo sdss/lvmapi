@@ -15,6 +15,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Path, Query
 from pydantic import BaseModel, Field
 
+from lvmapi.auth import AuthDependency
 from lvmapi.tasks import get_gort_log_task
 from lvmapi.tools.rabbitmq import CluClient
 
@@ -151,6 +152,7 @@ async def get_overwatcher_enabled() -> bool:
 @router.put(
     "/status/{enable_or_disable}",
     summary="Enable or disable the overwatcher",
+    dependencies=[AuthDependency],
 )
 async def put_overwatcher_enabled(
     enable_or_disable: Annotated[
@@ -176,6 +178,7 @@ async def get_allow_dome_calibrations() -> bool:
 @router.put(
     "/status/allow_dome_calibrations/{enable_or_disable}",
     summary="Enable or disable dome calibrations",
+    dependencies=[AuthDependency],
 )
 async def put_allow_dome_calibrations_enabled(
     enable_or_disable: Annotated[
