@@ -12,6 +12,7 @@ import asyncio
 import time
 import warnings
 
+import polars
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -22,15 +23,17 @@ from lvmapi.tools.weather import get_weather_data
 class AlertsSummary(BaseModel):
     """Summary of alerts."""
 
-    temperature_alert: bool | None = None
+    humidity_alert: bool | None = None
+    dew_point_alert: bool | None = None
+    wind_alert: bool | None = None
+    rain: bool | None = None
+    door_alert: bool | None = None
+    camera_temperature_alert: bool | None = None
     camera_alerts: dict[str, bool] | None = None
     o2_alert: bool | None = None
     o2_room_alerts: dict[str, bool] | None = None
     heater_alert: bool | None = None
     heater_camera_alerts: dict[str, bool] | None = None
-    wind_alert: bool | None = None
-    rain: bool | None = None
-    door_alert: bool | None = None
 
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -44,7 +47,7 @@ async def summary() -> AlertsSummary:
     tasks: list[asyncio.Task] = []
     tasks.append(asyncio.create_task(spec_temperature_alerts()))
     tasks.append(asyncio.create_task(enclosure_alerts()))
-    tasks.append(asyncio.create_task(get_weather_data(start_time=600)))
+    tasks.append(asyncio.create_task(get_weather_data(start_time=3600)))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -52,25 +55,38 @@ async def summary() -> AlertsSummary:
     if isinstance(camera_alerts, BaseException):
         warnings.warn(f"Error getting temperature alerts: {camera_alerts}")
         camera_alerts = None
-        temperature_alert = None
+        camera_temperature_alert = None
     else:
-        temperature_alert = any(camera_alerts.values())
+        camera_temperature_alert = any(camera_alerts.values())
 
     enclosure_alerts_response = results[1]
     if isinstance(enclosure_alerts_response, BaseException):
         enclosure_alerts_response = {}
 
-    weather_data = results[2]
-    if isinstance(weather_data, BaseException):
-        wind_alert = None
-    else:
+    weather_data: polars.DataFrame | BaseException = results[2]
+
+    wind_alert = None
+    humidity_alert = None
+    dew_point_alert = None
+
+    if not isinstance(weather_data, BaseException) and weather_data.height > 0:
         last_weather = weather_data[-1]
-        delta = time.time() - last_weather["ts"].dt.timestamp("ms")[0] / 1000
-        if delta > 300:
-            wind_alert = None
+
+        humidity_alert = last_weather["relative_humidity"][0] > 80
+        dew_point_alert = last_weather["dew_point"][0] > last_weather["temperature"][0]
+
+        now = time.time()
+        last_30m = weather_data.filter(polars.col.ts.dt.timestamp("ms") > (now - 1800))
+
+        # LCO rules are to close if wind speed is above 35 mph in the 30 minute
+        # average and reopen only if the average is below 30 mph.
+        wind_30m_last = last_weather["wind_speed_avg_30m"][0]
+        if wind_30m_last > 35:
+            wind_alert = True
+        elif wind_30m_last < 30:
+            wind_alert = False
         else:
-            wind_30m = last_weather["wind_speed_avg_30m"][0]
-            if wind_30m > 35:
+            if (last_30m["wind_speed_avg_30m"] > 35).any():
                 wind_alert = True
             else:
                 wind_alert = False
@@ -84,13 +100,15 @@ async def summary() -> AlertsSummary:
     door_alert = enclosure_alerts_response.get("door_alert", None)
 
     return AlertsSummary(
-        temperature_alert=temperature_alert,
-        camera_alerts=camera_alerts,
-        o2_alert=o2_alert,
-        o2_room_alerts=o2_alerts,
-        heater_alert=False,
-        heater_camera_alerts={},
+        humidity_alert=humidity_alert,
+        dew_point_alert=dew_point_alert,
         rain=rain_sensor_alarm,
         door_alert=door_alert,
         wind_alert=wind_alert,
+        camera_temperature_alert=camera_temperature_alert,
+        camera_alerts=camera_alerts,
+        heater_alert=False,
+        heater_camera_alerts={},
+        o2_alert=o2_alert,
+        o2_room_alerts=o2_alerts,
     )

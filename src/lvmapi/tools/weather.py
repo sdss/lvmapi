@@ -133,4 +133,10 @@ async def get_weather_data(
         },
     )
 
+    # Add simple dew point.
+    df = df.with_columns(
+        dew_point=polars.col.temperature
+        - ((100 - polars.col.relative_humidity) / 5.0).round(2)
+    )
+
     return df
