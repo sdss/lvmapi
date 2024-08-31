@@ -25,9 +25,7 @@ async def move_dome_task(direction: Literal["open", "close"], force: bool = Fals
 
     """
 
-    from lvmapi.app import app
-
-    async with get_gort_client(app) as gort:
+    async with get_gort_client() as gort:
         if direction == "open":
             await gort.enclosure.open()
         else:
@@ -40,9 +38,7 @@ async def move_dome_task(direction: Literal["open", "close"], force: bool = Fals
 async def shutdown_task():
     """Shuts down the system."""
 
-    from lvmapi.app import app
-
-    async with get_gort_client(app) as gort:
+    async with get_gort_client() as gort:
         await gort.shutdown(park_telescopes=True)
 
     return True
@@ -103,9 +99,8 @@ async def get_gort_log_task(logfile: str, n_lines: int | None = None):
 async def park_telescopes_task():
     """Parks all telescopes."""
 
-    from lvmapi.app import app
-
-    async with get_gort_client(app) as gort:
+    async with get_gort_client() as gort:
+        await gort.telescopes.home()
         await gort.telescopes.park(disable=True)
 
     return True
