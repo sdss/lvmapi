@@ -15,6 +15,8 @@ from typing import get_args
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from sdsstools.utils import GatheringTaskGroup
+
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import park_telescopes_task
 from lvmapi.tools import CluClient
@@ -171,3 +173,19 @@ async def route_park_telescopes() -> str:
     task = await park_telescopes_task.kiq()
 
     return task.task_id
+
+
+@router.get("/connect", summary="Connect all telescopes", dependencies=[AuthDependency])
+async def route_connect_telescopes() -> bool:
+    """Connects all telescopes."""
+
+    async with CluClient() as client:
+        async with GatheringTaskGroup() as gr:
+            for tel in get_args(Telescopes):
+                gr.create_task(client.send_command(f"lvm.{tel}.pwi", "setConnected 1"))
+
+    for cmd in gr.results():
+        if cmd.status.did_fail:
+            return False
+
+    return True
