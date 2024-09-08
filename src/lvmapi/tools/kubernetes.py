@@ -58,6 +58,18 @@ class Kubernetes:
 
         return deployments
 
+    def get_deployment_info(self, deployment: str):
+        """Returns the deployment info for a deployment."""
+
+        deployment_info = self.apps_v1.list_deployment_for_all_namespaces()
+
+        for item in deployment_info.items:
+            meta = item.metadata
+            if meta.name == deployment:
+                return item.to_dict()
+
+        raise ValueError(f"Deployment {deployment!r} not found.")
+
     def get_deployment_namespace(self, deployment: str):
         """Returns the namespace of a deployment."""
 
