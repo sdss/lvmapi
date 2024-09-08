@@ -8,7 +8,6 @@ WORKDIR /opt
 COPY . lvmapi
 
 RUN pip3 install -U pip setuptools wheel
-RUN cd lvmapi && pip3 install .
-RUN rm -Rf lvmapi
+RUN cd lvmapi && pip3 install -U -e .
 
-ENTRYPOINT gunicorn lvmapi.app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:80
+CMD ["fastapi", "run", "lvmapi/src/lvmapi/app.py", "--port", "80", "--workers", "1"]
