@@ -59,7 +59,7 @@ ruff = ">=0.5.0"
 poethepoet = ">=0.24.2"
 
 [tool.poe.tasks.dev]
-shell = "uvicorn --host 0.0.0.0 --port $port --reload lvmapi.app:app"
+shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
 env.LVMAPI_PASSWORD = "$2b$12$doiNxsJiL/lGdBMu/zLv5em4GVsUVH7e.YK3EAqxu1NU8qzXxKrti"  # "12345"
 env.SECRET_KEY = "33744caf930b8c695ec39221dd158e9c5fda13d0d19d1417ec71cf189aad6508"
 args = [
