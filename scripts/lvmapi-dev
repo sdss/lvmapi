@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# LVMAPI_PASSWORD = 12345
-export LVMAPI_PASSWORD="$2b$12$doiNxsJiL/lGdBMu/zLv5em4GVsUVH7e.YK3EAqxu1NU8qzXxKrti"
-export SECRET_KEY="33744caf930b8c695ec39221dd158e9c5fda13d0d19d1417ec71cf189aad6508"
-
-taskiq worker -r lvmapi.app:broker lvmapi.tasks --log-level ERROR
-# fastapi dev --host 0.0.0.0 --port 8888 --reload src/lvmapi/app.py
