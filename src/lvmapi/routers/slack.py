@@ -8,7 +8,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Form, HTTPException, Query
 from pydantic import BaseModel, model_validator
 
 import lvmapi.tools.slack
@@ -36,15 +38,15 @@ class Message(BaseModel):
 router = APIRouter(prefix="/slack", tags=["slack"])
 
 
-@router.get("/")
-async def get_slack():
+@router.get("/", summary="Slack API")
+async def route_get_slack():
     """Not implemented."""
 
     return {}
 
 
-@router.post("/message", description="Send a message to Slack")
-async def post_message(message: Message) -> None:
+@router.post("/message", summary="Send a message to Slack")
+async def route_post_message(message: Annotated[Message, Form()]) -> None:
     """Sends a message to the Slack channel."""
 
     try:
@@ -62,8 +64,8 @@ async def post_message(message: Message) -> None:
     return None
 
 
-@router.get("/message", description="Send a simple text message to Slack")
-async def get_message(
+@router.get("/message", summary="Send a simple text message to Slack")
+async def route_get_message(
     text: str = Query(description="Text to be sent"),
     channel: str | None = Query(None, description="Channel where to send the message"),
     username: str | None = Query(None, description="Username to send the message as"),
@@ -71,7 +73,7 @@ async def get_message(
 ) -> None:
     """Sends a message to the Slack channel."""
 
-    await post_message(
+    await route_post_message(
         Message(
             text=text,
             channel=channel,
@@ -83,8 +85,8 @@ async def get_message(
     return None
 
 
-@router.get("/user_id/{user}", description="Gets the userID for a user name")
-async def get_user_id(user: str) -> str | None:
+@router.get("/user_id/{user}", summary="Gets the userID for a user name")
+async def route_get_user_id(user: str) -> str | None:
     """Gets the ``userID`` of the user whose ``name`` or ``real_name`` matches."""
 
     try:
