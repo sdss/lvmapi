@@ -30,4 +30,4 @@ ENV PORT=80
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-CMD ["sh", "-c", "fastapi run lvmapi/src/lvmapi/app.py --port $PORT --workers $WORKERS"]
+CMD ["sh", "-c", "fastapi run src/lvmapi/app.py --port $PORT --workers $WORKERS"]
