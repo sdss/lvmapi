@@ -10,4 +10,7 @@ COPY . lvmapi
 RUN pip3 install -U pip setuptools wheel
 RUN cd lvmapi && pip3 install -U -e .
 
+RUN pip3 uninstall polars -y
+RUN pip3 install polars-lts-cpu
+
 CMD ["fastapi", "run", "lvmapi/src/lvmapi/app.py", "--port", "80", "--workers", "1"]
