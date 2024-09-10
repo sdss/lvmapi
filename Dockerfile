@@ -24,9 +24,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-ENV PORT=80
-
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-CMD ["fastapi", "run", "lvmapi/src/lvmapi/app.py", "--port", "$PORT", "--workers", "1"]
+CMD ["fastapi", "run", "lvmapi/src/lvmapi/app.py", "--port", "80", "--workers", "1"]
