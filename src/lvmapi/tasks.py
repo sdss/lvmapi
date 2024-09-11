@@ -50,7 +50,7 @@ async def restart_kubernetes_deployment_task(deployment: str, confirm: bool = Tr
 
     from lvmapi.app import app
 
-    app.state.kubernetes.restart_deployment(deployment)
+    await app.state.kubernetes.restart_deployment(deployment)
 
     if confirm:
         for _ in range(15):

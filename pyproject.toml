@@ -33,7 +33,7 @@ dependencies = [
     "taskiq-fastapi>=0.3.2",
     "python-multipart>=0.0.9",
     "adbc-driver-postgresql>=1.1.0",
-    "pyarrow>=17.0.0"
+    "pyarrow>=17.0.0",
 ]
 
 [project.urls]

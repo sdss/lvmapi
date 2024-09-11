@@ -136,7 +136,7 @@ class Kubernetes:
 
         self.apps_v1.delete_namespaced_deployment(deployment, namespace)
 
-    def restart_deployment(self, deployment: str, from_file: bool = True):
+    async def restart_deployment(self, deployment: str, from_file: bool = True):
         """Restarts a deployment.
 
         If the deployment is running, does a rollout restart. Otherwise looks
@@ -178,7 +178,7 @@ class Kubernetes:
 
             if deployment in self.list_deployments():
                 self.delete_deployment(deployment)
-                sleep(3)  # Give some time for the pods to exit.
+                await sleep(3)  # Give some time for the pods to exit.
             else:
                 warnings.warn(f"{deployment!r} is not running.")
 
