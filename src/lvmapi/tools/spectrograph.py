@@ -12,6 +12,12 @@ from typing import TYPE_CHECKING, Any, get_args, overload
 
 import polars
 
+from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
+from lvmopstools.devices.specs import (
+    get_spectrograph_temperature_label,
+    get_spectrograph_temperatures,
+)
+from lvmopstools.devices.thermistors import read_thermistors
 from sdsstools import GatheringTaskGroup
 
 from lvmapi.tools.influxdb import query_influxdb
@@ -29,62 +35,15 @@ __all__ = [
     "get_spectrograph_pressures",
     "get_spectrograph_mechanics",
     "read_thermistors",
+    "read_thermistors_influxdb",
     "get_spectrogaph_status",
     "get_etr",
+    "toggle_ion_pump",
+    "read_ion_pumps",
 ]
 
 
 SpecToStatus = dict[Spectrographs, SpecStatus]
-
-
-def get_spectrograph_temperature_label(camera: str, sensor: str = "ccd"):
-    """Returns the archon label associated with a temperature sensor."""
-
-    if sensor == "ccd":
-        if camera == "r":
-            return "mod2/tempa"
-        elif camera == "b":
-            return "mod12/tempc"
-        elif camera == "z":
-            return "mod12/tempa"
-
-    else:
-        if camera == "r":
-            return "mod2/tempb"
-        elif camera == "b":
-            return "mod2/tempc"
-        elif camera == "z":
-            return "mod12/tempb"
-
-
-async def get_spectrograph_temperatures(spec: Spectrographs):
-    """Returns a dictionary of spectrograph temperatures."""
-
-    async with CluClient() as client:
-        scp_command = await client.send_command(
-            f"lvmscp.{spec}",
-            "status",
-            internal=True,
-        )
-
-    if scp_command.status.did_fail:
-        raise ValueError("Failed retrieving status from SCP.")
-
-    status = scp_command.replies.get("status")
-
-    response: dict[str, float] = {}
-
-    cameras: list[Cameras] = ["r", "b", "z"]
-    sensors: list[Sensors] = ["ccd", "ln2"]
-
-    for camera in cameras:
-        for sensor in sensors:
-            label = get_spectrograph_temperature_label(camera, sensor)
-            if label not in status:
-                raise ValueError(f"Cannot find status label {label!r}.")
-            response[f"{camera}{spec[-1]}_{sensor}"] = status[label]
-
-    return response
 
 
 async def get_spectrograph_temperatures_history(
@@ -215,14 +174,14 @@ async def get_spectrograph_mechanics(spec: Spectrographs):
 
 
 @overload
-async def read_thermistors(interval: float) -> polars.DataFrame: ...
+async def read_thermistors_influxdb(interval: float) -> polars.DataFrame: ...
 
 
 @overload
-async def read_thermistors(interval: None) -> dict[str, bool]: ...
+async def read_thermistors_influxdb(interval: None) -> dict[str, bool]: ...
 
 
-async def read_thermistors(
+async def read_thermistors_influxdb(
     interval: float | None = None,
 ) -> polars.DataFrame | dict[str, bool]:
     """Returns thermistor states from InfluxDB.

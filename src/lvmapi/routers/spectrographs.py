@@ -23,6 +23,7 @@ from lvmapi.tools.spectrograph import (
     get_etr,
     get_spectrogaph_status,
     get_spectrograph_temperatures_history,
+    read_ion_pumps,
     read_thermistors,
 )
 from lvmapi.types import CamSpec, Sensors, SpecStatus, Spectrographs
@@ -45,6 +46,19 @@ class SpecStatusResponse(BaseModel):
         default=None,
         description="The estimated time remaining for the current exposure, "
         "including readout",
+    )
+
+
+class IonPumpResponse(BaseModel):
+    """The status of the ion pumps."""
+
+    pressure: float = Field(
+        ...,
+        description="The pressure reported by the ion pump in Torr",
+    )
+    on: bool = Field(
+        ...,
+        description="Whether the ion pump is on",
     )
 
 
@@ -138,6 +152,15 @@ async def route_get_thermistors(
         return data[thermistor]
 
     return data
+
+
+@router.get("/ion")
+async def route_get_ion() -> dict[str, IonPumpResponse]:
+    """Reads the current values of the ion pumps."""
+
+    ion_pump_data = await read_ion_pumps()
+
+    return ion_pump_data
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")

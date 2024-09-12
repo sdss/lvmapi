@@ -8,11 +8,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import datetime
 import os
 import pathlib
 import warnings
-from time import sleep
 
 import kubernetes
 from gort.tools import is_notebook
@@ -178,7 +178,7 @@ class Kubernetes:
 
             if deployment in self.list_deployments():
                 self.delete_deployment(deployment)
-                await sleep(3)  # Give some time for the pods to exit.
+                await asyncio.sleep(3)  # Give some time for the pods to exit.
             else:
                 warnings.warn(f"{deployment!r} is not running.")
 

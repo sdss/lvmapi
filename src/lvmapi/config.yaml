@@ -1,8 +1,4 @@
 ---
-rabbitmq:
-  host: lvm-hub.lco.cl
-  port: 5672
-
 influxdb:
   host: lvm-webapp.lco.cl
   port: 9999

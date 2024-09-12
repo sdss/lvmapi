@@ -34,6 +34,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "adbc-driver-postgresql>=1.1.0",
     "pyarrow>=17.0.0",
+    "lvmopstools>=0.3.0",
 ]
 
 [project.urls]
@@ -85,7 +86,7 @@ section-order = ["future", "standard-library", "typing", "third-party", "sdss", 
 
 [tool.ruff.lint.isort.sections]
 typing = ["typing"]
-sdss = ["sdsstools", "clu"]
+sdss = ["sdsstools", "clu", "drift", "lvmopstools"]
 
 [build-system]
 requires = ["hatchling"]

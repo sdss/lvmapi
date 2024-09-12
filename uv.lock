@@ -284,6 +284,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asyncudp"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/0b/b94c42d75e2bd018727e625fa3147447cdfb26603e7b0892a4fdfcd2154d/asyncudp-0.11.0.tar.gz", hash = "sha256:c8ab6459f4dc8ebc42f401d3bd72c2a6c6808d10e42231f39e0c433ac646abf9", size = 3986 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/fe/77f4a24264e728fd95542e53f026a91249b51d1611087b8c82d3a033ea97/asyncudp-0.11.0-py3-none-any.whl", hash = "sha256:96d859d86471e3ed30cf9f05cb38e96920156e3a9fe70ee916096ba758ea316e", size = 3538 },
+]
+
+[[package]]
 name = "attrs"
 version = "24.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -977,6 +986,7 @@ dependencies = [
     { name = "httpx" },
     { name = "influxdb-client", extra = ["async"] },
     { name = "lvmgort" },
+    { name = "lvmopstools" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "polars" },
     { name = "pyarrow" },
@@ -1014,6 +1024,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "influxdb-client", extras = ["async"], specifier = ">=1.38.0" },
     { name = "lvmgort", specifier = ">=1.0.0b1" },
+    { name = "lvmopstools", specifier = ">=0.3.0" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.0.0" },
     { name = "pyarrow", specifier = ">=17.0.0" },
@@ -1059,6 +1070,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f7/bc/d4f37d6b7dc5b30b030771618110c70a90ce2c2a04b9c3d8d4b0609ca7b0/lvmgort-1.0.0b1.tar.gz", hash = "sha256:1ff22da385c57a25c883a7eb108a47da308950ba7d62fb0d19554f076d8fa74e", size = 77276 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/35/082bd55f6ca2b15b9678f41df9b651d2ab377a873c25178f759db6fe2540/lvmgort-1.0.0b1-py3-none-any.whl", hash = "sha256:a11d332362fd2660e015eb952a1e8f8769ac1d6e01bfc731d62c559baa196173", size = 91957 },
+]
+
+[[package]]
+name = "lvmopstools"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "astropy" },
+    { name = "asyncudp" },
+    { name = "sdss-clu" },
+    { name = "sdss-drift" },
+    { name = "sdsstools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/c8/584b68a5fd5c106573b17c23832a46b5da6978ccf4a5d384514d10767649/lvmopstools-0.3.0.tar.gz", hash = "sha256:afe0d9338fa709795aaabd553fa12c16ebf1e02a28350e7b304b13ce5615efa4", size = 14673 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/4d/39f455fba5b856a40fb75c4e6c56e8efe3bdee655510fba76dde103afc9d/lvmopstools-0.3.0-py3-none-any.whl", hash = "sha256:6382567d1424694f96f407a6e3dacbe1d885724d5868a809eca51d924689e8a8", size = 19916 },
 ]
 
 [[package]]
@@ -1572,6 +1599,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pymodbus"
+version = "3.7.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/f1/10be9b46fa9389271eeec8cb022680ff701ef97bcdd47d0e4a1fa464c057/pymodbus-3.7.2.tar.gz", hash = "sha256:6cc63a14c8cca83f5b6d9dae3319565061bd49503ee7282df681201c16357eef", size = 190114 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/b7/3baaa396c9c18ca0e3907d9eddf77a774a67d552c16a9ec3669ea03f04d3/pymodbus-3.7.2-py3-none-any.whl", hash = "sha256:1ba874bc9295c4fed530dc7ba203cf1e1142dcaec4505af6ff33433ecb169146", size = 184684 },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -1870,8 +1906,21 @@ wheels = [
 ]
 
 [[package]]
+name = "sdss-drift"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pymodbus" },
+    { name = "sdsstools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7d/33/b26df92d114798f618576c4c11797d880465e002738d28920313667d3b63/sdss_drift-1.2.0.tar.gz", hash = "sha256:b6b6ae0021512be2ee477066168871e080d7b947c18f9849debc20f16bf921ff", size = 13092 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/b6/e1affa5671e199a9b95ad053fc84485f098db6b3a0108bc4aa65a213bbda/sdss_drift-1.2.0-py3-none-any.whl", hash = "sha256:9bc829d4ffc657a99f938a42cf1e67416099eb74cf35f288e54bbc37d0fb6967", size = 13248 },
+]
+
+[[package]]
 name = "sdsstools"
-version = "1.8.1"
+version = "1.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "daemonocle" },
@@ -1884,9 +1933,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/22/f9/b6d7216b9d88f32a4a644e7faedef79a1c09b9e6165b959cfb5adcd0e313/sdsstools-1.8.1.tar.gz", hash = "sha256:b2956830774f18e68ce537ba7d536a7b43b6407fc23357a72e08de28b67b22c9", size = 53824 }
+sdist = { url = "https://files.pythonhosted.org/packages/21/68/4064302385f46b38fc036df3c859b5a2aaa82eb32eaa4af69f0783c4a0a3/sdsstools-1.8.2.tar.gz", hash = "sha256:80c7bdf9a91ad1dd56a16ff5623cc70f5b5ccd415ed122f86d24d9fb9173ef94", size = 54050 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/7a/7756dfe24bcfae6bacc71c90ad80bed76adecac009c03933ab40c9ade643/sdsstools-1.8.1-py3-none-any.whl", hash = "sha256:8cad44a3da74ade52fdac2aba37cb504d99ad1700f05eae042dc389062a5a1b5", size = 55631 },
+    { url = "https://files.pythonhosted.org/packages/ea/c9/abeae708533b4005eb5c79e55c05ff2030fc79d279c55746ece9ec91764e/sdsstools-1.8.2-py3-none-any.whl", hash = "sha256:f1f3a0178309ceca3321ea4cc01baf39a7b7179559e0d9566b70f9761d103925", size = 55910 },
 ]
 
 [[package]]
