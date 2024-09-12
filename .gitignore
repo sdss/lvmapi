@@ -117,3 +117,5 @@ ENV/
 pyrightconfig.json
 
 logs/
+
+.ruff_cache
