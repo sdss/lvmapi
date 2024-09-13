@@ -1,7 +1,7 @@
 # Changelog
 
-## Next version
+## 0.1.0 - 2024-09-13
 
 ### 🚀 New
 
-* Initial REST API with `telescopes` endpoint.
+* Initial release.
