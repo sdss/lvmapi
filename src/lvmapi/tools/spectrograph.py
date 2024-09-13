@@ -15,9 +15,9 @@ import polars
 from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
 from lvmopstools.devices.specs import (
     exposure_etr,
-    spectrogaph_status,
     spectrograph_mechanics,
     spectrograph_pressures,
+    spectrograph_status,
     spectrograph_temperature_label,
     spectrograph_temperatures,
 )
@@ -37,7 +37,7 @@ __all__ = [
     "spectrograph_temperatures_history",
     "spectrograph_pressures",
     "spectrograph_mechanics",
-    "spectrogaph_status",
+    "spectrograph_status",
     "read_thermistors",
     "read_thermistors_influxdb",
     "read_ion_pumps",

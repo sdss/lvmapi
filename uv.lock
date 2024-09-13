@@ -1024,7 +1024,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "influxdb-client", extras = ["async"], specifier = ">=1.38.0" },
     { name = "lvmgort", specifier = ">=1.0.0b1" },
-    { name = "lvmopstools", specifier = ">=0.3.4" },
+    { name = "lvmopstools", specifier = ">=0.3.5" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.7.1" },
     { name = "pyarrow", specifier = ">=17.0.0" },
@@ -1074,7 +1074,7 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.3.4"
+version = "0.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astropy" },
@@ -1083,9 +1083,9 @@ dependencies = [
     { name = "sdss-drift" },
     { name = "sdsstools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/79/4ec65af0892bf6b4cd4cdca2a04e79af36df3cdfbe904d465873841ecb8f/lvmopstools-0.3.4.tar.gz", hash = "sha256:b25ea9730076654de344da15288104507d40010b1df0128869f1dfaf3dff61e5", size = 16560 }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/ef/8e4ed21b91ec5cabfa8dc23db7f3d9afdb598da96477a515cd793067e00d/lvmopstools-0.3.5.tar.gz", hash = "sha256:2baac6723bdb236761a449e33a27d38f61d428284a5ea7618b3b4f10852c2b23", size = 16560 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/48/b8d478b86f574826d76a28ca6edc627a4d42f34eae00d0ea7ee398a30a70/lvmopstools-0.3.4-py3-none-any.whl", hash = "sha256:2024734a2f96a0b1ca29a15a3786b36c828495dde566a466c0f9eecabe6154aa", size = 22505 },
+    { url = "https://files.pythonhosted.org/packages/5c/21/43fee4f81193b3a073bf7b5c4cb918754c53b010fff62a58518fee572380/lvmopstools-0.3.5-py3-none-any.whl", hash = "sha256:5f4f96e5ced527b326b3b8c4ecb76aeaec733e094c9eecad48dc3040344d23dc", size = 22502 },
 ]
 
 [[package]]

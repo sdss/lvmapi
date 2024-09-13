@@ -25,9 +25,9 @@ from lvmapi.tools.spectrograph import (
     read_ion_pumps,
     read_thermistors,
     read_thermistors_influxdb,
-    spectrogaph_status,
     spectrograph_mechanics,
     spectrograph_pressures,
+    spectrograph_status,
     spectrograph_temperatures,
     spectrograph_temperatures_history,
 )
@@ -117,7 +117,7 @@ async def route_get_sectrographs() -> list[str]:
 async def route_get_status() -> SpecStatusResponse:
     """Returns the spectrograph status."""
 
-    spec_status = await spectrogaph_status()
+    spec_status = await spectrograph_status()
 
     return SpecStatusResponse(
         status=spec_status["status"],

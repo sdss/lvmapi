@@ -34,7 +34,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "adbc-driver-postgresql>=1.1.0",
     "pyarrow>=17.0.0",
-    "lvmopstools>=0.3.4",
+    "lvmopstools>=0.3.5",
 ]
 
 [project.urls]
