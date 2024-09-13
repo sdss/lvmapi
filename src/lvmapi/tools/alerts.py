@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from lvmapi.tools.rabbitmq import CluClient
-from lvmapi.tools.spectrograph import get_spectrograph_temperatures_history
+from lvmapi.tools.spectrograph import spectrograph_temperatures_history
 
 
 __all__ = ["spec_temperature_alerts", "enclosure_alerts"]
@@ -42,7 +42,7 @@ async def spec_temperature_alerts(
 
     """
 
-    temperatures = await get_spectrograph_temperatures_history(start)
+    temperatures = await spectrograph_temperatures_history(start)
 
     temp_alerts_dict: dict[str, bool] = {}
 

@@ -8,23 +8,28 @@
 
 from __future__ import annotations
 
-from typing import get_args
+import re
+import warnings
+
+from typing import Annotated, get_args
 
 import polars
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from lvmapi.tools import (
-    get_spectrograph_mechanics,
-    get_spectrograph_pressures,
-    get_spectrograph_temperatures,
-)
+from lvmopstools.devices.ion import IonPumpDict
+from lvmopstools.devices.nps import read_nps
+
 from lvmapi.tools.spectrograph import (
-    get_etr,
-    get_spectrogaph_status,
-    get_spectrograph_temperatures_history,
+    exposure_etr,
     read_ion_pumps,
     read_thermistors,
+    read_thermistors_influxdb,
+    spectrogaph_status,
+    spectrograph_mechanics,
+    spectrograph_pressures,
+    spectrograph_temperatures,
+    spectrograph_temperatures_history,
 )
 from lvmapi.types import CamSpec, Sensors, SpecStatus, Spectrographs
 
@@ -52,21 +57,53 @@ class SpecStatusResponse(BaseModel):
 class IonPumpResponse(BaseModel):
     """The status of the ion pumps."""
 
-    pressure: float = Field(
+    pressure: float | None = Field(
         ...,
         description="The pressure reported by the ion pump in Torr",
     )
-    on: bool = Field(
+    on: bool | None = Field(
         ...,
         description="Whether the ion pump is on",
     )
+
+
+class CryostatsResponse(BaseModel):
+    """Reponse model for ``/cryostats``."""
+
+    ln2_temperatures: Annotated[
+        dict[str, float | None],
+        Field(description="LN2 temperatures"),
+    ]
+    pressures: Annotated[
+        dict[str, float | None],
+        Field(
+            description="Pressures in Torr as reported by the "
+            "cryostat pressure transceivers"
+        ),
+    ]
+    pressures_ion: Annotated[
+        dict[str, IonPumpDict],
+        Field(description="Pressures in Torr as reported by the ion pumps"),
+    ]
+    thermistors: Annotated[
+        dict[str, bool | None],
+        Field(description="Whether the thermistors are sensing LN2"),
+    ]
+    purging: Annotated[
+        bool | None,
+        Field(description="Is the purge valve open?"),
+    ] = False
+    filling: Annotated[
+        dict[str, bool | None],
+        Field(description="Whether the cryostat are filling"),
+    ]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
 
 
 @router.get("/", summary="List of spectrographs")
-async def route_get_cryostats() -> list[str]:
+async def route_get_sectrographs() -> list[str]:
     """Returns the list of cryostats."""
 
     return list(get_args(Spectrographs))
@@ -77,10 +114,10 @@ async def route_get_cryostats() -> list[str]:
     summary="Returns the spectrograph status",
     response_model=SpecStatusResponse,
 )
-async def route_get_status(spec: Spectrographs | None = None) -> SpecStatusResponse:
+async def route_get_status() -> SpecStatusResponse:
     """Returns the spectrograph status."""
 
-    spec_status = await get_spectrogaph_status()
+    spec_status = await spectrogaph_status()
 
     return SpecStatusResponse(
         status=spec_status["status"],
@@ -94,7 +131,7 @@ async def route_get_status(spec: Spectrographs | None = None) -> SpecStatusRespo
 async def route_get_etr():
     """The estimated time remaining for the current exposure, including readout."""
 
-    return await get_etr()
+    return await exposure_etr()
 
 
 @router.get("/temperatures", summary="Cryostat temperatures")
@@ -107,7 +144,7 @@ async def route_get_temperatures(
 ) -> list[dict]:
     """Returns the temperatures of one or multiple cryostats."""
 
-    df = await get_spectrograph_temperatures_history(
+    df = await spectrograph_temperatures_history(
         start,
         stop,
         camera=camera,
@@ -132,11 +169,11 @@ async def route_get_temperatures(
 )
 async def route_get_thermistors(
     thermistor: str | None = None,
-    interval=Query(None, description="Interval in seconds"),
+    interval: float | None = Query(None, description="Interval in seconds"),
 ):
     """Reads the thermistors and returns their states."""
 
-    data = await read_thermistors(interval=interval)
+    data = await read_thermistors_influxdb(interval)
 
     if isinstance(data, polars.DataFrame):
         data = data.with_columns(
@@ -160,7 +197,44 @@ async def route_get_ion() -> dict[str, IonPumpResponse]:
 
     ion_pump_data = await read_ion_pumps()
 
-    return ion_pump_data
+    return {key: IonPumpResponse(**value) for key, value in ion_pump_data.items()}
+
+
+@router.get("/cryostats", summary="Cryostat information")
+async def route_get_cryostats():
+    """Returns cryostat information regarding LN2 fills and pressures."""
+
+    temperatures_response = await spectrograph_temperatures(ignore_errors=True)
+    ln2_temperaures = {
+        camera.split("_")[0]: temp
+        for camera, temp in temperatures_response.items()
+        if camera.endswith("ln2")
+    }
+
+    pressures = await spectrograph_pressures(ignore_errors=True)
+    pressures_ion = await read_ion_pumps()
+    thermistors = await read_thermistors()
+
+    purging = False
+    filling = {}
+
+    try:
+        nps = await read_nps()
+        purging = nps["sp1.purge"]["state"]
+        for key, value in nps.items():
+            if match := re.match(r"sp[1-3]\.([rzb][1-3])", key):
+                filling[match.group(1)] = value["state"]
+    except Exception:
+        warnings.warn("Error retrieving NPS information.")
+
+    return CryostatsResponse(
+        ln2_temperatures=ln2_temperaures,
+        pressures=pressures,
+        pressures_ion=pressures_ion,
+        thermistors=thermistors,
+        purging=purging,
+        filling=filling,
+    )
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
@@ -168,15 +242,24 @@ async def route_get_ion() -> dict[str, IonPumpResponse]:
 async def route_get_summary(
     spectrograph: Spectrographs,
     mechs: bool = Query(False, description="Return mechanics information?"),
-) -> dict[str, float | str]:
+) -> dict[str, float | str | None]:
     """Retrieves current spectrograph information (temperature, pressure, etc.)"""
 
     try:
-        temps_response = await get_spectrograph_temperatures(spectrograph)
-        pres_reponse = await get_spectrograph_pressures(spectrograph)
+        temps_response = await spectrograph_temperatures(
+            spectrograph,
+            ignore_errors=True,
+        )
+        pres_reponse = await spectrograph_pressures(
+            spectrograph,
+            ignore_errors=True,
+        )
 
         if mechs:
-            mechs_response = await get_spectrograph_mechanics(spectrograph)
+            mechs_response = await spectrograph_mechanics(
+                spectrograph,
+                ignore_errors=True,
+            )
         else:
             mechs_response = {}
 

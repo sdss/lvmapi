@@ -8,20 +8,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, get_args, overload
+from typing import TYPE_CHECKING, get_args, overload
 
 import polars
 
 from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
 from lvmopstools.devices.specs import (
-    get_spectrograph_temperature_label,
-    get_spectrograph_temperatures,
+    exposure_etr,
+    spectrogaph_status,
+    spectrograph_mechanics,
+    spectrograph_pressures,
+    spectrograph_temperature_label,
+    spectrograph_temperatures,
 )
 from lvmopstools.devices.thermistors import read_thermistors
-from sdsstools import GatheringTaskGroup
 
 from lvmapi.tools.influxdb import query_influxdb
-from lvmapi.tools.rabbitmq import CluClient
 from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
 
 
@@ -30,23 +32,24 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "get_spectrograph_temperature_label",
-    "get_spectrograph_temperatures",
-    "get_spectrograph_pressures",
-    "get_spectrograph_mechanics",
+    "spectrograph_temperature_label",
+    "spectrograph_temperatures",
+    "spectrograph_temperatures_history",
+    "spectrograph_pressures",
+    "spectrograph_mechanics",
+    "spectrogaph_status",
     "read_thermistors",
     "read_thermistors_influxdb",
-    "get_spectrogaph_status",
-    "get_etr",
-    "toggle_ion_pump",
     "read_ion_pumps",
+    "toggle_ion_pump",
+    "exposure_etr",
 ]
 
 
 SpecToStatus = dict[Spectrographs, SpecStatus]
 
 
-async def get_spectrograph_temperatures_history(
+async def spectrograph_temperatures_history(
     start: str = "-30m",
     stop: str = "now()",
     camera: str | None = None,
@@ -62,7 +65,7 @@ async def get_spectrograph_temperatures_history(
 
     sensor_filter = r'|> filter(fn: (r) => r["_field"] =~ /mod(2|12)\/temp[abc]/)'
     if camera is not None and sensor is not None:
-        field = get_spectrograph_temperature_label(camera[0], sensor)
+        field = spectrograph_temperature_label(camera[0], sensor)
         sensor_filter = f'|> filter(fn: (r) => r["_field"] == "status.{field}")'
 
     query = rf"""
@@ -95,7 +98,7 @@ async def get_spectrograph_temperatures_history(
     for spec in ["sp1", "sp2", "sp3"]:
         for cc in get_args(Cameras):
             for ss in get_args(Sensors):
-                label = get_spectrograph_temperature_label(cc, ss)
+                label = spectrograph_temperature_label(cc, ss)
 
                 _measurement = f"lvmscp.{spec}"
                 _field = f"status.{label}"
@@ -120,57 +123,6 @@ async def get_spectrograph_temperatures_history(
         final_df = final_df.filter(polars.col.sensor == sensor)
 
     return final_df
-
-
-async def get_spectrograph_pressures(spec: Spectrographs):
-    """Returns a dictionary of spectrograph pressures."""
-
-    async with CluClient() as client:
-        ieb_command = await client.send_command(
-            f"lvmieb.{spec}",
-            "transducer status",
-            internal=True,
-        )
-
-    if ieb_command.status.did_fail:
-        raise ValueError("Failed retrieving status from IEB.")
-
-    pressures = ieb_command.replies.get("transducer")
-
-    response: dict[str, float] = {}
-    for key in pressures:
-        if "pressure" in key:
-            response[key] = pressures[key]
-
-    return response
-
-
-async def get_spectrograph_mechanics(spec: Spectrographs):
-    """Returns a dictionary of spectrograph shutter and hartmann door status."""
-
-    response: dict[str, str] = {}
-
-    async with CluClient() as client:
-        for device in ["shutter", "hartmann"]:
-            ieb_cmd = await client.send_command(
-                f"lvmieb.{spec}",
-                f"{device} status",
-                internal=True,
-            )
-
-            if ieb_cmd.status.did_fail:
-                raise ValueError(f"Failed retrieving {device } status from IEB.")
-
-            if device == "shutter":
-                key = f"{spec}_shutter"
-                response[key] = "open" if ieb_cmd.replies.get(key)["open"] else "closed"
-            else:
-                for door in ["left", "right"]:
-                    key = f"{spec}_hartmann_{door}"
-                    reply = ieb_cmd.replies.get(key)
-                    response[key] = "open" if reply["open"] else "closed"
-
-    return response
 
 
 @overload
@@ -233,91 +185,3 @@ from(bucket: "spec")
     df = df.sort(["channel", "time"])
 
     return df
-
-
-async def get_etr() -> tuple[float | None, float | None]:
-    """Returns the ETR for the exposure, including readout."""
-
-    spec_names = get_args(Spectrographs)
-
-    async with CluClient() as client:
-        async with GatheringTaskGroup() as group:
-            for spec in spec_names:
-                group.create_task(
-                    client.send_command(
-                        f"lvmscp.{spec}",
-                        "get-etr",
-                        internal=True,
-                    )
-                )
-
-    etrs: list[float] = []
-    total_times: list[float] = []
-    for task in group.results():
-        if task.status.did_fail:
-            continue
-
-        etr = task.replies.get("etr")
-        if all(etr):
-            etrs.append(etr[0])
-            total_times.append(etr[1])
-
-    if len(etrs) == 0 or len(total_times) == 0:
-        return None, None
-
-    return max(etrs), max(total_times)
-
-
-async def get_spectrogaph_status() -> dict[str, Any]:
-    """Returns the status of the spectrograph (integrating, reading, etc.)"""
-
-    spec_names = get_args(Spectrographs)
-
-    async with CluClient() as client:
-        async with GatheringTaskGroup() as group:
-            for spec in spec_names:
-                group.create_task(
-                    client.send_command(
-                        f"lvmscp.{spec}",
-                        "status -s",
-                        internal=True,
-                    )
-                )
-            group.create_task(get_etr())
-
-    result: SpecToStatus = {}
-    last_exposure_no: int = -1
-    etr: tuple[float | None, float | None] = (None, None)
-
-    for itask, task in enumerate(group.results()):
-        if itask == len(spec_names):
-            etr = task
-            continue
-
-        if task.status.did_fail:
-            continue
-
-        status = task.replies.get("status")
-        controller: Spectrographs = status["controller"]
-        status_names: str = status["status_names"]
-
-        if "ERROR" in status_names:
-            result[controller] = "error"
-        elif "IDLE" in status_names:
-            result[controller] = "idle"
-        elif "EXPOSING" in status_names:
-            result[controller] = "exposing"
-        elif "READING" in status_names:
-            result[controller] = "reading"
-        else:
-            result[controller] = "unknown"
-
-        last_exposure_no_key = status.get("last_exposure_no", -1)
-        if last_exposure_no_key > last_exposure_no:
-            last_exposure_no = last_exposure_no_key
-
-    for spec in spec_names:
-        if spec not in result:
-            result[spec] = "unknown"
-
-    return {"status": result, "last_exposure_no": last_exposure_no, "etr": etr}
