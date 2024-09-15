@@ -10,19 +10,50 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Form, HTTPException, Query
-from pydantic import BaseModel, model_validator
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field, model_validator
 
 import lvmapi.tools.slack
+from lvmapi import config
+
+
+default_channel = config["slack.channel"]
+default_user: str = "LVM"
 
 
 class Message(BaseModel):
-    text: str
-    blocks: list[dict] | None = None
-    channel: str | None = None
-    username: str | None = None
-    icon_url: str | None = None
-    mentions: list[str] = []
+    text: Annotated[
+        str | None,
+        Field(description="Text to be sent"),
+    ] = None
+
+    blocks: Annotated[
+        list[dict] | None,
+        Field(description="Blocks of data to be sent"),
+    ] = None
+
+    channel: Annotated[
+        str | None,
+        Field(
+            description="Channel where the message will be sent. "
+            f"Defaults to {default_channel}."
+        ),
+    ] = None
+
+    username: Annotated[
+        str,
+        Field(description="User that sends the message"),
+    ] = default_user
+
+    icon_url: Annotated[
+        str | None,
+        Field(description="URL for the icon to use"),
+    ] = None
+
+    mentions: Annotated[
+        list[str],
+        Field(description="List of user mentions"),
+    ] = []
 
     @model_validator(mode="after")
     def validate_message(self):
@@ -46,7 +77,7 @@ async def route_get_slack():
 
 
 @router.post("/message", summary="Send a message to Slack")
-async def route_post_message(message: Annotated[Message, Form()]) -> None:
+async def route_post_message(message: Message) -> None:
     """Sends a message to the Slack channel."""
 
     try:
@@ -68,7 +99,7 @@ async def route_post_message(message: Annotated[Message, Form()]) -> None:
 async def route_get_message(
     text: str = Query(description="Text to be sent"),
     channel: str | None = Query(None, description="Channel where to send the message"),
-    username: str | None = Query(None, description="Username to send the message as"),
+    username: str = Query(default_user, description="Username to send the message as"),
     icon_url: str | None = Query(None, description="URL for the icon to use"),
 ) -> None:
     """Sends a message to the Slack channel."""

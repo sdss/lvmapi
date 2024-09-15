@@ -6,7 +6,7 @@ influxdb:
 
 slack:
   token: null
-  channel: lvm-overwatcher
+  channel: lvm-notifications
 
 database:
   uri: postgresql://sdss_user@10.8.38.26:5432/lvmdb
