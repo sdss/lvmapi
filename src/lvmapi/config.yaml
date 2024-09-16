@@ -12,6 +12,7 @@ database:
   uri: postgresql://sdss_user@10.8.38.26:5432/lvmdb
   tables:
     exposures: gortdb.exposure
+    ln2_fill: lvmopsdb.ln2_fill
 
 actors:
   list:

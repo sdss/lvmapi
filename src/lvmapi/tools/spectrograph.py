@@ -8,9 +8,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, get_args, overload
+import json
+from datetime import UTC, datetime
+
+from typing import get_args, overload
 
 import polars
+import psycopg2
 
 from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
 from lvmopstools.devices.specs import (
@@ -21,14 +25,11 @@ from lvmopstools.devices.specs import (
     spectrograph_temperature_label,
     spectrograph_temperatures,
 )
-from lvmopstools.devices.thermistors import read_thermistors
+from lvmopstools.devices.thermistors import channel_to_valve, read_thermistors
 
+from lvmapi import config
 from lvmapi.tools.influxdb import query_influxdb
 from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
-
-
-if TYPE_CHECKING:
-    pass
 
 
 __all__ = [
@@ -43,6 +44,8 @@ __all__ = [
     "read_ion_pumps",
     "toggle_ion_pump",
     "exposure_etr",
+    "retrieve_fill_measurements",
+    "register_ln2_fill",
 ]
 
 
@@ -185,3 +188,262 @@ from(bucket: "spec")
     df = df.sort(["channel", "time"])
 
     return df
+
+
+async def retrieve_fill_measurements(
+    start: float | datetime,
+    end: float | datetime,
+) -> polars.DataFrame:
+    """Retrieves LN2 fill data from InfluxDB.
+
+    This function retrieves the LN2 fill data from InfluxDB for a given interval.
+    That includes LN2 and CCD temperatures, pressures, NPS outlet status, and
+    thermistor status. This query is intended mostly for ``lvmcryo`` to collect
+    metrology data after a fill.
+
+    Parameters
+    ----------
+    start
+        The start of the interval. Either a ``datetime`` object in UTC or a Unix
+        timestamp.
+    end
+        The end of the interval.
+
+    Returns
+    -------
+    fill_data
+        A Polars DataFrame with the fill data.
+
+    """
+
+    query_start_time: int | str
+    query_end_time: int | str
+
+    if isinstance(start, datetime):
+        query_start_time = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        query_start_time = int(start)
+
+    if isinstance(end, datetime):
+        query_end_time = end.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        query_end_time = int(end)
+
+    # Get data from the "spec" bucket (pressure and thermistors).
+
+    query_cryo = f"""
+        from(bucket: "spec")
+        |> range(start: {query_start_time}, stop: {query_end_time})
+        |> filter(fn: (r) => r["_measurement"] == "pressure" or r["_measurement"] == "thermistors")
+        |> filter(fn: (r) => (r["_measurement"] == "thermistors" and r["_field"] =~ /channel[0-9]+/) or
+                             (r["_measurement"] == "pressure" and r["_field"] == "cmb"))
+        |> aggregateWindow(every: 1s, fn: mean, createEmpty: false)
+        |> yield(name: "mean")
+    """  # noqa: E501
+
+    data_cryo = await query_influxdb(query_cryo)
+
+    # Select pressures and pivot.
+    pressures = (
+        data_cryo.filter(polars.col._measurement == "pressure")
+        .select(
+            time=polars.col._time.cast(polars.Datetime("ms", UTC)),
+            ccd=polars.col.ccd,
+            value=polars.col._value,
+        )
+        .with_columns(ccd="pressure_" + polars.col.ccd)
+        .pivot("ccd", index="time", values="value")
+        .with_columns(polars.all().forward_fill())
+        .sort("time")
+    )
+
+    # Select thermistors and pivot.
+    ch_to_valve = channel_to_valve()
+    thermistors = (
+        data_cryo.filter(polars.col._measurement == "thermistors")
+        .select(
+            time=polars.col._time.cast(polars.Datetime("ms", UTC)),
+            field=polars.col._field,
+            value=polars.col._value.cast(polars.Boolean),
+        )
+        .with_columns(
+            channel="thermistor_"
+            + polars.col.field.str.replace("channel", "")
+            .cast(polars.Int32)
+            .replace_strict(ch_to_valve, default=None)
+        )
+        .drop("field")
+        .drop_nulls()
+        .pivot("channel", index="time", values="value")
+        .with_columns(polars.all().forward_fill().backward_fill())
+        .sort("time")
+    )
+
+    # Query NPS outlet status.
+    # query_nps = f"""
+    #     from(bucket: "actors")
+    #     |> range(start: {query_start_time}, stop: {query_end_time})
+    #     |> filter(fn: (r) => r["_measurement"] == "lvmnps.sp1" or
+    #                         r["_measurement"] == "lvmnps.sp2" or
+    #                         r["_measurement"] == "lvmnps.sp3")
+    #     |> filter(fn: (r) => r["_field"] == "outlet_info.state" or
+    #                         r["_field"] == "outlet_info.normalised_name")
+    #     |> yield(name: "mean")
+    # """
+
+    # data_nps = await query_influxdb(query_nps)
+
+    # nps_names = (
+    #     data_nps.filter(polars.col._field == "outlet_info.normalised_name")
+    #     .select(
+    #         time=polars.col._time,
+    #         name=polars.col._value,
+    #     )
+    #     .sort("time")
+    # )
+
+    # nps_states = (
+    #     data_nps.filter(polars.col._field == "outlet_info.state")
+    #     .select(
+    #         time=polars.col._time,
+    #         state=polars.col._value == "true",
+    #     )
+    #     .sort("time")
+    # )
+
+    # nps_df = (
+    #     nps_names.join_asof(
+    #         nps_states,
+    #         on="time",
+    #         strategy="nearest",
+    #     )
+    #     .with_columns(
+    #         name="nps_" + polars.col.name
+    #     )
+    #     .pivot(
+    #         "name",
+    #         index="time",
+    #         values="state",
+    #     ).with_columns(polars.all().forward_fill().backward_fill())
+    # )
+
+    # Get temperatures and pivot
+    data_temp = await spectrograph_temperatures_history(
+        start=str(query_start_time),
+        stop=str(query_end_time),
+    )
+
+    temp_df = (
+        data_temp.select(
+            time=polars.col.time.cast(polars.Datetime("ms", UTC)),
+            sensor="temp_" + polars.col.camera + "_" + polars.col.sensor,
+            value=polars.col.temperature,
+        )
+        .pivot(
+            "sensor",
+            index="time",
+            values="value",
+        )
+        .with_columns(polars.all().forward_fill().backward_fill())
+        .sort("time")
+    )
+
+    # Create a uniform range of times.
+    if not isinstance(start, datetime):
+        start = datetime.fromtimestamp(start, UTC)
+    if not isinstance(end, datetime):
+        end = datetime.fromtimestamp(end, UTC)
+
+    time_range = (
+        polars.datetime_range(start, end, "1s", eager=True, time_unit="ms")
+        .alias("time")
+        .to_frame()
+    )
+
+    # Join with the data frames.
+    data = (
+        time_range.join_asof(pressures, on="time", strategy="nearest")
+        .join_asof(thermistors, on="time", strategy="nearest")
+        .join_asof(temp_df, on="time", strategy="nearest")
+        .with_columns(polars.all().forward_fill().backward_fill())
+    )
+
+    return data
+
+
+def register_ln2_fill(
+    *,
+    action: str,
+    start_time: str | None,
+    end_time: str | None,
+    purge_start: str | None,
+    purge_complete: str | None,
+    fill_start: str | None,
+    fill_complete: str | None,
+    fail_time: str | None,
+    abort_time: str | None,
+    failed: bool,
+    aborted: bool,
+    error: str | None,
+    log_file: str | None,
+    json_file: str | None,
+    configuration: dict | None,
+    log_data: list[dict] | None,
+) -> int:
+    """Registers LN2 fill data in the database."""
+
+    conn = psycopg2.connect(config["database.uri"])
+    cur = conn.cursor()
+
+    table = config["database.tables.ln2_fill"]
+
+    try:
+        cur.execute(
+            f"""
+            INSERT INTO {table} (start_time, end_time, purge_start, purge_complete,
+                                fill_start, fill_complete, fail_time, abort_time,
+                                failed, aborted, error, action, log_file, json_file,
+                                configuration, log_data)
+        VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
+                %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
+                %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
+                %(json_file)s, %(configuration)s, %(log_data)s)
+        RETURNING pk;
+        """,
+            {
+                "start_time": start_time,
+                "end_time": end_time,
+                "purge_start": purge_start,
+                "purge_complete": purge_complete,
+                "fill_start": fill_start,
+                "fill_complete": fill_complete,
+                "fail_time": fail_time,
+                "abort_time": abort_time,
+                "failed": failed,
+                "aborted": aborted,
+                "error": error,
+                "action": action,
+                "log_file": log_file,
+                "json_file": json_file,
+                "configuration": json.dumps(configuration) if configuration else None,
+                "log_data": json.dumps(log_data) if log_data else None,
+            },
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        cur.close()
+        conn.close()
+
+        raise
+
+    returned = cur.fetchone()
+    if returned is None:
+        raise ValueError("Could not retrieve primary key.")
+
+    pk = returned[0]
+
+    cur.close()
+    conn.close()
+
+    return pk

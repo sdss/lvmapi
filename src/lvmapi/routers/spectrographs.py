@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import datetime
 import re
 import warnings
 
@@ -19,12 +20,15 @@ from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import IonPumpDict
 from lvmopstools.devices.nps import read_nps
+from sdsstools.utils import run_in_executor
 
 from lvmapi.tools.spectrograph import (
     exposure_etr,
     read_ion_pumps,
     read_thermistors,
     read_thermistors_influxdb,
+    register_ln2_fill,
+    retrieve_fill_measurements,
     spectrograph_mechanics,
     spectrograph_pressures,
     spectrograph_status,
@@ -97,6 +101,36 @@ class CryostatsResponse(BaseModel):
         dict[str, bool | None],
         Field(description="Whether the cryostat are filling"),
     ]
+
+
+class FillDataModel(BaseModel):
+    """Response for the ``/fills/data`` endpoint."""
+
+    time: Annotated[datetime.datetime, Field(description="Time of the measurement")]
+
+    # There are many more fields so we just allow them all.
+    model_config = {"extra": "allow"}
+
+
+class RegisterFillPostModel(BaseModel):
+    """Request model for the ``/fills/register`` endpoint."""
+
+    action: Annotated[str, Field(description="LN2 action performed")]
+    start_time: Annotated[str | None, Field(description="Start time of the action")]
+    end_time: Annotated[str | None, Field(description="End time of the action")]
+    purge_start: Annotated[str | None, Field(description="Purge start time")]
+    purge_complete: Annotated[str | None, Field(description="Purge finish time")]
+    fill_start: Annotated[str | None, Field(description="Fill start time")]
+    fill_complete: Annotated[str | None, Field(description="Fill finish time")]
+    fail_time: Annotated[str | None, Field(description="Time of failure")]
+    abort_time: Annotated[str | None, Field(description="Time of abort")]
+    failed: Annotated[bool, Field(description="Did the action fail?")]
+    aborted: Annotated[bool, Field(description="Was the action aborted?")]
+    error: Annotated[str | None, Field(description="Error message")]
+    log_file: Annotated[str | None, Field(description="Path to the log file")]
+    json_file: Annotated[str | None, Field(description="Path to the JSON file")]
+    configuration: Annotated[dict | None, Field(description="Configuration data")]
+    log_data: Annotated[list[dict] | None, Field(description="Log data in JSON format")]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
@@ -235,6 +269,31 @@ async def route_get_cryostats():
         purging=purging,
         filling=filling,
     )
+
+
+@router.get("/fills/measurements", summary="Cryostat fill measurements")
+async def route_get_fill_data(start_time: int, end_time: int) -> list[FillDataModel]:
+    """Returns cryostat fill measurements."""
+
+    if start_time < 0 or end_time < 0 or start_time > end_time:
+        raise HTTPException(400, detail="Invalid start or end times.")
+
+    data = await retrieve_fill_measurements(start_time, end_time)
+    data_dict = data.to_dicts()
+
+    return [FillDataModel(**row) for row in data_dict]
+
+
+@router.post("/fills/register", summary="Register an LN2 fill")
+async def route_post_register_fill(data: RegisterFillPostModel) -> int:
+    """Registers an LN2 fill."""
+
+    try:
+        pk = await run_in_executor(register_ln2_fill, **data.model_dump())
+    except Exception as ee:
+        raise HTTPException(500, detail=str(ee))
+
+    return pk
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
