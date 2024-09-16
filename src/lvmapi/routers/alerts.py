@@ -39,6 +39,7 @@ class AlertsSummary(BaseModel):
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 
+@router.get("")
 @router.get("/")
 @router.get("/summary")
 async def summary() -> AlertsSummary:
