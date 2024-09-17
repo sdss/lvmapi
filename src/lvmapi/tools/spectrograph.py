@@ -243,19 +243,24 @@ async def retrieve_fill_measurements(
 
     data_cryo = await query_influxdb(query_cryo)
 
-    # Select pressures and pivot.
-    pressures = (
-        data_cryo.filter(polars.col._measurement == "pressure")
-        .select(
-            time=polars.col._time.cast(polars.Datetime("ms", UTC)),
-            ccd=polars.col.ccd,
-            value=polars.col._value,
+    pressure_data = data_cryo.filter(polars.col._measurement == "pressure")
+
+    # Select pressures and pivot. Pressure is the data we poll the least so for
+    # short intervals there may not be any data.
+    if len(pressure_data) > 0:
+        pressures = (
+            pressure_data.select(
+                time=polars.col._time.cast(polars.Datetime("ms", UTC)),
+                ccd=polars.col.ccd,
+                value=polars.col._value,
+            )
+            .with_columns(ccd="pressure_" + polars.col.ccd)
+            .pivot("ccd", index="time", values="value")
+            .with_columns(polars.all().forward_fill())
+            .sort("time")
         )
-        .with_columns(ccd="pressure_" + polars.col.ccd)
-        .pivot("ccd", index="time", values="value")
-        .with_columns(polars.all().forward_fill())
-        .sort("time")
-    )
+    else:
+        pressures = polars.DataFrame(None, schema={"time": polars.Datetime("ms", UTC)})
 
     # Select thermistors and pivot.
     ch_to_valve = channel_to_valve()
