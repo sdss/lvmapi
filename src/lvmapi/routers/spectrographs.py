@@ -132,6 +132,7 @@ class RegisterFillPostModel(BaseModel):
     json_file: Annotated[str | None, Field(description="Path to the JSON file")]
     configuration: Annotated[dict | None, Field(description="Configuration data")]
     log_data: Annotated[list[dict] | None, Field(description="Log data in JSON format")]
+    plot_paths: Annotated[dict[str, str] | None, Field(description="Paths to plots")]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])

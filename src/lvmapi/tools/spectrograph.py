@@ -394,6 +394,7 @@ def register_ln2_fill(
     json_file: str | None,
     configuration: dict | None,
     log_data: list[dict] | None,
+    plot_paths: dict[str, str] | None,
 ) -> int:
     """Registers LN2 fill data in the database."""
 
@@ -408,11 +409,11 @@ def register_ln2_fill(
             INSERT INTO {table} (start_time, end_time, purge_start, purge_complete,
                                 fill_start, fill_complete, fail_time, abort_time,
                                 failed, aborted, error, action, log_file, json_file,
-                                configuration, log_data)
+                                configuration, log_data, plot_paths)
         VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
                 %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
                 %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
-                %(json_file)s, %(configuration)s, %(log_data)s)
+                %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s)
         RETURNING pk;
         """,
             {
@@ -432,6 +433,7 @@ def register_ln2_fill(
                 "json_file": json_file,
                 "configuration": json.dumps(configuration) if configuration else None,
                 "log_data": json.dumps(log_data) if log_data else None,
+                "plot_paths": json.dumps(plot_paths) if plot_paths else None,
             },
         )
         conn.commit()
