@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import datetime
+import pathlib
 import re
 import warnings
 
@@ -271,8 +272,18 @@ async def route_get_cryostats():
     )
 
 
+@router.get("/fills/running", summary="Is a fill currently running?")
+async def route_get_fills_running() -> bool:
+    """Returns whether an LN2 fill is currently running."""
+
+    return pathlib.Path("/data/lvmcryo.lock").exists()
+
+
 @router.get("/fills/measurements", summary="Cryostat fill measurements")
-async def route_get_fill_data(start_time: int, end_time: int) -> list[FillDataModel]:
+async def route_get_fills_measurements(
+    start_time: int,
+    end_time: int,
+) -> list[FillDataModel]:
     """Returns cryostat fill measurements."""
 
     if start_time < 0 or end_time < 0 or start_time > end_time:
@@ -285,7 +296,7 @@ async def route_get_fill_data(start_time: int, end_time: int) -> list[FillDataMo
 
 
 @router.post("/fills/register", summary="Register an LN2 fill")
-async def route_post_register_fill(data: RegisterFillPostModel) -> int:
+async def route_post_fills_register(data: RegisterFillPostModel) -> int:
     """Registers an LN2 fill."""
 
     try:
