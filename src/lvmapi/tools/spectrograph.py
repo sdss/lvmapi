@@ -395,6 +395,7 @@ def register_ln2_fill(
     configuration: dict | None,
     log_data: list[dict] | None,
     plot_paths: dict[str, str] | None,
+    valve_times: dict[str, dict[str, str]] | None,
 ) -> int:
     """Registers LN2 fill data in the database."""
 
@@ -409,11 +410,12 @@ def register_ln2_fill(
             INSERT INTO {table} (start_time, end_time, purge_start, purge_complete,
                                 fill_start, fill_complete, fail_time, abort_time,
                                 failed, aborted, error, action, log_file, json_file,
-                                configuration, log_data, plot_paths)
+                                configuration, log_data, plot_paths, valve_times)
         VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
                 %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
                 %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
-                %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s)
+                %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s,
+                %(valve_times)s)
         RETURNING pk;
         """,
             {
@@ -434,6 +436,7 @@ def register_ln2_fill(
                 "configuration": json.dumps(configuration) if configuration else None,
                 "log_data": json.dumps(log_data) if log_data else None,
                 "plot_paths": json.dumps(plot_paths) if plot_paths else None,
+                "valve_times": json.dumps(valve_times) if valve_times else None,
             },
         )
         conn.commit()

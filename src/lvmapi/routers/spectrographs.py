@@ -133,6 +133,10 @@ class RegisterFillPostModel(BaseModel):
     configuration: Annotated[dict | None, Field(description="Configuration data")]
     log_data: Annotated[list[dict] | None, Field(description="Log data in JSON format")]
     plot_paths: Annotated[dict[str, str] | None, Field(description="Paths to plots")]
+    valve_times: Annotated[
+        dict[str, dict[str, str]] | None,
+        Field(description="Valve open/close times"),
+    ]
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
