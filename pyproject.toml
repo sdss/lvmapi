@@ -34,7 +34,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "adbc-driver-postgresql>=1.1.0",
     "pyarrow>=17.0.0",
-    "lvmopstools",
+    "lvmopstools>=0.3.8",
     "psycopg2-binary>=2.9.9",
 ]
 
@@ -54,7 +54,7 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-lvmopstools = { path = "../lvmopstools" }
+# lvmopstools = { path = "../lvmopstools" }
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"

@@ -1025,7 +1025,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "influxdb-client", extras = ["async"], specifier = ">=1.38.0" },
     { name = "lvmgort", specifier = ">=1.0.0b1" },
-    { name = "lvmopstools", directory = "../lvmopstools" },
+    { name = "lvmopstools", specifier = ">=0.3.8" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.7.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
@@ -1076,46 +1076,17 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.3.8a0"
-source = { directory = "../lvmopstools" }
+version = "0.3.8"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncudp" },
     { name = "sdss-clu" },
     { name = "sdss-drift" },
     { name = "sdsstools" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "asyncudp", specifier = ">=0.11.0" },
-    { name = "pyds9", marker = "extra == 'ds9'", specifier = ">=1.8.1" },
-    { name = "sdss-clu", specifier = ">=2.2.7" },
-    { name = "sdss-drift", specifier = ">=1.2.0" },
-    { name = "sdsstools", specifier = ">=1.8.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", extras = ["toml"], specifier = ">=5.0" },
-    { name = "doc8", specifier = ">=0.8.0" },
-    { name = "furo", specifier = ">=2021.9.22" },
-    { name = "ipdb", specifier = ">=0.12.3" },
-    { name = "ipython", specifier = ">=8.0.0" },
-    { name = "myst-parser", specifier = ">=2.0.0" },
-    { name = "nox", specifier = ">=2021.6.12" },
-    { name = "pytest", specifier = ">=5.2.2" },
-    { name = "pytest-asyncio", specifier = ">=0.10.0" },
-    { name = "pytest-cov", specifier = ">=2.8.1" },
-    { name = "pytest-mock", specifier = ">=1.13.0" },
-    { name = "pytest-sugar", specifier = ">=0.9.2" },
-    { name = "rstcheck", specifier = ">=3.3.1" },
-    { name = "ruff", specifier = ">=0.6.1" },
-    { name = "sphinx", specifier = ">=4.0.0" },
-    { name = "sphinx-autobuild", specifier = ">=2021.3.14" },
-    { name = "sphinx-autodoc-typehints", specifier = ">=1.23.2" },
-    { name = "sphinx-click", specifier = ">=3.0.1" },
-    { name = "sphinx-copybutton", specifier = ">=0.4.0" },
-    { name = "sphinx-jsonschema", specifier = ">=1.16.11" },
+sdist = { url = "https://files.pythonhosted.org/packages/7a/72/cb3855b03e8cb06e1736097af462a067cf371beb1369dcc3ff935652e4cc/lvmopstools-0.3.8.tar.gz", hash = "sha256:62d2961ac025ddce0417c3090633d94fa73d24f7953f1939a20fa68c81f0e2b2", size = 16756 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/91/9364659fd590dcdf58000a9616131c660173be9f0002e385c5825246ca05/lvmopstools-0.3.8-py3-none-any.whl", hash = "sha256:0b0e8736d56b268adafa37f8897f0e04b6c1776aa60e4fe5e5d5e29b6f4f8298", size = 22770 },
 ]
 
 [[package]]
