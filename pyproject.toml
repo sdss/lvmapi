@@ -1,6 +1,6 @@
 [project]
 name = "lvmapi"
-version = "0.1.2a0"
+version = "0.1.2"
 description = "REST API for LVM operations"
 authors = [
     { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" }
@@ -34,7 +34,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "adbc-driver-postgresql>=1.1.0",
     "pyarrow>=17.0.0",
-    "lvmopstools>=0.3.8",
+    "lvmopstools>=0.3.9",
     "psycopg[binary]>=3.2.2",
 ]
 
@@ -52,9 +52,6 @@ dev-dependencies = [
     "ruff>=0.5.0",
     "poethepoet>=0.24.2"
 ]
-
-[tool.uv.sources]
-# lvmopstools = { path = "../lvmopstools" }
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
