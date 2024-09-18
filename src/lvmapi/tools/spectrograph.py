@@ -257,7 +257,7 @@ async def retrieve_fill_measurements(
             )
             .with_columns(ccd="pressure_" + polars.col.ccd)
             .pivot("ccd", index="time", values="value")
-            .with_columns(polars.all().forward_fill())
+            # .with_columns(polars.all().forward_fill())
             .sort("time")
         )
     else:
@@ -281,7 +281,7 @@ async def retrieve_fill_measurements(
         .drop("field")
         .drop_nulls()
         .pivot("channel", index="time", values="value")
-        .with_columns(polars.all().forward_fill().backward_fill())
+        # .with_columns(polars.all().forward_fill().backward_fill())
         .sort("time")
     )
 
@@ -350,7 +350,7 @@ async def retrieve_fill_measurements(
             index="time",
             values="value",
         )
-        .with_columns(polars.all().forward_fill().backward_fill())
+        # .with_columns(polars.all().forward_fill().backward_fill())
         .sort("time")
     )
 
