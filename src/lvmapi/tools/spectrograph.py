@@ -8,14 +8,18 @@
 
 from __future__ import annotations
 
+import base64
 import json
+import pathlib
 from datetime import UTC, datetime
 
-from typing import get_args, overload
+from typing import Annotated, get_args, overload
 
 import polars
 import psycopg
+import psycopg.rows
 import psycopg.sql
+from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
 from lvmopstools.devices.specs import (
@@ -402,3 +406,125 @@ RETURNING pk;
     pk = returned[0]
 
     return pk
+
+
+class FillMetadataModel(BaseModel):
+    """Request model for the ``/fills/register`` endpoint."""
+
+    action: str
+    start_time: datetime | None
+    end_time: datetime | None
+    purge_start: datetime | None
+    purge_complete: datetime | None
+    fill_start: datetime | None
+    fill_complete: datetime | None
+    fail_time: datetime | None
+    abort_time: datetime | None
+    failed: bool
+    aborted: bool
+    error: str | None
+    log_file: str | None
+    json_file: str | None
+    configuration: dict | None
+    log_data: list[dict] | None
+    plot_paths: dict | None
+    valve_times: dict | None
+
+
+class FillMetadataReturn(BaseModel):
+    """Return model for `.retrieve_fill_metadata`."""
+
+    pk: Annotated[int, Field(description="Primary key of the LN2 fill record")]
+    action: Annotated[str, Field(description="LN2 action performed")]
+    start_time: Annotated[datetime | None, Field(description="Start time")]
+    end_time: Annotated[datetime | None, Field(description="End time")]
+    purge_start: Annotated[datetime | None, Field(description="Purge start time")]
+    purge_complete: Annotated[datetime | None, Field(description="Purge finish time")]
+    fill_start: Annotated[datetime | None, Field(description="Fill start time")]
+    fill_complete: Annotated[datetime | None, Field(description="Fill finish time")]
+    fail_time: Annotated[datetime | None, Field(description="Time of failure")]
+    abort_time: Annotated[datetime | None, Field(description="Time of abort")]
+    failed: Annotated[bool, Field(description="Did the action fail?")]
+    aborted: Annotated[bool, Field(description="Was the action aborted?")]
+    error: Annotated[str | None, Field(description="Error message")]
+    log_data: Annotated[str | None, Field(description="Reconstructed log file")]
+    configuration: Annotated[dict | None, Field(description="Configuration data")]
+    plot_data: Annotated[
+        dict[str, bytes],
+        Field(description="Plot images encoded as base64"),
+    ] = {}
+    valve_times: Annotated[
+        dict[str, dict[str, str | None]] | None,
+        Field(description="Valve open/close times"),
+    ]
+
+
+async def retrieve_fill_metadata(pk: int, transparent_plots: bool = False):
+    """Retrieves metadata for a given LN2 fill from the database."""
+
+    uri = config["database.uri"]
+    table: list[str] = config["database.tables.ln2_fill"].split(".")
+
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor(row_factory=psycopg.rows.dict_row) as acur:
+            await acur.execute(
+                psycopg.sql.SQL("SELECT * FROM {} WHERE pk = (%s)").format(
+                    psycopg.sql.Identifier(*table)
+                ),
+                (pk,),
+            )
+            db_data = await acur.fetchone()
+
+    if db_data is None:
+        raise ValueError(f"Cannot find LN2 fill with pk={pk}.")
+
+    data = FillMetadataModel(**db_data)
+
+    # Reconstruct log from JSON.
+    log_data: str | None = None
+    if data.log_data:
+        lines = []
+        for line in data.log_data:
+            timestamp = datetime.fromisoformat(line["timestamp"])
+            log_ts = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            log_ts += f".{timestamp.microsecond}"[0:2]
+            level = line["level"]
+            message = line["message"]
+            lines.append(f"{log_ts} - {level} - {message}")
+        log_data = "\n".join(lines)
+
+    # Encode plot images as base64 bytes.
+    plot_data: dict[str, bytes] = {}
+    if data.plot_paths:
+        for key, value in data.plot_paths.items():
+            if (transparent_plots and value.endswith("_transparent.png")) or (
+                not transparent_plots
+                and value.endswith(".png")
+                and "transparent" not in value
+            ):
+                path = pathlib.Path(value)
+                if not path.exists():
+                    continue
+                with open(path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read())
+                plot_data[key] = encoded_string
+
+    return FillMetadataReturn(
+        pk=pk,
+        action=data.action,
+        start_time=data.start_time,
+        end_time=data.end_time,
+        purge_start=data.purge_start,
+        purge_complete=data.purge_complete,
+        fill_start=data.fill_start,
+        fill_complete=data.fill_complete,
+        fail_time=data.fail_time,
+        abort_time=data.abort_time,
+        failed=data.failed,
+        aborted=data.aborted,
+        error=data.error,
+        log_data=log_data,
+        configuration=data.configuration,
+        plot_data=plot_data,
+        valve_times=data.valve_times,
+    )

@@ -16,19 +16,21 @@ import warnings
 from typing import Annotated, get_args
 
 import polars
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import IonPumpDict
 from lvmopstools.devices.nps import read_nps
 
 from lvmapi.tools.spectrograph import (
+    FillMetadataReturn,
     exposure_etr,
     read_ion_pumps,
     read_thermistors,
     read_thermistors_influxdb,
     register_ln2_fill,
     retrieve_fill_measurements,
+    retrieve_fill_metadata,
     spectrograph_mechanics,
     spectrograph_pressures,
     spectrograph_status,
@@ -309,6 +311,20 @@ async def route_post_fills_register(data: RegisterFillPostModel) -> int:
         raise HTTPException(500, detail=str(ee))
 
     return pk
+
+
+@router.get("/fills/{pk}/metadata", summary="Get LN2 fill metadata")
+async def route_get_fills_metadata(
+    pk: Annotated[int, Path(description="Primary key of the LN2 fill record")],
+) -> FillMetadataReturn:
+    """Returns the metadata for an LN2 fill."""
+
+    try:
+        return await retrieve_fill_metadata(pk)
+    except ValueError as err:
+        if "Cannnot find LN2 fill with pk" in str(err):
+            raise HTTPException(400, detail="Invalid primary key.")
+        raise
 
 
 @router.get("/{spectrograph}", summary="Cryostat basic information")
