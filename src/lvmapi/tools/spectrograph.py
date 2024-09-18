@@ -14,7 +14,8 @@ from datetime import UTC, datetime
 from typing import get_args, overload
 
 import polars
-import psycopg2
+import psycopg
+import psycopg.sql
 
 from lvmopstools.devices.ion import read_ion_pumps, toggle_ion_pump
 from lvmopstools.devices.specs import (
@@ -376,7 +377,7 @@ async def retrieve_fill_measurements(
     return data
 
 
-def register_ln2_fill(
+async def register_ln2_fill(
     *,
     action: str,
     start_time: str | None,
@@ -399,55 +400,53 @@ def register_ln2_fill(
 ) -> int:
     """Registers LN2 fill data in the database."""
 
-    conn = psycopg2.connect(config["database.uri"])
-    cur = conn.cursor()
+    uri = config["database.uri"]
+    table: list[str] = config["database.tables.ln2_fill"].split(".")
 
-    table = config["database.tables.ln2_fill"]
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acur:
+            await acur.execute(
+                psycopg.sql.SQL(
+                    """
+INSERT INTO {} (start_time, end_time, purge_start, purge_complete,
+                fill_start, fill_complete, fail_time, abort_time,
+                failed, aborted, error, action, log_file, json_file,
+                configuration, log_data, plot_paths, valve_times)
+VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
+        %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
+        %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
+        %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s,
+        %(valve_times)s)
+RETURNING pk;
+"""
+                ).format(psycopg.sql.Identifier(*table)),
+                {
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "purge_start": purge_start,
+                    "purge_complete": purge_complete,
+                    "fill_start": fill_start,
+                    "fill_complete": fill_complete,
+                    "fail_time": fail_time,
+                    "abort_time": abort_time,
+                    "failed": failed,
+                    "aborted": aborted,
+                    "error": error,
+                    "action": action,
+                    "log_file": log_file,
+                    "json_file": json_file,
+                    "configuration": json.dumps(configuration)
+                    if configuration
+                    else None,
+                    "log_data": json.dumps(log_data) if log_data else None,
+                    "plot_paths": json.dumps(plot_paths) if plot_paths else None,
+                    "valve_times": json.dumps(valve_times) if valve_times else None,
+                },
+            )
 
-    try:
-        cur.execute(
-            f"""
-            INSERT INTO {table} (start_time, end_time, purge_start, purge_complete,
-                                fill_start, fill_complete, fail_time, abort_time,
-                                failed, aborted, error, action, log_file, json_file,
-                                configuration, log_data, plot_paths, valve_times)
-        VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
-                %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
-                %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
-                %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s,
-                %(valve_times)s)
-        RETURNING pk;
-        """,
-            {
-                "start_time": start_time,
-                "end_time": end_time,
-                "purge_start": purge_start,
-                "purge_complete": purge_complete,
-                "fill_start": fill_start,
-                "fill_complete": fill_complete,
-                "fail_time": fail_time,
-                "abort_time": abort_time,
-                "failed": failed,
-                "aborted": aborted,
-                "error": error,
-                "action": action,
-                "log_file": log_file,
-                "json_file": json_file,
-                "configuration": json.dumps(configuration) if configuration else None,
-                "log_data": json.dumps(log_data) if log_data else None,
-                "plot_paths": json.dumps(plot_paths) if plot_paths else None,
-                "valve_times": json.dumps(valve_times) if valve_times else None,
-            },
-        )
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        cur.close()
-        conn.close()
+            await aconn.commit()
+            returned = await acur.fetchone()
 
-        raise
-
-    returned = cur.fetchone()
     if returned is None:
         raise ValueError("Could not retrieve primary key.")
 

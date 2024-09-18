@@ -21,7 +21,6 @@ from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import IonPumpDict
 from lvmopstools.devices.nps import read_nps
-from sdsstools.utils import run_in_executor
 
 from lvmapi.tools.spectrograph import (
     exposure_etr,
@@ -134,7 +133,7 @@ class RegisterFillPostModel(BaseModel):
     log_data: Annotated[list[dict] | None, Field(description="Log data in JSON format")]
     plot_paths: Annotated[dict[str, str] | None, Field(description="Paths to plots")]
     valve_times: Annotated[
-        dict[str, dict[str, str]] | None,
+        dict[str, dict[str, str | None]] | None,
         Field(description="Valve open/close times"),
     ]
 
@@ -305,7 +304,7 @@ async def route_post_fills_register(data: RegisterFillPostModel) -> int:
     """Registers an LN2 fill."""
 
     try:
-        pk = await run_in_executor(register_ln2_fill, **data.model_dump())
+        pk = await register_ln2_fill(**data.model_dump())
     except Exception as ee:
         raise HTTPException(500, detail=str(ee))
 

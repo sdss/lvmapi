@@ -35,7 +35,7 @@ dependencies = [
     "adbc-driver-postgresql>=1.1.0",
     "pyarrow>=17.0.0",
     "lvmopstools>=0.3.8",
-    "psycopg2-binary>=2.9.9",
+    "psycopg[binary]>=3.2.2",
 ]
 
 [project.urls]
