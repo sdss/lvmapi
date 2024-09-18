@@ -452,7 +452,4 @@ RETURNING pk;
 
     pk = returned[0]
 
-    cur.close()
-    conn.close()
-
     return pk
