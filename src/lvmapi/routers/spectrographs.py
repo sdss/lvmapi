@@ -117,23 +117,74 @@ class FillDataModel(BaseModel):
 class RegisterFillPostModel(BaseModel):
     """Request model for the ``/fills/register`` endpoint."""
 
-    action: Annotated[str, Field(description="LN2 action performed")]
-    start_time: Annotated[str | None, Field(description="Start time of the action")]
-    end_time: Annotated[str | None, Field(description="End time of the action")]
-    purge_start: Annotated[str | None, Field(description="Purge start time")]
-    purge_complete: Annotated[str | None, Field(description="Purge finish time")]
-    fill_start: Annotated[str | None, Field(description="Fill start time")]
-    fill_complete: Annotated[str | None, Field(description="Fill finish time")]
-    fail_time: Annotated[str | None, Field(description="Time of failure")]
-    abort_time: Annotated[str | None, Field(description="Time of abort")]
-    failed: Annotated[bool, Field(description="Did the action fail?")]
-    aborted: Annotated[bool, Field(description="Was the action aborted?")]
-    error: Annotated[str | None, Field(description="Error message")]
-    log_file: Annotated[str | None, Field(description="Path to the log file")]
-    json_file: Annotated[str | None, Field(description="Path to the JSON file")]
-    configuration: Annotated[dict | None, Field(description="Configuration data")]
-    log_data: Annotated[list[dict] | None, Field(description="Log data in JSON format")]
-    plot_paths: Annotated[dict[str, str] | None, Field(description="Paths to plots")]
+    action: Annotated[
+        str,
+        Field(description="LN2 action performed"),
+    ]
+    start_time: Annotated[
+        str | None,
+        Field(description="Start time of the action"),
+    ]
+    end_time: Annotated[
+        str | None,
+        Field(description="End time of the action"),
+    ]
+    purge_start: Annotated[
+        str | None,
+        Field(description="Purge start time"),
+    ]
+    purge_complete: Annotated[
+        str | None,
+        Field(description="Purge finish time"),
+    ]
+    fill_start: Annotated[
+        str | None,
+        Field(description="Fill start time"),
+    ]
+    fill_complete: Annotated[
+        str | None,
+        Field(description="Fill finish time"),
+    ]
+    fail_time: Annotated[
+        str | None,
+        Field(description="Time of failure"),
+    ]
+    abort_time: Annotated[
+        str | None,
+        Field(description="Time of abort"),
+    ]
+    failed: Annotated[
+        bool,
+        Field(description="Did the action fail?"),
+    ]
+    aborted: Annotated[
+        bool,
+        Field(description="Was the action aborted?"),
+    ]
+    error: Annotated[
+        str | None,
+        Field(description="Error message"),
+    ]
+    log_file: Annotated[
+        str | None,
+        Field(description="Path to the log file"),
+    ]
+    json_file: Annotated[
+        str | None,
+        Field(description="Path to the JSON file"),
+    ]
+    configuration: Annotated[
+        dict | None,
+        Field(description="Configuration data"),
+    ]
+    log_data: Annotated[
+        list[dict] | None,
+        Field(description="Log data in JSON format"),
+    ]
+    plot_paths: Annotated[
+        dict[str, str] | None,
+        Field(description="Paths to plots"),
+    ]
     valve_times: Annotated[
         dict[str, dict[str, str | None]] | None,
         Field(description="Valve open/close times"),

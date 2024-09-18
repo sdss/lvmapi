@@ -434,21 +434,66 @@ class FillMetadataModel(BaseModel):
 class FillMetadataReturn(BaseModel):
     """Return model for `.retrieve_fill_metadata`."""
 
-    pk: Annotated[int, Field(description="Primary key of the LN2 fill record")]
-    action: Annotated[str, Field(description="LN2 action performed")]
-    start_time: Annotated[datetime | None, Field(description="Start time")]
-    end_time: Annotated[datetime | None, Field(description="End time")]
-    purge_start: Annotated[datetime | None, Field(description="Purge start time")]
-    purge_complete: Annotated[datetime | None, Field(description="Purge finish time")]
-    fill_start: Annotated[datetime | None, Field(description="Fill start time")]
-    fill_complete: Annotated[datetime | None, Field(description="Fill finish time")]
-    fail_time: Annotated[datetime | None, Field(description="Time of failure")]
-    abort_time: Annotated[datetime | None, Field(description="Time of abort")]
-    failed: Annotated[bool, Field(description="Did the action fail?")]
-    aborted: Annotated[bool, Field(description="Was the action aborted?")]
-    error: Annotated[str | None, Field(description="Error message")]
-    log_data: Annotated[str | None, Field(description="Reconstructed log file")]
-    configuration: Annotated[dict | None, Field(description="Configuration data")]
+    pk: Annotated[
+        int,
+        Field(description="Primary key of the LN2 fill record"),
+    ]
+    action: Annotated[
+        str,
+        Field(description="LN2 action performed"),
+    ]
+    start_time: Annotated[
+        datetime | None,
+        Field(description="Start time"),
+    ]
+    end_time: Annotated[
+        datetime | None,
+        Field(description="End time"),
+    ]
+    purge_start: Annotated[
+        datetime | None,
+        Field(description="Purge start time"),
+    ]
+    purge_complete: Annotated[
+        datetime | None,
+        Field(description="Purge finish time"),
+    ]
+    fill_start: Annotated[
+        datetime | None,
+        Field(description="Fill start time"),
+    ]
+    fill_complete: Annotated[
+        datetime | None,
+        Field(description="Fill finish time"),
+    ]
+    fail_time: Annotated[
+        datetime | None,
+        Field(description="Time of failure"),
+    ]
+    abort_time: Annotated[
+        datetime | None,
+        Field(description="Time of abort"),
+    ]
+    failed: Annotated[
+        bool,
+        Field(description="Did the action fail?"),
+    ]
+    aborted: Annotated[
+        bool,
+        Field(description="Was the action aborted?"),
+    ]
+    error: Annotated[
+        str | None,
+        Field(description="Error message"),
+    ]
+    log_data: Annotated[
+        str | None,
+        Field(description="Reconstructed log file"),
+    ]
+    configuration: Annotated[
+        dict | None,
+        Field(description="Configuration data"),
+    ]
     plot_data: Annotated[
         dict[str, bytes],
         Field(description="Plot images encoded as base64"),
