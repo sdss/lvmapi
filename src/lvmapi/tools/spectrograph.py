@@ -257,7 +257,6 @@ async def retrieve_fill_measurements(
             )
             .with_columns(ccd="pressure_" + polars.col.ccd)
             .pivot("ccd", index="time", values="value")
-            # .with_columns(polars.all().forward_fill())
             .sort("time")
         )
     else:
@@ -281,57 +280,8 @@ async def retrieve_fill_measurements(
         .drop("field")
         .drop_nulls()
         .pivot("channel", index="time", values="value")
-        # .with_columns(polars.all().forward_fill().backward_fill())
         .sort("time")
     )
-
-    # Query NPS outlet status.
-    # query_nps = f"""
-    #     from(bucket: "actors")
-    #     |> range(start: {query_start_time}, stop: {query_end_time})
-    #     |> filter(fn: (r) => r["_measurement"] == "lvmnps.sp1" or
-    #                         r["_measurement"] == "lvmnps.sp2" or
-    #                         r["_measurement"] == "lvmnps.sp3")
-    #     |> filter(fn: (r) => r["_field"] == "outlet_info.state" or
-    #                         r["_field"] == "outlet_info.normalised_name")
-    #     |> yield(name: "mean")
-    # """
-
-    # data_nps = await query_influxdb(query_nps)
-
-    # nps_names = (
-    #     data_nps.filter(polars.col._field == "outlet_info.normalised_name")
-    #     .select(
-    #         time=polars.col._time,
-    #         name=polars.col._value,
-    #     )
-    #     .sort("time")
-    # )
-
-    # nps_states = (
-    #     data_nps.filter(polars.col._field == "outlet_info.state")
-    #     .select(
-    #         time=polars.col._time,
-    #         state=polars.col._value == "true",
-    #     )
-    #     .sort("time")
-    # )
-
-    # nps_df = (
-    #     nps_names.join_asof(
-    #         nps_states,
-    #         on="time",
-    #         strategy="nearest",
-    #     )
-    #     .with_columns(
-    #         name="nps_" + polars.col.name
-    #     )
-    #     .pivot(
-    #         "name",
-    #         index="time",
-    #         values="state",
-    #     ).with_columns(polars.all().forward_fill().backward_fill())
-    # )
 
     # Get temperatures and pivot
     data_temp = await spectrograph_temperatures_history(
@@ -350,7 +300,6 @@ async def retrieve_fill_measurements(
             index="time",
             values="value",
         )
-        # .with_columns(polars.all().forward_fill().backward_fill())
         .sort("time")
     )
 
