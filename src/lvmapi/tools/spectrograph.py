@@ -51,6 +51,11 @@ __all__ = [
     "exposure_etr",
     "retrieve_fill_measurements",
     "register_ln2_fill",
+    "retrieve_fill_metadata",
+    "FillMetadataModel",
+    "FillMetadataReturn",
+    "SpecToStatus",
+    "get_fill_list",
 ]
 
 
@@ -573,3 +578,25 @@ async def retrieve_fill_metadata(pk: int, transparent_plots: bool = False):
         plot_data=plot_data,
         valve_times=data.valve_times,
     )
+
+
+async def get_fill_list():
+    """Returns a mapping of LN2 fill PK to start time."""
+
+    uri = config["database.uri"]
+    table: list[str] = config["database.tables.ln2_fill"].split(".")
+
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acur:
+            await acur.execute(
+                psycopg.sql.SQL("SELECT pk, start_time FROM {}").format(
+                    psycopg.sql.Identifier(*table)
+                )
+            )
+            db_data = await acur.fetchall()
+
+    result: dict[int, str] = {}
+    for row in db_data:
+        result[row[0]] = row[1].strftime("%Y-%m-%d %H:%M:%S")
+
+    return result

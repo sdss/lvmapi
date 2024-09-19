@@ -25,6 +25,7 @@ from lvmopstools.devices.nps import read_nps
 from lvmapi.tools.spectrograph import (
     FillMetadataReturn,
     exposure_etr,
+    get_fill_list,
     read_ion_pumps,
     read_thermistors,
     read_thermistors_influxdb,
@@ -362,6 +363,13 @@ async def route_post_fills_register(data: RegisterFillPostModel) -> int:
         raise HTTPException(500, detail=str(ee))
 
     return pk
+
+
+@router.get("/fills/list", summary="List LN2 fills and record PKs")
+async def route_get_fills_list() -> dict[int, str]:
+    """Returns a mapping of LN2 fill PK to start time."""
+
+    return await get_fill_list()
 
 
 @router.get("/fills/{pk}/metadata", summary="Get LN2 fill metadata")
