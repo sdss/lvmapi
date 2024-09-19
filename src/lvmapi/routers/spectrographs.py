@@ -367,11 +367,15 @@ async def route_post_fills_register(data: RegisterFillPostModel) -> int:
 @router.get("/fills/{pk}/metadata", summary="Get LN2 fill metadata")
 async def route_get_fills_metadata(
     pk: Annotated[int, Path(description="Primary key of the LN2 fill record")],
+    transparent_plots: Annotated[
+        bool,
+        Query(description="Return transparent metadata?"),
+    ] = False,
 ) -> FillMetadataReturn:
     """Returns the metadata for an LN2 fill."""
 
     try:
-        return await retrieve_fill_metadata(pk)
+        return await retrieve_fill_metadata(pk, transparent_plots=transparent_plots)
     except ValueError as err:
         if "Cannnot find LN2 fill with pk" in str(err):
             raise HTTPException(400, detail="Invalid primary key.")
