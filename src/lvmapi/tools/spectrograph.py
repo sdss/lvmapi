@@ -354,7 +354,7 @@ async def register_ln2_fill(
     configuration: dict | None,
     log_data: list[dict] | None,
     plot_paths: dict[str, str] | None,
-    valve_times: dict[str, dict[str, str]] | None,
+    valve_times: dict[str, dict[str, str | bool | None]] | None,
 ) -> int:
     """Registers LN2 fill data in the database."""
 
@@ -504,7 +504,7 @@ class FillMetadataReturn(BaseModel):
         Field(description="Plot images encoded as base64"),
     ] = {}
     valve_times: Annotated[
-        dict[str, dict[str, str | None]] | None,
+        dict[str, dict[str, str | bool | None]] | None,
         Field(description="Valve open/close times"),
     ]
 

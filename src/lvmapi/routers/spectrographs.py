@@ -187,7 +187,7 @@ class RegisterFillPostModel(BaseModel):
         Field(description="Paths to plots"),
     ]
     valve_times: Annotated[
-        dict[str, dict[str, str | None]] | None,
+        dict[str, dict[str, str | bool | None]] | None,
         Field(description="Valve open/close times"),
     ]
 
