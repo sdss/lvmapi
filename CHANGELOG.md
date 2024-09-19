@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 - 2024-09-18
+
+### 🚀 New
+
+* Added endpoints `/spectrograph/fills/{pk}/metadata`, `/spectrograph/fills/list` endpoints.
+
+
 ## 0.1.2 - 2024-09-18
 
 ### 🚀 New
@@ -10,6 +17,7 @@
 
 * Improvements to the Slack posting routes.
 * Prevent redirects in the `/alerts` endpoint.
+
 
 ## 0.1.1 - 2024-09-13
 
