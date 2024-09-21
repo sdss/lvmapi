@@ -68,5 +68,6 @@ app.state.kubernetes = Kubernetes()
 
 
 @app.get("/")
-def root():
+def root(request: Request):
+    print(request.client.host, request.headers)
     return {}
