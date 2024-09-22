@@ -379,11 +379,19 @@ async def route_get_fills_metadata(
         bool,
         Query(description="Return transparent metadata?"),
     ] = False,
+    as_base64: Annotated[
+        bool,
+        Query(description="Return plots as base64-encoded strings?"),
+    ] = False,
 ) -> FillMetadataReturn:
     """Returns the metadata for an LN2 fill."""
 
     try:
-        return await retrieve_fill_metadata(pk, transparent_plots=transparent_plots)
+        return await retrieve_fill_metadata(
+            pk,
+            transparent_plots=transparent_plots,
+            as_base64=as_base64,
+        )
     except ValueError as err:
         if "Cannnot find LN2 fill with pk" in str(err):
             raise HTTPException(400, detail="Invalid primary key.")

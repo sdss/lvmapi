@@ -500,7 +500,7 @@ class FillMetadataReturn(BaseModel):
         Field(description="Configuration data"),
     ]
     plot_data: Annotated[
-        dict[str, bytes],
+        dict[str, str | bytes],
         Field(description="Plot images encoded as base64"),
     ] = {}
     valve_times: Annotated[
@@ -509,7 +509,11 @@ class FillMetadataReturn(BaseModel):
     ]
 
 
-async def retrieve_fill_metadata(pk: int, transparent_plots: bool = False):
+async def retrieve_fill_metadata(
+    pk: int,
+    transparent_plots: bool = False,
+    as_base64: bool = False,
+):
     """Retrieves metadata for a given LN2 fill from the database."""
 
     uri = config["database.uri"]
@@ -544,7 +548,7 @@ async def retrieve_fill_metadata(pk: int, transparent_plots: bool = False):
         log_data = "\n".join(lines)
 
     # Encode plot images as base64 bytes.
-    plot_data: dict[str, bytes] = {}
+    plot_data: dict[str, str | bytes] = {}
     if data.plot_paths:
         for key, value in data.plot_paths.items():
             if (transparent_plots and value.endswith("_transparent.png")) or (
@@ -555,9 +559,12 @@ async def retrieve_fill_metadata(pk: int, transparent_plots: bool = False):
                 path = pathlib.Path(value)
                 if not path.exists():
                     continue
-                with open(path, "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read())
-                plot_data[key] = encoded_string
+
+                if as_base64:
+                    with open(path, "rb") as f:
+                        plot_data[key] = base64.b64encode(f.read())
+                else:
+                    plot_data[key] = str(path.absolute())
 
     return FillMetadataReturn(
         pk=pk,
