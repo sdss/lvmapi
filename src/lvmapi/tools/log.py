@@ -10,9 +10,15 @@ from __future__ import annotations
 
 import json
 import pathlib
+import warnings
+from datetime import UTC, datetime
 
 import polars
+import psycopg
+from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
+
+from sdsstools import get_sjd
 
 from lvmapi import config
 
@@ -127,3 +133,152 @@ def get_exposure_data(mjd: int):
         )
 
     return data
+
+
+NIGHT_LOG_CATEGORIES = ["observers", "weather", "issues", "other"]
+
+
+async def get_night_log_mjds():
+    """Returns a list of MJDs with night log data."""
+
+    uri = config["database.uri"]
+    table_night_log = config["database.tables.night_log"]
+
+    df = polars.read_database_uri(
+        f"SELECT DISTINCT(mjd) AS mjd FROM {table_night_log}",
+        uri,
+        engine="adbc",
+    )
+
+    return sorted(df["mjd"].unique().to_list())
+
+
+async def add_night_log_comment(
+    sjd: int | None,
+    comment: str,
+    category: str | None = None,
+):
+    """Adds a comment to the night log."""
+
+    uri = config["database.uri"]
+    table_night_log = Identifier(*config["database.tables.night_log"].split("."))
+    table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
+
+    sjd = sjd or get_sjd()
+
+    if category is None:
+        warnings.warn("No category provided. Defaulting to 'other'.")
+        category = "other"
+
+    category = category.lower()
+    if category not in NIGHT_LOG_CATEGORIES:
+        warnings.warn(f'Non-standard category "{category}".')
+
+    # Get a connection and cursor.
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acursor:
+            # Check if there is already an entry for this SJD in night_log.
+            result = await acursor.execute(
+                SQL("SELECT pk FROM {night_log_table} WHERE mjd = %s").format(
+                    night_log_table=table_night_log
+                ),
+                (sjd,),
+            )
+
+            pk = await result.fetchone()
+            if pk is not None:
+                pk = pk[0]
+            else:
+                # Insert a new entry in night_log.
+                result = await acursor.execute(
+                    SQL(
+                        "INSERT INTO {table_night_log} (mjd, sent) "
+                        "VALUES (%s, false) RETURNING pk"
+                    ).format(table_night_log=table_night_log),
+                    (sjd,),
+                )
+
+                fetch_pk = await result.fetchone()
+                if not fetch_pk:
+                    raise RuntimeError("Failed to insert new entry in night_log.")
+
+                pk = fetch_pk[0]
+                await aconn.commit()
+
+            # Now add the comment.
+            result = await acursor.execute(
+                SQL(
+                    "INSERT INTO {table_comment} "
+                    "(night_log_pk, time, category, comment) "
+                    "VALUES (%s, %s, %s, %s) RETURNING pk"
+                ).format(table_comment=table_comment),
+                (pk, datetime.now(UTC), category, comment),
+            )
+
+            fetch_pk = await result.fetchone()
+            if not fetch_pk:
+                raise RuntimeError("Failed to insert new comment in night_log_comment.")
+
+            await aconn.commit()
+
+    return fetch_pk[0]
+
+
+async def get_night_log_data(sjd: int | None = None):
+    """Returns the comments and other relevant data for the night log."""
+
+    uri = config["database.uri"]
+    table_night_log = Identifier(*config["database.tables.night_log"].split("."))
+    table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
+
+    sjd = sjd or get_sjd()
+
+    query1 = "SELECT nl.pk, nl.sent FROM {night_log_table} AS nl WHERE nl.mjd = %s"
+    query2 = """
+        SELECT nlc.time, nlc.category, nlc.comment
+            FROM {night_log_table} AS nl
+            JOIN {table_comment} AS nlc ON nl.pk = nlc.night_log_pk
+            WHERE nl.mjd = %s
+            ORDER BY nlc.time
+    """
+
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acursor:
+            # Get the night log entry for the SJD.
+            nl = await acursor.execute(
+                SQL(query1).format(night_log_table=table_night_log),
+                (sjd,),
+            )
+            night_log = await nl.fetchone()
+
+            # And the comments
+            nlc = await acursor.execute(
+                SQL(query2).format(
+                    night_log_table=table_night_log,
+                    table_comment=table_comment,
+                ),
+                (sjd,),
+            )
+            comments = await nlc.fetchall()
+
+    if night_log is None:
+        return {
+            "mjd": sjd,
+            "exists": False,
+        }
+
+    result = {
+        "mjd": sjd,
+        "exists": True,
+        "sent": night_log[1],
+        "comments": {category: [] for category in NIGHT_LOG_CATEGORIES},
+    }
+
+    for comment in comments:
+        dt, category, text = comment
+        if category not in NIGHT_LOG_CATEGORIES:
+            category = "other"
+
+        result["comments"][category].append({"time": dt, "comment": text})
+
+    return result
