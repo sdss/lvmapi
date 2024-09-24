@@ -68,7 +68,7 @@ async def restart_kubernetes_deployment_task(deployment: str, confirm: bool = Tr
 async def get_exposure_data_task(mjd: int):
     """Returns the list of exposures for a given MJD."""
 
-    from lvmapi.tools.log import get_exposure_data
+    from lvmapi.tools.logs import get_exposure_data
 
     exposure_data = get_exposure_data(mjd)
 

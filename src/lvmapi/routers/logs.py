@@ -17,7 +17,8 @@ from fastapi import APIRouter, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmapi.tasks import get_exposure_data_task
-from lvmapi.tools.log import (
+from lvmapi.tools.logs import (
+    create_night_log_entry,
     get_exposure_data,
     get_exposures,
     get_night_log_data,
@@ -48,13 +49,17 @@ class NightLogData(BaseModel):
         bool,
         Field(description="Whether the night log has been sent"),
     ] = False
+    observers: Annotated[
+        str | None,
+        Field(description="The observers that took the data"),
+    ] = None
     comments: Annotated[
         dict[str, list[NightLogComment]],
         Field(description="The list of comments, organised by category"),
     ] = {}
 
 
-router = APIRouter(prefix="/log", tags=["log"])
+router = APIRouter(prefix="/logs", tags=["logs"])
 
 
 @router.get("/")
@@ -112,7 +117,7 @@ async def route_get_exposures(
     return list(map(str, exposures))
 
 
-@router.get("/night_logs", summary="List of night log MJDs.")
+@router.get("/night-logs", summary="List of night log MJDs.")
 async def route_get_night_logs():
     """Returns a list of MJDs with night log data."""
 
@@ -120,7 +125,15 @@ async def route_get_night_logs():
     return mjds
 
 
-@router.get("/night_logs/{mjd}", summary="Night log data for an MJD")
+@router.get("/night-logs/create", summary="Create night log entry")
+async def route_get_night_logs_create():
+    """Creates a night log entry for the current MJD."""
+
+    mjd = await create_night_log_entry()
+    return mjd
+
+
+@router.get("/night-logs/{mjd}", summary="Night log data for an MJD")
 async def route_get_night_logs_mjd(
     mjd: Annotated[
         int | None,
@@ -132,7 +145,6 @@ async def route_get_night_logs_mjd(
 ):
     """Returns the night log data for an MJD."""
 
-    print("mjd", mjd)
     data = await get_night_log_data(mjd if mjd != 0 else None)
 
     comments = {

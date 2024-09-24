@@ -19,7 +19,7 @@ from lvmapi.routers import (
     enclosure,
     ephemeris,
     kubernetes,
-    log,
+    logs,
     macros,
     overwatcher,
     slack,
@@ -46,7 +46,7 @@ app.include_router(alerts.router)
 app.include_router(tasks.router)
 app.include_router(kubernetes.router)
 app.include_router(actors.router)
-app.include_router(log.router)
+app.include_router(logs.router)
 
 
 @app.get("/id")
@@ -69,5 +69,4 @@ app.state.kubernetes = Kubernetes()
 
 @app.get("/")
 def root(request: Request):
-    print(request.client.host, request.headers)
     return {}

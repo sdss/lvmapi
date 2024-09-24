@@ -3,7 +3,7 @@
 #
 # @Author: José Sánchez-Gallego (gallegoj@uw.edu)
 # @Date: 2024-08-06
-# @Filename: log.py
+# @Filename: logs.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
 from __future__ import annotations
@@ -135,7 +135,7 @@ def get_exposure_data(mjd: int):
     return data
 
 
-NIGHT_LOG_CATEGORIES = ["observers", "weather", "issues", "other"]
+NIGHT_LOG_CATEGORIES = set(["observers", "weather", "issues", "other"])
 
 
 async def get_night_log_mjds():
@@ -151,6 +151,47 @@ async def get_night_log_mjds():
     )
 
     return sorted(df["mjd"].unique().to_list())
+
+
+async def create_night_log_entry(mjd: int | None = None):
+    """Creates a new entry in the night log for an MJD."""
+
+    uri = config["database.uri"]
+    table_night_log = Identifier(*config["database.tables.night_log"].split("."))
+    table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
+
+    mjd = mjd or get_sjd()
+
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acursor:
+            # Insert new MJD or do nothing if already exists.
+            await acursor.execute(
+                SQL(
+                    "INSERT INTO {table_night_log} (mjd, sent) VALUES (%s, false) "
+                    "ON CONFLICT DO NOTHING RETURNING pk;"
+                ).format(table_night_log=table_night_log),
+                (mjd,),
+            )
+            is_new = (await acursor.fetchone()) is not None
+
+            # Add a placeholder for the observers.
+            if is_new:
+                await acursor.execute(
+                    SQL(
+                        """
+            INSERT INTO {table_comment} (night_log_pk, time, category, comment)
+            VALUES ((SELECT pk FROM {table_night_log} WHERE mjd = %s), %s, %s, %s)
+            """
+                    ).format(
+                        table_comment=table_comment,
+                        table_night_log=table_night_log,
+                    ),
+                    (mjd, datetime.now(UTC), "observers", "Overwatcher"),
+                )
+
+            await aconn.commit()
+
+    return mjd
 
 
 async def add_night_log_comment(
@@ -204,6 +245,16 @@ async def add_night_log_comment(
 
                 pk = fetch_pk[0]
                 await aconn.commit()
+
+            # The observers category should have a single comment.
+            if category == "observers":
+                await acursor.execute(
+                    SQL(
+                        "DELETE FROM {table_comment} WHERE night_log_pk = %s "
+                        "AND category = %s"
+                    ).format(table_comment=table_comment),
+                    (pk, "observers"),
+                )
 
             # Now add the comment.
             result = await acursor.execute(
@@ -271,7 +322,8 @@ async def get_night_log_data(sjd: int | None = None):
         "mjd": sjd,
         "exists": True,
         "sent": night_log[1],
-        "comments": {category: [] for category in NIGHT_LOG_CATEGORIES},
+        "observers": None,
+        "comments": {category: [] for category in NIGHT_LOG_CATEGORIES - {"observers"}},
     }
 
     for comment in comments:
@@ -279,6 +331,9 @@ async def get_night_log_data(sjd: int | None = None):
         if category not in NIGHT_LOG_CATEGORIES:
             category = "other"
 
-        result["comments"][category].append({"time": dt, "comment": text})
+        if category == "observers":
+            result["observers"] = text
+        else:
+            result["comments"][category].append({"time": dt, "comment": text})
 
     return result
