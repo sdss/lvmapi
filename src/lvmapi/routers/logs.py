@@ -13,12 +13,14 @@ from datetime import datetime
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Body, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmapi.tasks import get_exposure_data_task
 from lvmapi.tools.logs import (
+    add_night_log_comment,
     create_night_log_entry,
+    delete_night_log_comment,
     get_exposure_data,
     get_exposures,
     get_night_log_data,
@@ -30,7 +32,8 @@ from lvmapi.tools.logs import (
 class NightLogComment(BaseModel):
     """A comment in the night log."""
 
-    time: Annotated[datetime, Field(description="The time the comment was loaded")]
+    pk: Annotated[int, Field(description="The primary key of the comment")]
+    date: Annotated[datetime, Field(description="The time the comment was loaded")]
     comment: Annotated[str, Field(description="The comment text")]
 
 
@@ -40,6 +43,10 @@ class NightLogData(BaseModel):
     mjd: Annotated[
         int,
         Field(description="The MJD associated with the comments"),
+    ]
+    current: Annotated[
+        bool,
+        Field(description="Whether the night log is for the current MJD"),
     ]
     exists: Annotated[
         bool,
@@ -57,6 +64,23 @@ class NightLogData(BaseModel):
         dict[str, list[NightLogComment]],
         Field(description="The list of comments, organised by category"),
     ] = {}
+
+
+class NightLogPostComment(BaseModel):
+    """A comment to add to the night log."""
+
+    mjd: Annotated[
+        int,
+        Field(description="The MJD associated with the comment"),
+    ]
+    category: Annotated[
+        str,
+        Field(description="The category of the comment"),
+    ]
+    comment: Annotated[
+        str,
+        Field(description="The comment text"),
+    ]
 
 
 router = APIRouter(prefix="/logs", tags=["logs"])
@@ -131,6 +155,27 @@ async def route_get_night_logs_create():
 
     mjd = await create_night_log_entry()
     return mjd
+
+
+@router.post("/night-logs/comments/add", summary="Add night log comment")
+async def route_post_night_logs_add_comment(
+    data: Annotated[NightLogPostComment, Body(description="The comment to add")],
+):
+    """Adds a comment to a night log."""
+
+    await add_night_log_comment(data.mjd, data.comment, category=data.category)
+
+
+@router.get(
+    "/night-logs/comments/delete/{pk}",
+    summary="Delete night log comment",
+)
+async def route_get_night_logs_delete_comment(
+    pk: Annotated[int, Path(description="The primary key of the comment")],
+):
+    """Deletes a comment from a night log."""
+
+    await delete_night_log_comment(pk)
 
 
 @router.get("/night-logs/{mjd}", summary="Night log data for an MJD")

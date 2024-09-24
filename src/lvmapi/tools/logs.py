@@ -160,7 +160,7 @@ async def create_night_log_entry(mjd: int | None = None):
     table_night_log = Identifier(*config["database.tables.night_log"].split("."))
     table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
 
-    mjd = mjd or get_sjd()
+    mjd = mjd or get_sjd("LCO")
 
     async with await psycopg.AsyncConnection.connect(uri) as aconn:
         async with aconn.cursor() as acursor:
@@ -205,7 +205,7 @@ async def add_night_log_comment(
     table_night_log = Identifier(*config["database.tables.night_log"].split("."))
     table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
 
-    sjd = sjd or get_sjd()
+    sjd = sjd or get_sjd("LCO")
 
     if category is None:
         warnings.warn("No category provided. Defaulting to 'other'.")
@@ -275,6 +275,25 @@ async def add_night_log_comment(
     return fetch_pk[0]
 
 
+async def delete_night_log_comment(pk: int):
+    """Deletes a comment from the night log."""
+
+    uri = config["database.uri"]
+    table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
+
+    async with await psycopg.AsyncConnection.connect(uri) as aconn:
+        async with aconn.cursor() as acursor:
+            await acursor.execute(
+                SQL("DELETE FROM {table_comment} WHERE pk = %s").format(
+                    table_comment=table_comment
+                ),
+                (pk,),
+            )
+            await aconn.commit()
+
+    return True
+
+
 async def get_night_log_data(sjd: int | None = None):
     """Returns the comments and other relevant data for the night log."""
 
@@ -282,11 +301,11 @@ async def get_night_log_data(sjd: int | None = None):
     table_night_log = Identifier(*config["database.tables.night_log"].split("."))
     table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
 
-    sjd = sjd or get_sjd()
+    sjd = sjd or get_sjd("LCO")
 
     query1 = "SELECT nl.pk, nl.sent FROM {night_log_table} AS nl WHERE nl.mjd = %s"
     query2 = """
-        SELECT nlc.time, nlc.category, nlc.comment
+        SELECT nlc.pk, nlc.time, nlc.category, nlc.comment
             FROM {night_log_table} AS nl
             JOIN {table_comment} AS nlc ON nl.pk = nlc.night_log_pk
             WHERE nl.mjd = %s
@@ -315,11 +334,13 @@ async def get_night_log_data(sjd: int | None = None):
     if night_log is None:
         return {
             "mjd": sjd,
+            "current": sjd == get_sjd("LCO"),
             "exists": False,
         }
 
     result = {
         "mjd": sjd,
+        "current": sjd == get_sjd("LCO"),
         "exists": True,
         "sent": night_log[1],
         "observers": None,
@@ -327,13 +348,13 @@ async def get_night_log_data(sjd: int | None = None):
     }
 
     for comment in comments:
-        dt, category, text = comment
+        pk, dt, category, text = comment
         if category not in NIGHT_LOG_CATEGORIES:
             category = "other"
 
         if category == "observers":
             result["observers"] = text
         else:
-            result["comments"][category].append({"time": dt, "comment": text})
+            result["comments"][category].append({"pk": pk, "date": dt, "comment": text})
 
     return result
