@@ -9,12 +9,16 @@
 from __future__ import annotations
 
 import asyncio
+import io
 from datetime import datetime
 
-from typing import Annotated
+from typing import Annotated, Any
 
+import polars
 from fastapi import APIRouter, Body, Path, Query
 from pydantic import BaseModel, Field
+
+from sdsstools import get_sjd
 
 from lvmapi.tasks import get_exposure_data_task
 from lvmapi.tools.logs import (
@@ -64,6 +68,10 @@ class NightLogData(BaseModel):
         dict[str, list[NightLogComment]],
         Field(description="The list of comments, organised by category"),
     ] = {}
+    exposure_table: Annotated[
+        str | None,
+        Field(description="The exposure table for the night log"),
+    ] = None
 
 
 class NightLogPostComment(BaseModel):
@@ -181,7 +189,7 @@ async def route_get_night_logs_delete_comment(
 @router.get("/night-logs/{mjd}", summary="Night log data for an MJD")
 async def route_get_night_logs_mjd(
     mjd: Annotated[
-        int | None,
+        int,
         Path(
             description="The MJD for which to retrieve night log data. "
             "Use 0 for tonight's log."
@@ -190,10 +198,72 @@ async def route_get_night_logs_mjd(
 ):
     """Returns the night log data for an MJD."""
 
-    data = await get_night_log_data(mjd if mjd != 0 else None)
+    mjd = mjd if mjd > 0 else get_sjd("LCO")
+    data = await get_night_log_data(mjd)
 
     comments = {
         category: [NightLogComment(**comment) for comment in comments]
         for category, comments in data.pop("comments", {}).items()
     }
-    return NightLogData(**data, comments=comments)
+
+    exposure_data = await route_get_exposures_data(mjd, as_task=False)
+    assert isinstance(exposure_data, dict)
+
+    exposure_records: list[dict[str, Any]] = []
+    for exp in exposure_data.values():
+        exp_dict = dict(exp)
+
+        # No need for the mjd column.
+        exp_dict.pop("mjd")
+
+        # Convert the lamps to a string
+        lamps = exp_dict.pop("lamps")
+        lamps_on = ",".join([lamp for lamp, on in lamps.items() if on])
+        exp_dict["lamps"] = lamps_on
+
+        exposure_records.append(exp_dict)
+
+    if len(exposure_records) == 0:
+        exposure_table_ascii = None
+    else:
+        exposure_df = polars.DataFrame(exposure_records)
+
+        # Rename some columns to make the table narrower.
+        # Use only second precision in obstime.
+        exposure_df = exposure_df.rename(
+            {
+                "exposure_no": "exposure",
+                "image_type": "type",
+                "exposure_time": "exp_time",
+                "n_standards": "n_std",
+                "n_cameras": "n_cam",
+            }
+        ).with_columns(
+            obstime=polars.col.obstime.str.replace("T", " ").str.replace(r"\.\d+", "")
+        )
+
+        n_tiles = exposure_df.filter(
+            polars.col.type == "object",
+            polars.col.object.str.starts_with("tile_id="),
+        ).height
+
+        exposure_io = io.StringIO()
+        with polars.Config(
+            tbl_formatting="ASCII_FULL_CONDENSED",
+            tbl_hide_column_data_types=True,
+            tbl_hide_dataframe_shape=True,
+            tbl_cols=-1,
+            tbl_rows=-1,
+            tbl_width_chars=1000,
+        ):
+            print(f"# science_tiles: {n_tiles}\n", file=exposure_io)
+            print(exposure_df, file=exposure_io)
+
+        exposure_io.seek(0)
+        exposure_table_ascii = exposure_io.read()
+
+    return NightLogData(
+        **data,
+        comments=comments,
+        exposure_table=exposure_table_ascii,
+    )
