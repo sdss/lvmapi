@@ -9,12 +9,10 @@
 from __future__ import annotations
 
 import asyncio
-import io
 from datetime import datetime
 
-from typing import Annotated, Any
+from typing import Annotated
 
-import polars
 from fastapi import APIRouter, Body, Path, Query
 from pydantic import BaseModel, Field
 
@@ -26,9 +24,11 @@ from lvmapi.tools.logs import (
     create_night_log_entry,
     delete_night_log_comment,
     get_exposure_data,
+    get_exposure_table_ascii,
     get_exposures,
     get_night_log_data,
     get_night_log_mjds,
+    get_plaintext_night_log,
     get_spectro_mjds,
 )
 
@@ -206,64 +206,25 @@ async def route_get_night_logs_mjd(
         for category, comments in data.pop("comments", {}).items()
     }
 
-    exposure_data = await route_get_exposures_data(mjd, as_task=False)
-    assert isinstance(exposure_data, dict)
-
-    exposure_records: list[dict[str, Any]] = []
-    for exp in exposure_data.values():
-        exp_dict = dict(exp)
-
-        # No need for the mjd column.
-        exp_dict.pop("mjd")
-
-        # Convert the lamps to a string
-        lamps = exp_dict.pop("lamps")
-        lamps_on = ",".join([lamp for lamp, on in lamps.items() if on])
-        exp_dict["lamps"] = lamps_on
-
-        exposure_records.append(exp_dict)
-
-    if len(exposure_records) == 0:
-        exposure_table_ascii = None
-    else:
-        exposure_df = polars.DataFrame(exposure_records)
-
-        # Rename some columns to make the table narrower.
-        # Use only second precision in obstime.
-        exposure_df = exposure_df.rename(
-            {
-                "exposure_no": "exposure",
-                "image_type": "type",
-                "exposure_time": "exp_time",
-                "n_standards": "n_std",
-                "n_cameras": "n_cam",
-            }
-        ).with_columns(
-            obstime=polars.col.obstime.str.replace("T", " ").str.replace(r"\.\d+", "")
-        )
-
-        n_tiles = exposure_df.filter(
-            polars.col.type == "object",
-            polars.col.object.str.starts_with("tile_id="),
-        ).height
-
-        exposure_io = io.StringIO()
-        with polars.Config(
-            tbl_formatting="ASCII_FULL_CONDENSED",
-            tbl_hide_column_data_types=True,
-            tbl_hide_dataframe_shape=True,
-            tbl_cols=-1,
-            tbl_rows=-1,
-            tbl_width_chars=1000,
-        ):
-            print(f"# science_tiles: {n_tiles}\n", file=exposure_io)
-            print(exposure_df, file=exposure_io)
-
-        exposure_io.seek(0)
-        exposure_table_ascii = exposure_io.read()
+    exposure_table_ascii = await get_exposure_table_ascii(mjd)
 
     return NightLogData(
         **data,
         comments=comments,
         exposure_table=exposure_table_ascii,
     )
+
+
+@router.get("/night-logs/{mjd}/plaintext", summary="Plantext night log")
+async def route_get_night_logs_mjd_plaintext(
+    mjd: Annotated[
+        int,
+        Path(description="The MJD for which to retrieve night log."),
+    ],
+):
+    """Returns the night log as a plaintext string."""
+
+    mjd = mjd if mjd > 0 else get_sjd("LCO")
+    data = await get_plaintext_night_log(mjd)
+
+    return data

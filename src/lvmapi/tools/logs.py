@@ -8,17 +8,21 @@
 
 from __future__ import annotations
 
+import io
 import json
 import pathlib
 import warnings
 from datetime import UTC, datetime
 
+from typing import Any, Literal, overload
+
 import polars
 import psycopg
+from astropy.time import Time
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
 
-from sdsstools import get_sjd
+from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
 
@@ -63,7 +67,27 @@ def get_exposures(mjd: int):
     return files
 
 
-def get_exposure_data(mjd: int):
+@overload
+def get_exposure_data(
+    mjd: int,
+    as_dataframe: Literal[False],
+    compact_lamps: bool = False,
+) -> dict[int, ExposureDataDict]: ...
+
+
+@overload
+def get_exposure_data(
+    mjd: int,
+    as_dataframe: Literal[True],
+    compact_lamps: bool = False,
+) -> polars.DataFrame: ...
+
+
+def get_exposure_data(
+    mjd: int,
+    as_dataframe: bool = False,
+    compact_lamps: bool = False,
+) -> dict[int, ExposureDataDict] | polars.DataFrame:
     """Returns the data for the exposures from a given MJD."""
 
     uri = config["database.uri"]
@@ -106,8 +130,8 @@ def get_exposure_data(mjd: int):
         object = header.get("OBJECT", "")
 
         lamps = {
-            lamp_name: header.get(lamp_header, None) == "ON"
-            for lamp_header, lamp_name in [
+            lname if not compact_lamps else lname[0]: header.get(lheader, None) == "ON"
+            for lheader, lname in [
                 ("ARGON", "Argon"),
                 ("NEON", "Neon"),
                 ("LDLS", "LDLS"),
@@ -132,7 +156,88 @@ def get_exposure_data(mjd: int):
             object=object,
         )
 
-    return data
+    if not as_dataframe:
+        return data
+
+    exposure_records: list[dict[str, Any]] = []
+    for exp in data.values():
+        exp_dict = dict(exp)
+
+        # Convert the lamps to a string
+        lamps = exp_dict.pop("lamps")
+        sep = "," if not compact_lamps else ""
+        lamps_on = sep.join([lamp for lamp, on in lamps.items() if on])
+        exp_dict["lamps"] = lamps_on
+
+        exposure_records.append(exp_dict)
+
+    df = polars.DataFrame(exposure_records)
+
+    return df
+
+
+async def get_exposure_table_ascii(
+    sjd: int | None = None,
+    columns: list[str] | None = None,
+    full_obstime: bool = True,
+    compact_lamps: bool = False,
+):
+    """Returns the exposure table as an ASCII string."""
+
+    sjd = sjd or get_sjd("LCO")
+
+    df = await run_in_executor(
+        get_exposure_data, sjd, as_dataframe=True, compact_lamps=compact_lamps
+    )
+    assert isinstance(df, polars.DataFrame)
+
+    if df.height == 0:
+        return None
+
+    # Rename some columns to make the table narrower.
+    # Use only second precision in obstime.
+    exposure_df = df.rename(
+        {
+            "exposure_no": "exp_no",
+            "image_type": "type",
+            "exposure_time": "exp_time",
+            "n_standards": "n_std",
+            "n_cameras": "n_cam",
+        }
+    ).with_columns(
+        obstime=polars.col.obstime.str.replace("T", " ").str.replace(r"\.\d+", "")
+    )
+
+    if not full_obstime:
+        exposure_df = exposure_df.with_columns(
+            obstime=polars.col.obstime.str.split(" ").list.get(1).cast(polars.String())
+        )
+
+    # Drop MJD column.
+    exposure_df = exposure_df.drop("mjd")
+
+    if columns:
+        exposure_df = exposure_df.select(columns)
+
+    n_tiles = exposure_df.filter(
+        polars.col.type == "object",
+        polars.col.object.str.starts_with("tile_id="),
+    ).height
+
+    exposure_io = io.StringIO()
+    with polars.Config(
+        tbl_formatting="ASCII_FULL_CONDENSED",
+        tbl_hide_column_data_types=True,
+        tbl_hide_dataframe_shape=True,
+        tbl_cols=-1,
+        tbl_rows=-1,
+        tbl_width_chars=1000,
+    ):
+        print(f"# science_tiles: {n_tiles}\n", file=exposure_io)
+        print(exposure_df, file=exposure_io)
+
+    exposure_io.seek(0)
+    return exposure_io.read()
 
 
 NIGHT_LOG_CATEGORIES = set(["observers", "weather", "issues", "other"])
@@ -358,3 +463,76 @@ async def get_night_log_data(sjd: int | None = None):
             result["comments"][category].append({"pk": pk, "date": dt, "comment": text})
 
     return result
+
+
+async def get_plaintext_night_log(sjd: int | None = None):
+    """Returns the night log as a plaintext string."""
+
+    sjd = sjd or get_sjd("LCO")
+    data = await get_night_log_data(sjd)
+
+    nigh_log = """LVM Telescopes, Las Campanas Observatory, SDSSV
+
+=============
+Observing Log
+=============
+
+{date} (MJD {sjd})
+
+Observing Team: {observers}
+
+Observing Summary
+=================
+
+Weather
+-------
+{weather}
+
+Issues/Bugs
+-----------
+{issues}
+
+Other
+-----
+{other}
+
+Exposure data
+-------------
+{exposure_data}
+"""
+
+    date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
+
+    observers = data["observers"] or "Overwatcher"
+
+    comments = data["comments"]
+    weather = ["- {}".format(comments["comment"]) for comments in comments["weather"]]
+    issues = ["- {}".format(comments["comment"]) for comments in comments["issues"]]
+    other = ["- {}".format(comments["comment"]) for comments in comments["other"]]
+
+    exposure_table = await get_exposure_table_ascii(
+        sjd,
+        columns=[
+            "exp_no",
+            "obstime",
+            "type",
+            "exp_time",
+            "ra",
+            "dec",
+            "airmass",
+            "lamps",
+            "object",
+        ],
+        full_obstime=False,
+        compact_lamps=True,
+    )
+
+    return nigh_log.format(
+        date=date,
+        sjd=sjd,
+        observers=observers,
+        weather="\n".join(weather) or "No comments",
+        issues="\n".join(issues) or "No comments",
+        other="\n".join(other) or "No comments",
+        exposure_data=exposure_table or "No exposures found",
+    )
