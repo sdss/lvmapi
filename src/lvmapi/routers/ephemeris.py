@@ -14,6 +14,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from sdsstools import get_sjd
+
 from lvmapi.tools.schedule import get_ephemeris_summary
 
 
@@ -52,3 +53,8 @@ async def route_get_summary(
     """Returns a summary of the ephemeris for an SJD."""
 
     return get_ephemeris_summary(sjd=sjd)
+
+
+@router.get("/sjd", summary="Get current SJD")
+async def route_get_sjd() -> int:
+    return get_sjd("LCO")
