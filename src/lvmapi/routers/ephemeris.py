@@ -8,9 +8,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from sdsstools import get_sjd
 from lvmapi.tools.schedule import get_ephemeris_summary
 
 
@@ -35,13 +38,17 @@ class EphemerisSummaryOut(BaseModel):
 router = APIRouter(prefix="/ephemeris", tags=["ephemeris"])
 
 
-@router.get("/")
 @router.get(
     "/summary",
-    description="Summary of the ephemeris",
+    summary="Summary of the ephemeris",
     response_model=EphemerisSummaryOut,
 )
-async def get_summary(sjd: int | None = None):
-    """Returns a summary of the ephemeris."""
+async def route_get_summary(
+    sjd: Annotated[
+        int | None,
+        Query(description="The SJD for which to retrieve the ephemeris summary"),
+    ] = None,
+):
+    """Returns a summary of the ephemeris for an SJD."""
 
     return get_ephemeris_summary(sjd=sjd)
