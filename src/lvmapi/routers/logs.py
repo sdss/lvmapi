@@ -23,6 +23,7 @@ from lvmapi.tools.logs import (
     add_night_log_comment,
     create_night_log_entry,
     delete_night_log_comment,
+    email_night_log,
     get_exposure_data,
     get_exposure_table_ascii,
     get_exposures,
@@ -215,14 +216,29 @@ async def route_get_night_logs_mjd(
     )
 
 
-@router.get("/night-logs/{mjd}/plaintext", summary="Plantext night log")
+@router.get("/night-logs/{mjd}/email", summary="Email night log")
+async def route_get_night_logs_mjd_email(
+    mjd: Annotated[
+        int,
+        Path(description="The MJD for which to retrieve night log."),
+    ],
+):
+    """Emails the night log."""
+
+    mjd = mjd if mjd > 0 else get_sjd("LCO")
+    data = await email_night_log(mjd)
+
+    return data
+
+
+@router.get("/night-logs/{mjd}/plaintext", summary="Plain-text night log")
 async def route_get_night_logs_mjd_plaintext(
     mjd: Annotated[
         int,
         Path(description="The MJD for which to retrieve night log."),
     ],
 ):
-    """Returns the night log as a plaintext string."""
+    """Returns the night log as a plain-text string."""
 
     mjd = mjd if mjd > 0 else get_sjd("LCO")
     data = await get_plaintext_night_log(mjd)

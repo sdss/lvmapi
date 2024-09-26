@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+      }
+
+      div.header {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+      }
+
+      img.header-image {
+        padding: 4px;
+        width: 100px;
+      }
+
+      a, a:visited, a:link {
+        text-decoration: none;
+        color: black;
+      }
+
+      h1.header-text {
+        font-size: 2.25em;
+        font-weight: 600;
+        align-self: center;
+      }
+
+      div.section {
+        padding: 30px 0px 0px 0px;
+        font-size: 14pt;
+        font-weight: 600
+      }
+
+      div.section ~ hr {
+        width: 100%;
+        margin: 5px 0px 15px 0px;
+      }
+
+      li {
+        white-space: pre-line;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <a href="{{ lvmweb_url }}">
+        <img class="header-image" src="https://github.com/sdss/lvmapi/raw/refs/heads/main/src/lvmapi/data/lvm_logo.png" />
+      </a>
+      <div style="flex-grow: 1"></div>
+      <h1 class="header-text">
+        <a href="{{ lvmweb_url }}">
+          SDSS-V LVM Night Log | {{ sjd }}
+        </a>
+      </h1>
+    </div>
+    <hr style="width: 100%" />
+
+    <div style="padding: 10px 0px;">Visit LVM Web for the <a style="text-decoration: underline" href="{{ lvmweb_url }}">full night log</a>.</div>
+
+    <div style="padding: 10px 0px;">
+      <div style="font-size: 14pt; font-weight: 600">{{ date }} - MJD {{ sjd }}</div>
+    </div>
+
+    <div style="padding: 20px 0px 0px 0px; font-size: 14pt">
+      <span style="font-weight: 600">Observers:</span>
+      <span>{{ observers }}</span>
+    </div>
+
+    <div class="section">
+      Weather
+    </div>
+    <hr />
+    {% if weather %}
+      <lu>
+        {% for comment in weather %}
+          <li>{{ comment.comment }}</li>
+        {% endfor %}
+      </lu>
+    {% else %}
+      <div>No comments.</div>
+    {% endif %}
+
+    <div class="section">
+      Issues / bugs
+    </div>
+    <hr />
+    {% if issues %}
+      <lu>
+        {% for comment in issues %}
+          <li>{{ comment.comment }}</li>
+        {% endfor %}
+      </lu>
+    {% else %}
+      <div>No comments.</div>
+    {% endif %}
+
+    <div class="section">
+      Other
+    </div>
+    <hr />
+    {% if other %}
+      <lu>
+        {% for comment in other %}
+          <li>{{ comment.comment }}</li>
+        {% endfor %}
+      </lu>
+    {% else %}
+      <div>No comments.</div>
+    {% endif %}
+
+    <div class="section">
+      Exposures
+    </div>
+    <hr />
+    {% if exposure_table %}
+      <pre>
+        {{- exposure_table }}
+      </pre>
+    {% else %}
+      <div>No exposures.</div>
+    {% endif %}
+
+  </body>
+
+</html>

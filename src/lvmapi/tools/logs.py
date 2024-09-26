@@ -11,14 +11,18 @@ from __future__ import annotations
 import io
 import json
 import pathlib
+import smtplib
 import warnings
 from datetime import UTC, datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from typing import Any, Literal, overload
 
 import polars
 import psycopg
 from astropy.time import Time
+from jinja2 import Environment, FileSystemLoader
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
 
@@ -536,3 +540,92 @@ Exposure data
         other="\n".join(other) or "No comments",
         exposure_data=exposure_table or "No exposures found",
     )
+
+
+async def email_night_log(sjd: int | None = None, update_database: bool = True):
+    """Emails the night log for an SJD."""
+
+    sjd = sjd or get_sjd("LCO")
+
+    root = pathlib.Path(__file__).parents[1]
+    template = root / config["night_logs.email_template"]
+    loader = FileSystemLoader(template.parent)
+
+    env = Environment(
+        loader=loader,
+        lstrip_blocks=True,
+        trim_blocks=True,
+    )
+    html_template = env.get_template(template.name)
+
+    data = await get_night_log_data(sjd)
+    exposure_table = await get_exposure_table_ascii(
+        sjd,
+        columns=[
+            "exp_no",
+            "obstime",
+            "type",
+            "exp_time",
+            "ra",
+            "dec",
+            "airmass",
+            "lamps",
+            "object",
+        ],
+        full_obstime=False,
+        compact_lamps=True,
+    )
+
+    observers = data["observers"] or "Overwatcher"
+    date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
+    lvmweb_url = config["night_logs.lvmweb_url"] + str(sjd)
+
+    html_message = html_template.render(
+        sjd=sjd,
+        lvmweb_url=lvmweb_url,
+        observers=observers,
+        date=date,
+        weather=data["comments"]["weather"],
+        issues=data["comments"]["issues"],
+        other=data["comments"]["other"],
+        exposure_table=exposure_table,
+    )
+
+    recipients = config["night_logs.email_recipients"]
+    from_address = config["night_logs.email_from"]
+
+    email_server = config["night_logs.email_server"]
+    email_host, *email_rest = email_server.split(":")
+    email_port: int = 0
+    if len(email_rest) == 1:
+        email_port = int(email_rest[0])
+
+    email_reply_to = config["night_logs.email_reply_to"]
+
+    msg = MIMEMultipart("alternative" if html_message else "mixed")
+    msg["Subject"] = f"LVM Observing Summary for MJD {sjd}"
+    msg["From"] = from_address
+    msg["To"] = ", ".join(recipients)
+    msg["Reply-To"] = email_reply_to
+
+    plain = MIMEText(
+        "A message was sent from LVM but your email client cannot process HTML.",
+        "plain",
+    )
+    msg.attach(plain)
+
+    html = MIMEText(html_message, "html")
+    msg.attach(html)
+
+    with smtplib.SMTP(host=email_host, port=email_port) as smtp:
+        smtp.sendmail(from_address, ", ".join(recipients), msg.as_string())
+
+    if update_database:
+        uri = config["database.uri"]
+        table = Identifier(*config["database.tables.night_log"].split("."))
+        query1 = "UPDATE {table} SET sent = true WHERE mjd = %s"
+
+        async with await psycopg.AsyncConnection.connect(uri) as aconn:
+            async with aconn.cursor() as acursor:
+                await acursor.execute(SQL(query1).format(table=table), (sjd,))
+                await aconn.commit()
