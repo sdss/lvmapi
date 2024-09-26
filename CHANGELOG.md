@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.5 - 2024-09-26
+
+### 🚀 New
+
+* Add routes to send night log email and retrieve it as plain text.
+
+### 🏷️ Changed
+
+* Removed the alias `/ephemeris` for `/ephemeris/summary`.
+
+
 ## 0.1.4 - 2024-09-24
 
 ### 🚀 New
