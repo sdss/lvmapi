@@ -73,7 +73,8 @@ night_logs:
   email_template: data/night_log_email_template.html
   lvmweb_url: https://lvm-web.lco.cl/night-logs/
   email_recipients:
-    - gallegoj@uw.edu
+    - lvm-operations@sdss.org
+    - lvm-observers@sdss.org
   email_server: smtp-01.lco.cl
   email_from: LVM Night Log <lvm-nightlog@lco.cl>
   email_reply_to: lvm-operations@sdss.org
