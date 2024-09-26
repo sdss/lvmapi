@@ -29,6 +29,7 @@ from pydantic import BaseModel
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
+from lvmapi.tools.slack import post_message
 
 
 class ExposureDataDict(BaseModel):
@@ -542,7 +543,11 @@ Exposure data
     )
 
 
-async def email_night_log(sjd: int | None = None, update_database: bool = True):
+async def email_night_log(
+    sjd: int | None = None,
+    update_database: bool = True,
+    send_slack_notification: bool = True,
+):
     """Emails the night log for an SJD."""
 
     sjd = sjd or get_sjd("LCO")
@@ -629,3 +634,6 @@ async def email_night_log(sjd: int | None = None, update_database: bool = True):
             async with aconn.cursor() as acursor:
                 await acursor.execute(SQL(query1).format(table=table), (sjd,))
                 await aconn.commit()
+
+    if send_slack_notification:
+        await post_message(f"Night log for MJD {sjd} can be found <{lvmweb_url}|here>.")
