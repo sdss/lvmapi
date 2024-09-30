@@ -76,6 +76,7 @@ LightsStatus: type[BaseModel] = create_model(
 )
 
 
+@router.get("")
 @router.get("/")
 @router.get("/status")
 async def status() -> EnclosureStatus:
