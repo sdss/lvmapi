@@ -159,11 +159,19 @@ async def put_overwatcher_enabled(
         Literal["enable", "disable"],
         Path(description="Whether to enable or disable the overwatcher"),
     ],
+    now: Annotated[
+        bool,
+        Query(description="Whether to stop observing immediately"),
+    ] = False,
 ):
     """Enables or disables the overwatcher."""
 
     async with CluClient() as clu:
-        await clu.send_command("lvm.overwatcher", enable_or_disable)
+        await clu.send_command(
+            "lvm.overwatcher",
+            enable_or_disable,
+            "--now" if enable_or_disable == "disable" and now else "",
+        )
 
 
 @router.get("/status/allow_dome_calibrations", summary="Allow dome calibrations?")
