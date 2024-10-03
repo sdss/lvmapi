@@ -32,6 +32,11 @@ class Message(BaseModel):
         Field(description="Blocks of data to be sent"),
     ] = None
 
+    attachments: Annotated[
+        list[dict] | None,
+        Field(description="Attachments to be sent"),
+    ] = None
+
     channel: Annotated[
         str | None,
         Field(
@@ -88,6 +93,7 @@ async def route_post_message(message: Message) -> None:
             username=message.username,
             icon_url=message.icon_url,
             mentions=message.mentions,
+            attachments=message.attachments,
         )
     except Exception as err:
         raise HTTPException(500, detail=str(err))
@@ -101,8 +107,22 @@ async def route_get_message(
     channel: str | None = Query(None, description="Channel where to send the message"),
     username: str = Query(default_user, description="Username to send the message as"),
     icon_url: str | None = Query(None, description="URL for the icon to use"),
+    color: str | None = Query(None, description="Color of the message attachment"),
 ) -> None:
     """Sends a message to the Slack channel."""
+
+    if color is not None:
+        attachments = [
+            {
+                "color": color,
+                "text": text,
+                "mrkdwn_in": ["text"],
+                "fallback": text,
+            }
+        ]
+        text = ""
+    else:
+        attachments = []
 
     await route_post_message(
         Message(
@@ -110,6 +130,7 @@ async def route_get_message(
             channel=channel,
             username=username,
             icon_url=icon_url,
+            attachments=attachments,
         )
     )
 
