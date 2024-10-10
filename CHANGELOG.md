@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 - 2024-10-10
+
+### ✨ Improved
+
+* Redirect `/enclosure` to `/enclosure/status`.
+* Add `?now` query argument to `/overwatcher/disable`.
+* Allow setting Slack messsage colour as attachment.
+
+
 ## 0.1.5 - 2024-09-26
 
 ### 🚀 New
