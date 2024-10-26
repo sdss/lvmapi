@@ -18,6 +18,7 @@ database:
 
 actors:
   list:
+    - lvm.overwatcher
     - lvm.sci.agcam
     - lvm.spec.agcam
     - lvm.skye.agcam
@@ -42,6 +43,7 @@ actors:
     - lvm.skye.guider
     - lvm.skyw.guider
   actor_to_deployment:
+    lvm.overwatcher: overwatcher
     lvm.sci.agcam: lvmagcam
     lvm.spec.agcam: lvmagcam
     lvm.skye.agcam: lvmagcam

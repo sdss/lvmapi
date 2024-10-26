@@ -75,7 +75,7 @@ def get_exposures(mjd: int):
 @overload
 def get_exposure_data(
     mjd: int,
-    as_dataframe: Literal[False],
+    as_dataframe: Literal[False] = False,
     compact_lamps: bool = False,
 ) -> dict[int, ExposureDataDict]: ...
 
@@ -83,7 +83,7 @@ def get_exposure_data(
 @overload
 def get_exposure_data(
     mjd: int,
-    as_dataframe: Literal[True],
+    as_dataframe: Literal[True] = True,
     compact_lamps: bool = False,
 ) -> polars.DataFrame: ...
 
