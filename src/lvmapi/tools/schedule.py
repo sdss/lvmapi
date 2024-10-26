@@ -30,11 +30,11 @@ def get_ephemeris_data(filename: pathlib.Path | str) -> polars.DataFrame:
     return polars.read_parquet(filename)
 
 
-def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
+def sjd_ephemeris(sjd: int, twilight_horizon: float = -15) -> polars.DataFrame:
     """Returns the ephemeris for a given SJD."""
 
     observer = astroplan.Observer.at_site("Las Campanas Observatory")
-    observer.pressure = 0.75 * uu.bar
+    observer.pressure = 0.76 * uu.bar
 
     # Calculate Elevation of True Horizon. Astroplan does not provide this directly.
     # See https://github.com/astropy/astroplan/issues/242
@@ -46,12 +46,12 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
 
     # Calculate time at ~15UT, which corresponds to about noon at LCO, so always
     # before the beginning of the night.
-    time = Time(sjd - 0.35, format="mjd")
+    time = Time(sjd - 0.35, format="mjd", scale="utc")
 
     sunset = observer.sun_set_time(
         time,
         which="next",
-        horizon=hzel - 0.25 * uu.deg,  # Half the apparent size of the Sun.
+        horizon=hzel - 0.5 * uu.deg,  # Apparent size of the Sun.
     )
     sunset_twilight = observer.sun_set_time(
         time,
@@ -62,7 +62,7 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
     sunrise = observer.sun_rise_time(
         time,
         which="next",
-        horizon=hzel - 0.25 * uu.deg,
+        horizon=hzel - 0.5 * uu.deg,
     )
     sunrise_twilight = observer.sun_rise_time(
         time,
@@ -100,18 +100,18 @@ def sjd_ephemeris(sjd: int, twilight_horizon: float = -18) -> polars.DataFrame:
 
 
 def create_schedule(
+    start_sjd: int,
     end_sjd: int,
-    start_sjd: int | None = None,
     twilight_horizon: float = -15,
 ) -> polars.DataFrame:
     """Creates a schedule for the given time range.
 
     Parameters
     ----------
+    start_sjd
+        The initial SJD.
     end_sjd
         The final SJD of the schedule.
-    start_sjd
-        Optionally, the initial SJD. If not provided, the current time will be used.
 
     Returns
     -------
