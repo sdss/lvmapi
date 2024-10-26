@@ -170,17 +170,17 @@ def get_ephemeris_summary(sjd: int | None = None) -> dict:
     )
 
     return {
-        "SJD": sjd,
-        "request_jd": Time.now().jd,
+        "SJD": int(sjd),
+        "request_jd": float(Time.now().jd),
         "date": data["date"][0],
-        "sunset": sunset.jd,
-        "twilight_end": twilight_end.jd,
-        "twilight_start": twilight_start.jd,
-        "sunrise": sunrise.jd,
-        "is_night": is_night,
-        "is_twilight": is_twilight_evening or is_twilight_morning,
-        "time_to_sunset": round(time_to_sunset, 3),
-        "time_to_sunrise": round(time_to_sunrise, 3),
-        "moon_illumination": round(data["moon_illumination"][0], 3),
+        "sunset": float(sunset.jd),
+        "twilight_end": float(twilight_end.jd),
+        "twilight_start": float(twilight_start.jd),
+        "sunrise": float(sunrise.jd),
+        "is_night": bool(is_night),
+        "is_twilight": bool(is_twilight_evening or is_twilight_morning),
+        "time_to_sunset": round(float(time_to_sunset), 3),
+        "time_to_sunrise": round(float(time_to_sunrise), 3),
+        "moon_illumination": round(float(data["moon_illumination"][0]), 3),
         "from_file": from_file,
     }
