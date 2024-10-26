@@ -623,7 +623,7 @@ async def email_night_log(
     msg.attach(html)
 
     with smtplib.SMTP(host=email_host, port=email_port) as smtp:
-        smtp.sendmail(from_address, ", ".join(recipients), msg.as_string())
+        smtp.sendmail(from_address, recipients, msg.as_string())
 
     if update_database:
         uri = config["database.uri"]
