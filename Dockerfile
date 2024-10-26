@@ -10,6 +10,9 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
+# Install git
+RUN apt-get update && apt-get install -y git
+
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -20,6 +23,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ADD . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
+
+# Clear installed packages
+RUN apt-get purge -y git && apt-get autoremove -y && sudo apt-get update && sudo apt-get clean -y
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
