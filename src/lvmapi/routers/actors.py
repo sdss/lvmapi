@@ -66,14 +66,14 @@ async def get_actor_health(request: Request) -> list[HealthResponse]:
 
 
 @router.get("/ping", summary="Actor ping")
-async def ping_route(actors: list[str] | None = None) -> dict[str, bool]:
+async def get_ping_route(actors: list[str] | None = None) -> dict[str, bool]:
     """Pings a list of actors."""
 
     return await ping_actors(actors=actors)
 
 
-@router.get("/restart/{actor}", summary="Restart actor")
-async def restart_actor_route(actor: str) -> str:
+@router.get("/restart/{actor}", summary="Restart an actor")
+async def get_restart_actor_route(actor: str) -> str:
     """Restarts an actor. Scheduled as a task and returns the task ID"""
 
     deployment = config["actors.actor_to_deployment"][actor]
@@ -82,6 +82,21 @@ async def restart_actor_route(actor: str) -> str:
 
     task = await restart_kubernetes_deployment_task.kiq(deployment)
     return task.task_id
+
+
+@router.get("/stop/{actor}", summary="Stop an actor")
+async def get_stop_actor_route(actor: str) -> bool:
+    """Stops an actor."""
+
+    from lvmapi.app import app
+
+    deployment = config["actors.actor_to_deployment"][actor]
+    if deployment is None:
+        raise ValueError(f"Actor {actor} does not have a deployment.")
+
+    app.state.kubernetes.delete_deployment(deployment)
+
+    return True
 
 
 @router.get("/versions", summary="Get actor versions")

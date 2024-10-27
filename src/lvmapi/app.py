@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import os
+
 import taskiq_fastapi
 from fastapi import FastAPI, Request
 
@@ -65,6 +67,15 @@ taskiq_fastapi.init(broker, "lvmapi.app:app")
 
 # Add kubernetes API instance to state.
 app.state.kubernetes = Kubernetes()
+
+# Fake states for testing.
+app.state.use_fake_states = os.environ.get("LVM_USE_FAKE_STATES", "0") != "0"
+app.state.fake_states = {
+    "wind_alert": False,
+    "humidity_alert": False,
+    "door_alert": False,
+    "is_day": False,
+}
 
 
 @app.get("/")
