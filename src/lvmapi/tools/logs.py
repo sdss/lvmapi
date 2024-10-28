@@ -640,4 +640,6 @@ async def email_night_log(
                 await aconn.commit()
 
     if send_slack_notification:
-        await post_message(f"Night log for MJD {sjd} can be found <{lvmweb_url}|here>.")
+        await post_message(
+            f"The night log for MJD {sjd} can be found <{lvmweb_url}|here>."
+        )
