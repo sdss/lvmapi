@@ -1,5 +1,28 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Add the option to stop an actor.
+
+### ✨ Improved
+
+* Allow to pass start and end time to the weather report endpoint.
+* Add `overwatcher` to the list of actors.
+* Update ephemeris schedule to match LCO's.
+* Add overwatcher observing status data to `/overwatcher/status`.
+* Add query param to avoid resending night log emails.
+
+### 🔧 Fixed
+
+* Fix `smtp.sendmail()` call in `email_night_log()`.
+
+### ⚙️ Engineering
+
+* Implement system to fake alert values.
+
+
 ## 0.1.6 - 2024-10-10
 
 ### ✨ Improved
