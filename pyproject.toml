@@ -1,6 +1,6 @@
 [project]
 name = "lvmapi"
-version = "0.1.7a0"
+version = "0.1.7"
 description = "REST API for LVM operations"
 authors = [
     { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" }
@@ -25,7 +25,7 @@ dependencies = [
     "redis[hiredis]>=5.0.3",
     "httpx>=0.27.2",
     "aiocache>=0.12.2",
-    "lvmgort",
+    "lvmgort>=1.0.0",
     "cachetools>=5.4.0",
     "taskiq[reload]>=0.11.7; sys_platform!='darwin'",
     "taskiq>=0.11.7; sys_platform=='darwin'",
@@ -59,8 +59,8 @@ dev = [
 package = true
 default-groups = ["dev"]
 
-[tool.uv.sources]
-lvmgort = { git = "https://github.com/sdss/lvmgort", branch = "overwatcher" }
+# [tool.uv.sources]
+# lvmgort = { git = "https://github.com/sdss/lvmgort", branch = "overwatcher" }
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
