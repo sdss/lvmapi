@@ -45,6 +45,16 @@ async def shutdown_task():
 
 
 @broker.task()
+async def cleanup_task(readout: bool = True):
+    """Shuts down the system."""
+
+    async with get_gort_client() as gort:
+        await gort.cleanup(readout=readout)
+
+    return True
+
+
+@broker.task()
 async def restart_kubernetes_deployment_task(deployment: str, confirm: bool = True):
     """Restarts a Kubernetes deployment."""
 

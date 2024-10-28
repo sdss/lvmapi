@@ -8,20 +8,46 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from lvmapi.auth import AuthDependency
-from lvmapi.tasks import shutdown_task
+from lvmapi.tasks import cleanup_task, shutdown_task
 
 
 router = APIRouter(prefix="/macros", tags=["macros"])
 
 
-@router.get("/shutdown", dependencies=[AuthDependency])
+@router.get(
+    "/shutdown",
+    dependencies=[AuthDependency],
+    summary="Runs the shutdown macro",
+)
 async def route_get_shutdown() -> str:
     """Schedules an emergency shutdown of the enclosure and telescopes."""
 
     task = await shutdown_task.kiq()
+    return task.task_id
+
+
+@router.get(
+    "/cleanup",
+    dependencies=[AuthDependency],
+    summary="Runs the cleanup macro",
+)
+async def route_get_cleanup(
+    readout: Annotated[
+        bool,
+        Query(
+            description="If the spectrographs are idle and with a readout pending, "
+            "reads the spectrographs."
+        ),
+    ] = True,
+) -> str:
+    """Runs the cleanup recipe as a task."""
+
+    task = await cleanup_task.kiq(readout=readout)
     return task.task_id
 
 

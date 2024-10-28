@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Add `/macros/cleanup` endpoint.
+
+
 ## 0.1.7 - 2024-10-28
 
 ### 🚀 New
