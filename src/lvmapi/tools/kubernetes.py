@@ -87,7 +87,7 @@ class Kubernetes:
 
         path = pathlib.Path(config["kubernetes.deployments_path"])
 
-        files = list(path.glob(f"**/{name}*"))
+        files = list(path.glob(f"**/{name}.y*ml"))
 
         if files is None or len(files) == 0:
             raise ValueError(f"No YAML file found for {name!r}.")
