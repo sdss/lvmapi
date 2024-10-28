@@ -6,6 +6,10 @@
 
 * Add `/macros/cleanup` endpoint.
 
+### 🔧 Fixed
+
+* Prevent the `lvmapi` development version from inheriting production task messages from the exchange.
+
 
 ## 0.1.7 - 2024-10-28
 
