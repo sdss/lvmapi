@@ -38,6 +38,11 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is the overwatcher observing?"),
     ] = False
 
+    cancelling: Annotated[
+        bool,
+        Field(description="Are observations being cancelled?"),
+    ] = False
+
     calibrating: Annotated[
         bool,
         Field(description="Is the overwatcher taking cals?"),
@@ -61,6 +66,26 @@ class OverwatcherStatusModel(BaseModel):
     running_calibration: Annotated[
         str | None,
         Field(description="Name of the currently running calibration"),
+    ] = None
+
+    tile_id: Annotated[
+        int | None,
+        Field(description="Tile ID of the current observation"),
+    ] = None
+
+    dither_position: Annotated[
+        int | None,
+        Field(description="Dither position of the current observation"),
+    ] = None
+
+    stage: Annotated[
+        str | None,
+        Field(description="Stage of the current observation"),
+    ] = None
+
+    standard_no: Annotated[
+        int | None,
+        Field(description="Standard number of the current observation"),
     ] = None
 
 
@@ -135,9 +160,21 @@ async def get_overwatcher_status() -> OverwatcherStatusModel:
         except KeyError:
             status = {"running": False}
 
+        observer_command = await clu.send_command("lvm.overwatcher", "observer status")
+
+        try:
+            observer_status = observer_command.replies.get("observer_status")
+        except KeyError:
+            observer_status = {}
+        observer_status.pop("observing")  # Duplicated.
+
     running_cal = await route_get_calibrations_current()
 
-    return OverwatcherStatusModel(**status, running_calibration=running_cal)
+    return OverwatcherStatusModel(
+        **status,
+        **observer_status,
+        running_calibration=running_cal,
+    )
 
 
 @router.get("/status/enabled", summary="Is the overwatcher enabled?")
