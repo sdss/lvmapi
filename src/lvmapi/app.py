@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 
 import taskiq_fastapi
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 
 from lvmapi import auth
 from lvmapi.broker import broker, broker_shutdown, broker_startup
@@ -73,9 +73,64 @@ app.state.use_fake_states = os.environ.get("LVM_USE_FAKE_STATES", "0") != "0"
 app.state.fake_states = {
     "wind_alert": False,
     "humidity_alert": False,
+    "rain_alert": False,
     "door_alert": False,
     "is_day": False,
 }
+
+
+@app.get("/fake-states/enable", include_in_schema=False)
+async def route_get_enable_states():
+    """Enable fake states."""
+
+    app.state.use_fake_states = True
+
+    return {"use_fake_states": app.state.use_fake_states}
+
+
+@app.get("/fake-states/disable", include_in_schema=False)
+async def route_get_disable_states():
+    """Disable fake states."""
+
+    app.state.use_fake_states = False
+
+    return {"use_fake_states": app.state.use_fake_states}
+
+
+@app.get("/fake-states/set/{state}/{value}", include_in_schema=False)
+async def route_get_set_fake_state(state: str, value: bool):
+    """Sets a fake state."""
+
+    if state not in app.state.fake_states:
+        raise HTTPException(400, f"Invalid state {state!r}")
+
+    app.state.fake_states[state] = value
+
+    return {"state": state, "value": app.state.fake_states[state]}
+
+
+@app.get("/fake-states/get", include_in_schema=False)
+async def route_get_get_fake_state_all():
+    """Queries the value of all fake states."""
+
+    return {
+        "use_fake_states": app.state.use_fake_states,
+        "fake_States": app.state.fake_states,
+    }
+
+
+@app.get("/fake-states/get/{state}", include_in_schema=False)
+async def route_get_get_fake_state(state: str):
+    """Queries the value of a fake state."""
+
+    if state not in app.state.fake_states:
+        raise HTTPException(400, f"Invalid state {state!r}")
+
+    return {
+        "use_fake_states": app.state.use_fake_states,
+        "state": state,
+        "value": app.state.fake_states[state],
+    }
 
 
 @app.get("/")

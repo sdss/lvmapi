@@ -13,7 +13,7 @@ import time
 import warnings
 
 import polars
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
@@ -42,7 +42,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 @router.get("/")
 @router.get("/summary")
-async def summary() -> AlertsSummary:
+async def summary(request: Request) -> AlertsSummary:
     """Summary of alerts."""
 
     tasks: list[asyncio.Task] = []
@@ -99,6 +99,13 @@ async def summary() -> AlertsSummary:
     o2_alert = any(o2_alerts.values())
     rain_sensor_alarm = enclosure_alerts_response.get("rain_sensor_alarm", None)
     door_alert = enclosure_alerts_response.get("door_alert", None)
+
+    # These fake states are just for testing.
+    if request.app.state.use_fake_states:
+        humidity_alert = request.app.state.fake_states["humidity_alert"]
+        wind_alert = request.app.state.fake_states["wind_alert"]
+        rain_sensor_alarm = request.app.state.fake_states["rain_alert"]
+        door_alert = request.app.state.fake_states["door_alert"]
 
     return AlertsSummary(
         humidity_alert=humidity_alert,
