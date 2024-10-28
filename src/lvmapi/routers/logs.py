@@ -222,11 +222,15 @@ async def route_get_night_logs_mjd_email(
         int,
         Path(description="The MJD for which to retrieve night log."),
     ],
+    only_if_not_sent: Annotated[
+        bool,
+        Query(description="Only send the email if it has not been already been sent."),
+    ] = False,
 ):
     """Emails the night log."""
 
     mjd = mjd if mjd > 0 else get_sjd("LCO")
-    data = await email_night_log(mjd)
+    data = await email_night_log(mjd, only_if_not_sent=only_if_not_sent)
 
     return data
 

@@ -547,6 +547,7 @@ async def email_night_log(
     sjd: int | None = None,
     update_database: bool = True,
     send_slack_notification: bool = True,
+    only_if_not_sent: bool = False,
 ):
     """Emails the night log for an SJD."""
 
@@ -580,6 +581,9 @@ async def email_night_log(
         full_obstime=False,
         compact_lamps=True,
     )
+
+    if data["sent"] and only_if_not_sent:
+        raise RuntimeError(f"Night log for MJD {sjd} has already been sent.")
 
     observers = data["observers"] or "Overwatcher"
     date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
