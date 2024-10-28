@@ -230,9 +230,15 @@ async def route_get_night_logs_mjd_email(
     """Emails the night log."""
 
     mjd = mjd if mjd > 0 else get_sjd("LCO")
-    data = await email_night_log(mjd, only_if_not_sent=only_if_not_sent)
 
-    return data
+    try:
+        await email_night_log(mjd, only_if_not_sent=only_if_not_sent)
+    except Exception as err:
+        if "has already been sent" in str(err):
+            return False
+        raise
+
+    return True
 
 
 @router.get("/night-logs/{mjd}/plaintext", summary="Plain-text night log")
