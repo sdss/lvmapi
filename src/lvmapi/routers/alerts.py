@@ -70,22 +70,21 @@ async def summary(request: Request) -> AlertsSummary:
     dew_point_alert = None
 
     if not isinstance(weather_data, BaseException) and weather_data.height > 0:
-        last_weather = weather_data[-1]
-
-        wind_alert = is_measurament_safe(
+        wind_alert = not is_measurament_safe(
             weather_data,
             "wind_speed_avg",
             threshold=35,
             reopen_value=30,
         )
 
-        humidity_alert = is_measurament_safe(
+        humidity_alert = not is_measurament_safe(
             weather_data,
             "relative_humidity",
             threshold=80,
             reopen_value=70,
         )
 
+        last_weather = weather_data[-1]
         dew_point_alert = last_weather["dew_point"][0] > last_weather["temperature"][0]
 
     o2_alerts = {
