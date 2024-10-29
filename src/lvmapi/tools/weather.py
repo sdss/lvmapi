@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import time
+
 import httpx
 import polars
 from astropy.time import Time, TimeDelta
@@ -140,3 +142,70 @@ async def get_weather_data(
     )
 
     return df
+
+
+def is_measurament_safe(
+    data: polars.DataFrame,
+    measurement: str,
+    threshold: float,
+    window: int = 30,
+    rolling_average_window: int = 30,
+    reopen_value: float | None = None,
+):
+    """Determines whether an alert should be raised for a given measurement.
+
+    An alert will be issued if the rolling average value of the ``measurement``
+    (a column in ``data``) over the last ``window`` seconds is above the
+    ``threshold``. Once the alert has been raised  the value of the ``measurement``
+    must fall below the ``reopen_value`` to close the alert (defaults to the same
+    ``threshold`` value) in a rolling.
+
+    ``window`` and ``rolling_average_window`` are in minutes.
+
+    Returns
+    -------
+    result
+        A boolean indicating whether the measurement is safe. `True` means the
+        measurement is in a valid, safe range.
+
+    """
+
+    if measurement not in data.columns:
+        raise ValueError(f"Measurement {measurement} not found in data.")
+
+    reopen_value = reopen_value or threshold
+
+    data = data.filter(["ts", measurement])
+    data = data.with_columns(
+        average=polars.col(measurement).rolling_mean_by(
+            by="ts",
+            window_size=f"{rolling_average_window}m",
+        )
+    )
+
+    # Get data from the last window`.
+    now = time.time()
+    data_window = data.filter(polars.col.ts.dt.timestamp("ms") > (now - window * 60))
+
+    # If any of the values in the last "window" is above the threshold, it's unsafe.
+    if (data_window["average"] >= threshold).any():
+        return False
+
+    # If all the values in the last "window" are below the reopen threshold, it's safe.
+    if (data_window["average"] < reopen_value).all():
+        return True
+
+    # The last case is if the values in the last "window" are between the reopen and
+    # the threshold values. We want to avoid the returned value flipping from true
+    # to false in a quick manner. We check the previous "window" minutes to see if
+    # the alert was raised at any point. If so, we require the current window to
+    # be below the reopen value. Otherwise, we consider it's safe.
+
+    prev_window = data.filter(
+        polars.col.ts.dt.timestamp("ms") > (now - 2 * window * 60),
+        polars.col.ts.dt.timestamp("ms") < (now - window * 60),
+    )
+    if (prev_window["average"] >= threshold).any():
+        return (data_window["average"] < reopen_value).all()
+
+    return True

@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import warnings
 
 import polars
@@ -17,7 +16,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
-from lvmapi.tools.weather import get_weather_data
+from lvmapi.tools.weather import get_weather_data, is_measurament_safe
 
 
 class AlertsSummary(BaseModel):
@@ -73,24 +72,21 @@ async def summary(request: Request) -> AlertsSummary:
     if not isinstance(weather_data, BaseException) and weather_data.height > 0:
         last_weather = weather_data[-1]
 
-        humidity_alert = last_weather["relative_humidity"][0] > 80
+        wind_alert = is_measurament_safe(
+            weather_data,
+            "wind_speed_avg",
+            threshold=35,
+            reopen_value=30,
+        )
+
+        humidity_alert = is_measurament_safe(
+            weather_data,
+            "relative_humidity",
+            threshold=80,
+            reopen_value=70,
+        )
+
         dew_point_alert = last_weather["dew_point"][0] > last_weather["temperature"][0]
-
-        now = time.time()
-        last_30m = weather_data.filter(polars.col.ts.dt.timestamp("ms") > (now - 1800))
-
-        # LCO rules are to close if wind speed is above 35 mph in the 30 minute
-        # average and reopen only if the average is below 30 mph.
-        wind_30m_last = last_weather["wind_speed_avg_30m"][0]
-        if wind_30m_last > 35:
-            wind_alert = True
-        elif wind_30m_last < 30:
-            wind_alert = False
-        else:
-            if (last_30m["wind_speed_avg_30m"] > 35).any():
-                wind_alert = True
-            else:
-                wind_alert = False
 
     o2_alerts = {
         key: value for key, value in enclosure_alerts_response.items() if "o2_" in key

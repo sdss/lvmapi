@@ -2,6 +2,10 @@
 
 ## Next version
 
+### ✨ Improved
+
+* Added function `is_measurament_safe()` to calculate if weather data values are safe.
+
 ### 🏷️ Changed
 
 * Change `/overwatcher/status/allow_calibrations` to `/overwatcher/status/allow_calibrations`.
