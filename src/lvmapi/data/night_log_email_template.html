@@ -39,8 +39,20 @@
         margin: 5px 0px 15px 0px;
       }
 
+      ul {
+        list-style-position: outside;
+      }
+
       li {
         white-space: pre-line;
+      }
+
+      li + li {
+        margin-top: 10px;
+      }
+
+      pre.version-tab {
+        tab-size: 4;
       }
     </style>
   </head>
@@ -75,25 +87,26 @@
     </div>
     <hr />
     {% if weather %}
-      <lu>
+      <ul>
         {% for comment in weather %}
           <li>{{ comment.comment }}</li>
         {% endfor %}
-      </lu>
+      </ul>
     {% else %}
       <div>No comments.</div>
     {% endif %}
+
 
     <div class="section">
       Issues / bugs
     </div>
     <hr />
     {% if issues %}
-      <lu>
+      <ul>
         {% for comment in issues %}
           <li>{{ comment.comment }}</li>
         {% endfor %}
-      </lu>
+      </ul>
     {% else %}
       <div>No comments.</div>
     {% endif %}
@@ -103,13 +116,38 @@
     </div>
     <hr />
     {% if other %}
-      <lu>
+      <ul>
         {% for comment in other %}
           <li>{{ comment.comment }}</li>
         {% endfor %}
-      </lu>
+      </ul>
     {% else %}
       <div>No comments.</div>
+    {% endif %}
+
+    <div class="section">
+      Software versions
+    </div>
+    <hr />
+    {% if software_versions %}
+      <table style="border: 0; padding: 5px">
+        {% for actor, version in software_versions.items() %}
+          <tr>
+            <td>
+              <code style="font-size: 10pt">
+                {{ actor }}
+              </code>
+            </td>
+            <td>
+              <code style="margin-left: 20px; font-size: 10pt">
+                {{ version or "N/A" }}
+              </code>
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <div>No data.</div>
     {% endif %}
 
     <div class="section">

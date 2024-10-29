@@ -8,8 +8,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Request
@@ -17,7 +15,8 @@ from pydantic import BaseModel
 
 from lvmapi import config
 from lvmapi.tasks import restart_kubernetes_deployment_task
-from lvmapi.tools.rabbitmq import CluClient, ping_actors
+from lvmapi.tools.logs import get_actor_versions
+from lvmapi.tools.rabbitmq import ping_actors
 
 
 class HealthResponse(BaseModel):
@@ -108,21 +107,5 @@ async def get_actor_versions_route(
 ) -> dict[str, str | None]:
     """Returns the version of an actor."""
 
-    actors: list[str] = config["actors"]["list"]
-    if actor is not None:
-        actors = [actor]
 
-    async with CluClient() as client:
-        version_cmds = await asyncio.gather(
-            *[client.send_command(actor, "version") for actor in actors]
-        )
-
-    versions: dict[str, str | None] = {}
-    for iactor, version_cmd in enumerate(version_cmds):
-        try:
-            version: str | None = version_cmd.replies.get("version")
-        except Exception:
-            version = None
-        versions[actors[iactor]] = version
-
-    return versions
+    return (await get_actor_versions(actor=actor))

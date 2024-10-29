@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import pathlib
@@ -29,6 +30,7 @@ from pydantic import BaseModel
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
+from lvmapi.tools.rabbitmq import CluClient
 from lvmapi.tools.slack import post_message
 
 
@@ -243,6 +245,29 @@ async def get_exposure_table_ascii(
 
     exposure_io.seek(0)
     return exposure_io.read()
+
+
+async def get_actor_versions(actor: str | None = None):
+    """Returns a list of actor versions."""
+
+    actors: list[str] = config["actors"]["list"]
+    if actor is not None:
+        actors = [actor]
+
+    async with CluClient() as client:
+        version_cmds = await asyncio.gather(
+            *[client.send_command(actor, "version") for actor in actors]
+        )
+
+    versions: dict[str, str | None] = {}
+    for iactor, version_cmd in enumerate(version_cmds):
+        try:
+            version: str | None = version_cmd.replies.get("version")
+        except Exception:
+            version = None
+        versions[actors[iactor]] = version
+
+    return versions
 
 
 NIGHT_LOG_CATEGORIES = set(["observers", "weather", "issues", "other"])
@@ -501,6 +526,10 @@ Other
 -----
 {other}
 
+Versions
+--------
+{versions}
+
 Exposure data
 -------------
 {exposure_data}
@@ -532,6 +561,9 @@ Exposure data
         compact_lamps=True,
     )
 
+    versions = await get_actor_versions()
+    versions_l = [f"{actor}: {version or '?'}" for actor, version in versions.items()]
+
     return nigh_log.format(
         date=date,
         sjd=sjd,
@@ -539,6 +571,7 @@ Exposure data
         weather="\n".join(weather) or "No comments",
         issues="\n".join(issues) or "No comments",
         other="\n".join(other) or "No comments",
+        versions="\n".join(versions_l),
         exposure_data=exposure_table or "No exposures found",
     )
 
@@ -589,6 +622,8 @@ async def email_night_log(
     date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
     lvmweb_url = config["night_logs.lvmweb_url"] + str(sjd)
 
+    versions = await get_actor_versions()
+
     html_message = html_template.render(
         sjd=sjd,
         lvmweb_url=lvmweb_url,
@@ -598,6 +633,7 @@ async def email_night_log(
         issues=data["comments"]["issues"],
         other=data["comments"]["other"],
         exposure_table=exposure_table,
+        software_versions=versions,
     )
 
     recipients = config["night_logs.email_recipients"]
