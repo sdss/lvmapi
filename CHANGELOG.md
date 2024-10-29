@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🏷️ Changed
+
+* Change `/overwatcher/status/allow_calibrations` to `/overwatcher/status/allow_calibrations`.
+
+
 ## 0.1.8 - 2024-10-28
 
 ### 🚀 New

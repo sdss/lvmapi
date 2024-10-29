@@ -58,9 +58,9 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is it safe to observe?"),
     ] = None
 
-    allow_dome_calibrations: Annotated[
+    allow_calibrations: Annotated[
         bool,
-        Field(description="Is the overwatcher allowed to take dome cals?"),
+        Field(description="Is the overwatcher allowed to take cals?"),
     ] = False
 
     running_calibration: Annotated[
@@ -211,33 +211,33 @@ async def put_overwatcher_enabled(
         )
 
 
-@router.get("/status/allow_dome_calibrations", summary="Allow dome calibrations?")
-async def get_allow_dome_calibrations() -> bool:
-    """Returns whether the overwatcher can take calibrations inside the dome."""
+@router.get("/status/allow_calibrations", summary="Allow calibrations?")
+async def get_allow_calibrations() -> bool:
+    """Returns whether the overwatcher can take calibrations."""
 
     status = await get_overwatcher_status()
 
-    return status.allow_dome_calibrations
+    return status.allow_calibrations
 
 
 @router.put(
-    "/status/allow_dome_calibrations/{enable_or_disable}",
-    summary="Enable or disable dome calibrations",
+    "/status/allow_calibrations/{enable_or_disable}",
+    summary="Enable or disable calibrations",
     dependencies=[AuthDependency],
 )
-async def put_allow_dome_calibrations_enabled(
+async def put_allow_calibrations_enabled(
     enable_or_disable: Annotated[
         Literal["enable", "disable"],
-        Path(description="Whether to enable or disable dome calibrations"),
+        Path(description="Whether to enable or disable calibrations"),
     ],
 ):
-    """Enables or disables dome calibrations."""
+    """Enables or disables calibrations."""
 
     command: str = "calibrations "
     if enable_or_disable == "enable":
-        command += "enable-dome-calibrations"
+        command += "enable-calibrations"
     else:
-        command += "disable-dome-calibrations"
+        command += "disable-calibrations"
 
     async with CluClient() as clu:
         await clu.send_command("lvm.overwatcher", command)
