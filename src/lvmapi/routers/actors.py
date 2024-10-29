@@ -107,5 +107,4 @@ async def get_actor_versions_route(
 ) -> dict[str, str | None]:
     """Returns the version of an actor."""
 
-
-    return (await get_actor_versions(actor=actor))
+    return await get_actor_versions(actor=actor)
