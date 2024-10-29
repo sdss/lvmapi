@@ -175,7 +175,7 @@ def is_measurament_safe(
 
     reopen_value = reopen_value or threshold
 
-    data = data.filter(["ts", measurement])
+    data = data.filter(polars.col.ts, polars.col(measurement))
     data = data.with_columns(
         average=polars.col(measurement).rolling_mean_by(
             by="ts",
