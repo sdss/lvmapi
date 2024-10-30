@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Allow to modify a night log comment.
+
+
 ## 0.1.9 - 2024-10-30
 
 ### ✨ Improved

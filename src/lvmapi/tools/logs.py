@@ -333,8 +333,9 @@ async def add_night_log_comment(
     sjd: int | None,
     comment: str,
     category: str | None = None,
+    comment_pk: int | None = None,
 ):
-    """Adds a comment to the night log."""
+    """Adds or updates a comment in the night log."""
 
     uri = config["database.uri"]
     table_night_log = Identifier(*config["database.tables.night_log"].split("."))
@@ -361,9 +362,9 @@ async def add_night_log_comment(
                 (sjd,),
             )
 
-            pk = await result.fetchone()
-            if pk is not None:
-                pk = pk[0]
+            night_log_pk = await result.fetchone()
+            if night_log_pk is not None:
+                night_log_pk = night_log_pk[0]
             else:
                 # Insert a new entry in night_log.
                 result = await acursor.execute(
@@ -374,11 +375,11 @@ async def add_night_log_comment(
                     (sjd,),
                 )
 
-                fetch_pk = await result.fetchone()
-                if not fetch_pk:
+                fetch_night_log_pk = await result.fetchone()
+                if not fetch_night_log_pk:
                     raise RuntimeError("Failed to insert new entry in night_log.")
 
-                pk = fetch_pk[0]
+                night_log_pk = fetch_night_log_pk[0]
                 await aconn.commit()
 
             # The observers category should have a single comment.
@@ -388,26 +389,46 @@ async def add_night_log_comment(
                         "DELETE FROM {table_comment} WHERE night_log_pk = %s "
                         "AND category = %s"
                     ).format(table_comment=table_comment),
-                    (pk, "observers"),
+                    (night_log_pk, "observers"),
                 )
 
-            # Now add the comment.
-            result = await acursor.execute(
-                SQL(
-                    "INSERT INTO {table_comment} "
-                    "(night_log_pk, time, category, comment) "
-                    "VALUES (%s, %s, %s, %s) RETURNING pk"
-                ).format(table_comment=table_comment),
-                (pk, datetime.now(UTC), category, comment),
-            )
+            # Get the next pk. Normally this would be done with a sequence but
+            # we want to do an UPSERT in the next step.
+            if comment_pk is None:
+                result = await acursor.execute(
+                    SQL("SELECT MAX(pk) FROM {table_comment}").format(
+                        table_comment=table_comment
+                    )
+                )
+                fetch_pk = await result.fetchone()
+                if not fetch_pk:
+                    raise RuntimeError("Cannot get next comment pk.")
+                comment_pk = fetch_pk[0] + 1
 
-            fetch_pk = await result.fetchone()
-            if not fetch_pk:
-                raise RuntimeError("Failed to insert new comment in night_log_comment.")
+            # Now add the comment.
+            try:
+                await acursor.execute(
+                    SQL(
+                        "INSERT INTO {table_comment} "
+                        "(pk, night_log_pk, time, category, comment) "
+                        "VALUES (%s, %s, %s, %s, %s) "
+                        "ON CONFLICT (pk) DO UPDATE SET comment = %s;"
+                    ).format(table_comment=table_comment),
+                    (
+                        comment_pk,
+                        night_log_pk,
+                        datetime.now(UTC),
+                        category,
+                        comment,
+                        comment,
+                    ),
+                )
+            except Exception as ee:
+                raise RuntimeError(f"Failed to insert comment: {ee}")
 
             await aconn.commit()
 
-    return fetch_pk[0]
+    return comment_pk
 
 
 async def delete_night_log_comment(pk: int):

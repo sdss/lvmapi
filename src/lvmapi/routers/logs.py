@@ -90,6 +90,13 @@ class NightLogPostComment(BaseModel):
         str,
         Field(description="The comment text"),
     ]
+    pk: Annotated[
+        int | None,
+        Field(
+            description="The primary key of the comment. If provided, "
+            "the comment will be updated."
+        ),
+    ] = None
 
 
 router = APIRouter(prefix="/logs", tags=["logs"])
@@ -172,7 +179,12 @@ async def route_post_night_logs_add_comment(
 ):
     """Adds a comment to a night log."""
 
-    await add_night_log_comment(data.mjd, data.comment, category=data.category)
+    await add_night_log_comment(
+        data.mjd,
+        data.comment,
+        category=data.category,
+        comment_pk=data.pk,
+    )
 
 
 @router.get(
