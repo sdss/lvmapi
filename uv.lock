@@ -1022,7 +1022,7 @@ wheels = [
 
 [[package]]
 name = "lvmapi"
-version = "0.1.9a0"
+version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
@@ -1109,11 +1109,12 @@ dev = [
 
 [[package]]
 name = "lvmgort"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astropy" },
     { name = "httpx" },
+    { name = "lvmopstools" },
     { name = "peewee" },
     { name = "polars" },
     { name = "psycopg2-binary" },
@@ -1124,9 +1125,9 @@ dependencies = [
     { name = "sdsstools" },
     { name = "unclick" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/92/f70501b1b3c43da6a3b6ac987106bf4554a7024748916da0cc757e86bfa2/lvmgort-1.0.0.tar.gz", hash = "sha256:156f91b03e4573b5897cc9fc191e53e30ff12b55e3cad518065c5c3a619cf74d", size = 97033 }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/03/881df11740a5dd430b7757127b4e26e8d754a8bb1844c5aeb0403cda82f3/lvmgort-1.0.1.tar.gz", hash = "sha256:1689aaa0c6bf3011e4f0e6d2087e9351897e26a11f8478a65d1d39fefe380ed4", size = 97953 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/48/a8b6ab09645b8177fd4d2c9a67e70191b46c9b517b82deb2b622ace23458/lvmgort-1.0.0-py3-none-any.whl", hash = "sha256:4d25983eff41a2af2f13c5b1e9df1ea4151cd79fcf6352b65a32288596825e71", size = 122565 },
+    { url = "https://files.pythonhosted.org/packages/58/89/e16b6b7ab2909e8ff3e1170893a2252ddba0f8ec7491a8934b9c3a3e4351/lvmgort-1.0.1-py3-none-any.whl", hash = "sha256:6636c623070bdc6058a6bfbb2a3a6f9c94eb1635b07bf8468cca16340af11d32", size = 123620 },
 ]
 
 [[package]]
@@ -2152,11 +2153,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "75.2.0"
+version = "75.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/07/37/b31be7e4b9f13b59cde9dcaeff112d401d49e0dc5b37ed4a9fc8fb12f409/setuptools-75.2.0.tar.gz", hash = "sha256:753bb6ebf1f465a1912e19ed1d41f403a79173a9acf66a42e7e6aec45c3c16ec", size = 1350308 }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/22/a438e0caa4576f8c383fa4d35f1cc01655a46c75be358960d815bfbb12bd/setuptools-75.3.0.tar.gz", hash = "sha256:fba5dd4d766e97be1b1681d98712680ae8f2f26d7881245f2ce9e40714f1a686", size = 1351577 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/2d/90165d51ecd38f9a02c6832198c13a4e48652485e2ccf863ebb942c531b6/setuptools-75.2.0-py3-none-any.whl", hash = "sha256:a7fcb66f68b4d9e8e66b42f9876150a3371558f98fa32222ffaa5bced76406f8", size = 1249825 },
+    { url = "https://files.pythonhosted.org/packages/90/12/282ee9bce8b58130cb762fbc9beabd531549952cac11fc56add11dcb7ea0/setuptools-75.3.0-py3-none-any.whl", hash = "sha256:f2504966861356aa38616760c0f66568e535562374995367b4e69c7143cf6bcd", size = 1251070 },
 ]
 
 [[package]]
@@ -2179,11 +2180,11 @@ wheels = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.33.2"
+version = "3.33.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/69/45/378db6bd5ef952b25c0caed9c9b9be733dba1f702099182deddd60e85be7/slack_sdk-3.33.2.tar.gz", hash = "sha256:34c51cfb9c254553219a0bba7a741c913f5d4d372d6278c3e7e10fe7bb667724", size = 232746 }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/80/1deaf0d20bdfd04613f67f0b8603c374dbde29199433bf070f29dc8f44aa/slack_sdk-3.33.3.tar.gz", hash = "sha256:4cc44c9ffe4bb28a01fbe3264c2f466c783b893a4eca62026ab845ec7c176ff1", size = 232956 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/a8/985fc67f08ac4bab00eadcb8821c859961bd2ab4c9ec6936868c32d83340/slack_sdk-3.33.2-py2.py3-none-any.whl", hash = "sha256:8107912488028f5a3f04ee9c58524418d3a2763a843db25530375b7733e6ec0a", size = 291712 },
+    { url = "https://files.pythonhosted.org/packages/6b/bc/9af41edcc7ebc825f5bc700a9d8a865d5372dd5564f6047d672b4f35d620/slack_sdk-3.33.3-py2.py3-none-any.whl", hash = "sha256:0515fb93cd03b18de61f876a8304c4c3cef4dd3c2a3bad62d7394d2eb5a3c8e6", size = 291952 },
 ]
 
 [[package]]
