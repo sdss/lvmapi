@@ -5,6 +5,7 @@
 ### ✨ Improved
 
 * Added function `is_measurament_safe()` to calculate if weather data values are safe.
+* Report actor versions in night log email.
 
 ### 🏷️ Changed
 
