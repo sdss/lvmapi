@@ -674,11 +674,8 @@ async def email_night_log(
     msg["To"] = ", ".join(recipients)
     msg["Reply-To"] = email_reply_to
 
-    plain = MIMEText(
-        "A message was sent from LVM but your email client cannot process HTML.",
-        "plain",
-    )
-    msg.attach(plain)
+    plaintext_email = await get_plaintext_night_log(sjd)
+    msg.attach(MIMEText(plaintext_email, "plain"))
 
     html = MIMEText(html_message, "html")
     msg.attach(html)

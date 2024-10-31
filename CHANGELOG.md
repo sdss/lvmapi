@@ -5,6 +5,7 @@
 ### ✨ Improved
 
 * Allow to modify a night log comment.
+* Attach full plaintext version of the night log to the email.
 
 
 ## 0.1.9 - 2024-10-30
