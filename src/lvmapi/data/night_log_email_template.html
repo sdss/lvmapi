@@ -126,6 +126,18 @@
     {% endif %}
 
     <div class="section">
+      Exposures
+    </div>
+    <hr />
+    {% if exposure_table %}
+      <pre>
+        {{- exposure_table }}
+      </pre>
+    {% else %}
+      <div>No exposures.</div>
+    {% endif %}
+
+    <div class="section">
       Software versions
     </div>
     <hr />
@@ -148,18 +160,6 @@
       </table>
     {% else %}
       <div>No data.</div>
-    {% endif %}
-
-    <div class="section">
-      Exposures
-    </div>
-    <hr />
-    {% if exposure_table %}
-      <pre>
-        {{- exposure_table }}
-      </pre>
-    {% else %}
-      <div>No exposures.</div>
     {% endif %}
 
   </body>

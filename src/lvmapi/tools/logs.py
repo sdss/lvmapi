@@ -547,13 +547,13 @@ Other
 -----
 {other}
 
-Versions
---------
-{versions}
-
 Exposure data
 -------------
 {exposure_data}
+
+Versions
+--------
+{versions}
 """
 
     date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
