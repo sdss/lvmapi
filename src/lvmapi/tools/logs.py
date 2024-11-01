@@ -405,6 +405,11 @@ async def add_night_log_comment(
                     raise RuntimeError("Cannot get next comment pk.")
                 comment_pk = fetch_pk[0] + 1
 
+                # Increase the sequence to make sure it doesn't get out of sync.
+                await acursor.execute(
+                    "ALTER SEQUENCE gortdb.night_log_comment_pk_seq INCREMENT BY 1;"
+                )
+
             # Now add the comment.
             try:
                 await acursor.execute(
