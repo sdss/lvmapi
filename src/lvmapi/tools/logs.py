@@ -244,7 +244,7 @@ async def get_exposure_table_ascii(
         print(exposure_df, file=exposure_io)
 
     exposure_io.seek(0)
-    return exposure_io.read()
+    return exposure_io.read().strip()
 
 
 async def get_actor_versions(actor: str | None = None):
