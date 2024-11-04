@@ -392,41 +392,28 @@ async def add_night_log_comment(
                     (night_log_pk, "observers"),
                 )
 
-            # Get the next pk. Normally this would be done with a sequence but
-            # we want to do an UPSERT in the next step.
+            # Depending on whether we are updating or adding a new comment,
+            # we use different queries.
             if comment_pk is None:
-                result = await acursor.execute(
-                    SQL("SELECT MAX(pk) FROM {table_comment}").format(
-                        table_comment=table_comment
-                    )
-                )
-                fetch_pk = await result.fetchone()
-                if not fetch_pk:
-                    raise RuntimeError("Cannot get next comment pk.")
-                comment_pk = fetch_pk[0] + 1
+                query = """
+                        INSERT INTO {table_comment}
+                        (night_log_pk, time, category, comment)
+                        VALUES ({values});
+                        """
+                params = (night_log_pk, datetime.now(UTC), category, comment)
+            else:
+                query = """
+                        UPDATE {table_comment}
+                        SET time = %s, comment = %s
+                        WHERE pk = %s;
+                        """
+                params = (datetime.now(UTC), comment, comment_pk)
 
-                # Increase the sequence to make sure it doesn't get out of sync.
-                await acursor.execute(
-                    "ALTER SEQUENCE gortdb.night_log_comment_pk_seq INCREMENT BY 1;"
-                )
-
-            # Now add the comment.
+            # Run the query.
             try:
                 await acursor.execute(
-                    SQL(
-                        "INSERT INTO {table_comment} "
-                        "(pk, night_log_pk, time, category, comment) "
-                        "VALUES (%s, %s, %s, %s, %s) "
-                        "ON CONFLICT (pk) DO UPDATE SET comment = %s;"
-                    ).format(table_comment=table_comment),
-                    (
-                        comment_pk,
-                        night_log_pk,
-                        datetime.now(UTC),
-                        category,
-                        comment,
-                        comment,
-                    ),
+                    SQL(query).format(table_comment=table_comment),
+                    params,
                 )
             except Exception as ee:
                 raise RuntimeError(f"Failed to insert comment: {ee}")
