@@ -1,11 +1,15 @@
 # Changelog
 
-## Next version
+## 0.1.10 - 2024-11-04
 
 ### ✨ Improved
 
 * Allow to modify a night log comment.
 * Attach full plaintext version of the night log to the email.
+
+### 🏷️ Changed
+
+* Swap the order of the exposure data and software versions in the night log email template.
 
 
 ## 0.1.9 - 2024-10-30
