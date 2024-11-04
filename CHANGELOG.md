@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Add `disable_overwatcher` query parameters to `/macros/shutdown`.
+
+
 ## 0.1.10 - 2024-11-04
 
 ### ✨ Improved

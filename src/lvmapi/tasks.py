@@ -35,11 +35,11 @@ async def move_dome_task(direction: Literal["open", "close"], force: bool = Fals
 
 
 @broker.task()
-async def shutdown_task():
+async def shutdown_task(disable_overwtcher: bool = False):
     """Shuts down the system."""
 
     async with get_gort_client() as gort:
-        await gort.shutdown(park_telescopes=True)
+        await gort.shutdown(park_telescopes=True, disable_overwtcher=disable_overwtcher)
 
     return True
 

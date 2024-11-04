@@ -24,10 +24,15 @@ router = APIRouter(prefix="/macros", tags=["macros"])
     dependencies=[AuthDependency],
     summary="Runs the shutdown macro",
 )
-async def route_get_shutdown() -> str:
+async def route_get_shutdown(
+    disable_overwatcher: Annotated[
+        bool,
+        Query(description="Disables the Overwatcher after closing the dome."),
+    ],
+) -> str:
     """Schedules an emergency shutdown of the enclosure and telescopes."""
 
-    task = await shutdown_task.kiq()
+    task = await shutdown_task.kiq(disable_overwtcher=disable_overwatcher)
     return task.task_id
 
 
