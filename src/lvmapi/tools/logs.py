@@ -398,7 +398,7 @@ async def add_night_log_comment(
                 query = """
                         INSERT INTO {table_comment}
                         (night_log_pk, time, category, comment)
-                        VALUES ({values});
+                        VALUES (%s, %s, %s, %s);
                         """
                 params = (night_log_pk, datetime.now(UTC), category, comment)
             else:
