@@ -13,8 +13,10 @@ import enum
 
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, HTTPException, Path
-from pydantic import BaseModel, create_model, field_validator
+from fastapi import APIRouter, Body, HTTPException, Path
+from pydantic import BaseModel, Field, create_model, field_validator
+
+from lvmopstools.devices import read_nps
 
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import move_dome_task
@@ -58,6 +60,8 @@ class EnclosureStatus(BaseModel):
 
     o2_status: O2Status
 
+    cal_lamp_state: dict[str, bool]
+
 
 class Lights(enum.Enum):
     control_room = "control_room"
@@ -74,6 +78,14 @@ LightsStatus: type[BaseModel] = create_model(
     __doc__="Model of lights status",
     **{light: (bool, False) for light in Lights.__members__ if light != "all"},  # type: ignore
 )
+
+
+class NPSBody(BaseModel):
+    """Model for NPS data."""
+
+    nps: Annotated[str, Field(description="The NPS to control.")]
+    outlet: Annotated[str, Field(description="The outlet to control or 'all'.")]
+    state: Annotated[bool, Field(description="The state to set (on/off).")]
 
 
 @router.get("")
@@ -115,7 +127,9 @@ async def status() -> EnclosureStatus:
                 "spectrograph_room": reply["o2_percent_spectrograph"],
             }
 
-    return EnclosureStatus(**status_data)
+    cal_lamp_state = await route_get_nps(nps="calib")
+
+    return EnclosureStatus(**status_data, cal_lamp_state=cal_lamp_state)
 
 
 @router.get("/open", dependencies=[AuthDependency])
@@ -195,3 +209,45 @@ async def set_lights(
                 if lamp != "all"
             ]
         )
+
+
+@router.get("/nps/{nps}", summary="Reads an NPS")
+async def route_get_nps(
+    nps: Annotated[str, Path(description="The NPS for which to return the data.")],
+) -> dict[str, bool]:
+    """Returns the state of a network power switch."""
+
+    try:
+        nps_data = await read_nps()
+    except Exception as ee:
+        raise HTTPException(500, detail=str(ee))
+
+    return {
+        outlet.split(".")[1]: nps_data[outlet]["state"]
+        for outlet in nps_data
+        if outlet.split(".")[0] == nps
+    }
+
+
+@router.put("/nps/{nps}", summary="Reads an NPS", dependencies=[AuthDependency])
+async def route_put_nps(
+    data: Annotated[NPSBody, Body(description="The NPS data to set.")],
+) -> bool:
+    """Sets the state of an NPS outlet."""
+
+    command = "on" if data.state else "off"
+
+    try:
+        if data.outlet == "all":
+            if data.state:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot turn all outlets on.",
+                )
+            await send_clu_command(f"lvmnps.{data.nps} all-off")
+        else:
+            await send_clu_command(f"lvmnps.{data.nps} {command} {data.outlet}")
+    except RuntimeError:
+        return False
+
+    return True

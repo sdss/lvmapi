@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* Add `/enclosure/nps` routes to query and set the state of the NPS outlets.
+
 ### ✨ Improved
 
 * Add `disable_overwatcher` query parameters to `/macros/shutdown`.
