@@ -15,6 +15,7 @@ database:
     ln2_fill: lvmopsdb.ln2_fill
     night_log: gortdb.night_log
     night_log_comment: gortdb.night_log_comment
+    notification: gortdb.notification
 
 actors:
   list:

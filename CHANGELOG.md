@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Add the `/logs/notifications/{mjd}` route to retrieve the Overwatcher notifications for a given MJD.
+
+
 ## 0.1.11 - 2024-11-06
 
 ### 🚀 New

@@ -29,6 +29,7 @@ from lvmapi.tools.logs import (
     get_exposures,
     get_night_log_data,
     get_night_log_mjds,
+    get_notifications,
     get_plaintext_night_log,
     get_spectro_mjds,
 )
@@ -99,6 +100,18 @@ class NightLogPostComment(BaseModel):
     ] = None
 
 
+class Notification(BaseModel):
+    """An Overwatcher notification."""
+
+    date: Annotated[datetime, Field(description="The notification datetime.")]
+    message: Annotated[str, Field(description="The notification message.")]
+    level: Annotated[str, Field(description="The level of the notification.")]
+    payload: Annotated[
+        dict | None,
+        Field(description="The payload of the notification."),
+    ] = None
+
+
 router = APIRouter(prefix="/logs", tags=["logs"])
 
 
@@ -155,6 +168,25 @@ async def route_get_exposures(
     exposures = await executor(None, get_exposures, mjd)
 
     return list(map(str, exposures))
+
+
+@router.get("/notifications/{mjd}", summary="Returns notifications for an MJD.")
+async def route_get_notifications(
+    mjd: Annotated[
+        int,
+        Path(description="The SJD for which to list notifications. 0 for current SJD."),
+    ],
+) -> list[Notification]:
+    """Returns a list of notifications for an MJD."""
+
+    mjd = mjd if mjd > 0 else get_sjd("LCO")
+    notifications = await get_notifications(mjd)
+
+    return [
+        Notification(**notification)
+        for notification in notifications
+        if notification["message"] != "I am alive!"
+    ]
 
 
 @router.get("/night-logs", summary="List of night log MJDs.")
