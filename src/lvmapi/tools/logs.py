@@ -509,6 +509,30 @@ async def get_night_log_data(sjd: int | None = None):
     return result
 
 
+def notifications_to_list(notifications: list[dict[str, Any]]) -> list[str]:
+    """Converts a list of notifications to a list of strings."""
+
+    if len(notifications) == 0:
+        return ["No notifications"]
+
+    notification_list: list[str] = []
+    for notification in notifications:
+        date = notification["date"].strftime("%Y-%m-%d %H:%M:%S")
+        level = notification["level"].upper()
+        message = notification["message"]
+        payload = ", ".join(
+            [f"{key}: {value}" for key, value in notification["payload"].items()]
+        )
+
+        notification_str = f"{date} - {level} - {message}"
+        if payload:
+            notification_str += f" {{ {payload} }}"
+
+        notification_list.append(notification_str)
+
+    return notification_list
+
+
 async def get_plaintext_night_log(sjd: int | None = None):
     """Returns the night log as a plaintext string."""
 
@@ -547,6 +571,11 @@ Exposure data
 Versions
 --------
 {versions}
+
+Notifications
+-------------
+{notifications}
+
 """
 
     date = Time(sjd - 1, format="mjd").datetime.strftime("%A, %B %-d, %Y")
@@ -578,6 +607,8 @@ Versions
     versions = await get_actor_versions()
     versions_l = [f"{actor}: {version or '?'}" for actor, version in versions.items()]
 
+    notifications = await get_notifications(sjd)
+
     return nigh_log.format(
         date=date,
         sjd=sjd,
@@ -587,6 +618,7 @@ Versions
         other="\n".join(other) or "No comments",
         versions="\n".join(versions_l),
         exposure_data=exposure_table or "No exposures found",
+        notifications="\n".join(notifications_to_list(notifications)),
     )
 
 
@@ -637,6 +669,7 @@ async def email_night_log(
     lvmweb_url = config["night_logs.lvmweb_url"] + str(sjd)
 
     versions = await get_actor_versions()
+    notifications = await get_notifications(sjd)
 
     html_message = html_template.render(
         sjd=sjd,
@@ -646,8 +679,9 @@ async def email_night_log(
         weather=data["comments"]["weather"],
         issues=data["comments"]["issues"],
         other=data["comments"]["other"],
-        exposure_table=exposure_table,
+        exposure_table=exposure_table.strip() if exposure_table else None,
         software_versions=versions,
+        notifications=("\n".join(notifications_to_list(notifications))).strip(),
     )
 
     recipients = config["night_logs.email_recipients"]
@@ -727,11 +761,14 @@ async def get_notifications(sjd: int | None = None):
     uri = config["database.uri"]
     table = Identifier(*config["database.tables.notification"].split("."))
 
-    query = SQL("SELECT * FROM {table} WHERE mjd = %s ORDER BY date ASC")
+    query = SQL("""
+        SELECT * FROM {table}
+        WHERE mjd = %s AND message != %s ORDER BY date ASC
+    """)
 
     async with await psycopg.AsyncConnection.connect(uri) as aconn:
         async with aconn.cursor(row_factory=dict_row) as acursor:
-            await acursor.execute(query.format(table=table), (sjd,))
+            await acursor.execute(query.format(table=table), (sjd, "I am alive!"))
             notifications = await acursor.fetchall()
 
     return notifications

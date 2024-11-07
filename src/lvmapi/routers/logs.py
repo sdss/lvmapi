@@ -74,6 +74,10 @@ class NightLogData(BaseModel):
         str | None,
         Field(description="The exposure table for the night log"),
     ] = None
+    notifications: Annotated[
+        list[Notification],
+        Field(description="The list of notifications for the night log"),
+    ] = []
 
 
 class NightLogPostComment(BaseModel):
@@ -253,10 +257,13 @@ async def route_get_night_logs_mjd(
 
     exposure_table_ascii = await get_exposure_table_ascii(mjd)
 
+    notifications = await route_get_notifications(mjd)
+
     return NightLogData(
         **data,
         comments=comments,
         exposure_table=exposure_table_ascii,
+        notifications=notifications,
     )
 
 

@@ -130,11 +130,19 @@
     </div>
     <hr />
     {% if exposure_table %}
-      <pre>
-        {{- exposure_table }}
-      </pre>
+      <pre>{{- exposure_table }}</pre>
     {% else %}
       <div>No exposures.</div>
+    {% endif %}
+
+    <div class="section">
+      Notifications
+    </div>
+    <hr />
+    {% if notifications %}
+      <pre>{{- notifications }}</pre>
+    {% else %}
+      <div>No data.</div>
     {% endif %}
 
     <div class="section">
