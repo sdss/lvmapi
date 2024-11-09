@@ -17,6 +17,7 @@ from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import BaseModel, Field, create_model, field_validator
 
 from lvmopstools.devices import read_nps
+from sdsstools.utils import GatheringTaskGroup
 
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import move_dome_task
@@ -95,7 +96,11 @@ async def status() -> EnclosureStatus:
     """Performs an emergency shutdown of the enclosure and telescopes."""
 
     try:
-        ecp_status = await send_clu_command("lvmecp status")
+        async with GatheringTaskGroup() as group:
+            group.create_task(send_clu_command("lvmecp status"))
+            group.create_task(route_get_nps(nps="calib"))
+
+        ecp_status, cal_lamp_state = group.results()
     except Exception as ee:
         raise HTTPException(status_code=500, detail=str(ee))
 
@@ -126,8 +131,6 @@ async def status() -> EnclosureStatus:
                 "utilities_room": reply["o2_percent_utilities"],
                 "spectrograph_room": reply["o2_percent_spectrograph"],
             }
-
-    cal_lamp_state = await route_get_nps(nps="calib")
 
     return EnclosureStatus(**status_data, cal_lamp_state=cal_lamp_state)
 
