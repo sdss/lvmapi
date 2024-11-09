@@ -17,7 +17,7 @@ import lvmapi.tools.slack
 from lvmapi import config
 
 
-default_channel = config["slack.channel"]
+default_channel = config["slack.default_channel"]
 default_user: str = "LVM"
 
 

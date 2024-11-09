@@ -6,7 +6,9 @@ influxdb:
 
 slack:
   token: null
-  channel: lvm-notifications
+  default_channel: lvm-notifications
+  level_channels:
+    CRITICAL: lvm-critical
 
 database:
   uri: postgresql://sdss_user@10.8.38.26:5432/lvmdb

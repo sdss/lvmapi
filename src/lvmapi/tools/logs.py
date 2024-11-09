@@ -24,13 +24,13 @@ import polars
 import psycopg
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
-from psycopg.rows import dict_row
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
 
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
+from lvmapi.tools.notifications import get_notifications
 from lvmapi.tools.rabbitmq import CluClient
 from lvmapi.tools.slack import post_message
 
@@ -724,51 +724,3 @@ async def email_night_log(
         await post_message(
             f"The night log for MJD {sjd} can be found <{lvmweb_url}|here>."
         )
-
-
-async def fill_notifications_mjd():
-    """Fills MJD field for records in the notifications table.
-
-    This is a temporary function to fill the MJD field in the notifications table and
-    only needed due to a bug in the Overwatcher which was not filling the MJD field.
-
-    """
-
-    uri = config["database.uri"]
-    table = Identifier(*config["database.tables.notification"].split("."))
-
-    # Start by getting a list of records with null MJD.
-    query = SQL("SELECT pk, date FROM {table} WHERE mjd IS NULL").format(table=table)
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            await acursor.execute(query)
-            records = await acursor.fetchall()
-
-    for pk, date in records:
-        sjd = get_sjd("LCO", date=date)
-        query = SQL("UPDATE {table} SET mjd = %s WHERE pk = %s").format(table=table)
-        async with await psycopg.AsyncConnection.connect(uri) as aconn:
-            async with aconn.cursor() as acursor:
-                await acursor.execute(query, (sjd, pk))
-                await aconn.commit()
-
-
-async def get_notifications(sjd: int | None = None):
-    """Returns the notifications for an SJD."""
-
-    sjd = sjd or get_sjd("LCO")
-
-    uri = config["database.uri"]
-    table = Identifier(*config["database.tables.notification"].split("."))
-
-    query = SQL("""
-        SELECT * FROM {table}
-        WHERE mjd = %s AND message != %s ORDER BY date ASC
-    """)
-
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor(row_factory=dict_row) as acursor:
-            await acursor.execute(query.format(table=table), (sjd, "I am alive!"))
-            notifications = await acursor.fetchall()
-
-    return notifications

@@ -23,6 +23,7 @@ from lvmapi.routers import (
     kubernetes,
     logs,
     macros,
+    notifications,
     overwatcher,
     slack,
     spectrographs,
@@ -49,6 +50,7 @@ app.include_router(tasks.router)
 app.include_router(kubernetes.router)
 app.include_router(actors.router)
 app.include_router(logs.router)
+app.include_router(notifications.router)
 
 
 @app.get("/id")

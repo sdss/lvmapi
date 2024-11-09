@@ -90,7 +90,7 @@ async def post_message(
     if text is not None and blocks is not None:
         raise ValueError("Cannot specify both text and blocks.")
 
-    channel = channel or config["slack.channel"]
+    channel = channel or config["slack.default_channel"]
     assert channel is not None
 
     client = get_api_client()
