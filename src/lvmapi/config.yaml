@@ -77,7 +77,7 @@ night_logs:
   lvmweb_url: https://lvm-web.lco.cl/night-logs/
   email_recipients:
     - lvm-operations@sdss.org
-    - lvm-observers@sdss.org
+    - lvm-inst@sdss.org
   email_server: smtp-01.lco.cl
   email_from: LVM Night Log <lvm-nightlog@lco.cl>
   email_reply_to: lvm-operations@sdss.org
