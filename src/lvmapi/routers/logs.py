@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic import BaseModel, Field
@@ -88,7 +88,7 @@ class NightLogPostComment(BaseModel):
         Field(description="The MJD associated with the comment"),
     ]
     category: Annotated[
-        str,
+        Literal["weather", "issues", "other", "observers"],
         Field(description="The category of the comment"),
     ]
     comment: Annotated[

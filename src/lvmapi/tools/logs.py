@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from typing import Any, Literal, overload
+from typing import Any, Literal, get_args, overload
 
 import polars
 import psycopg
@@ -271,9 +271,6 @@ async def get_actor_versions(actor: str | None = None):
     return versions
 
 
-NIGHT_LOG_CATEGORIES = set(["observers", "weather", "issues", "other"])
-
-
 async def get_night_log_mjds():
     """Returns a list of MJDs with night log data."""
 
@@ -330,10 +327,13 @@ async def create_night_log_entry(mjd: int | None = None):
     return mjd
 
 
+NightLogCategories = Literal["weather", "issues", "other", "observers"]
+
+
 async def add_night_log_comment(
     sjd: int | None,
     comment: str,
-    category: str | None = None,
+    category: NightLogCategories | None = None,
     comment_pk: int | None = None,
 ):
     """Adds or updates a comment in the night log."""
@@ -348,9 +348,8 @@ async def add_night_log_comment(
         warnings.warn("No category provided. Defaulting to 'other'.")
         category = "other"
 
-    category = category.lower()
-    if category not in NIGHT_LOG_CATEGORIES:
-        warnings.warn(f'Non-standard category "{category}".')
+    if category not in get_args(NightLogCategories):
+        raise ValueError(f"Invalid night log category {category!r}.")
 
     # Get a connection and cursor.
     async with await psycopg.AsyncConnection.connect(uri) as aconn:
@@ -487,18 +486,20 @@ async def get_night_log_data(sjd: int | None = None):
             "exists": False,
         }
 
+    valid_categories = set(get_args(NightLogCategories))
+
     result = {
         "mjd": sjd,
         "current": sjd == get_sjd("LCO"),
         "exists": True,
         "sent": night_log[1],
         "observers": None,
-        "comments": {category: [] for category in NIGHT_LOG_CATEGORIES - {"observers"}},
+        "comments": {category: [] for category in valid_categories - {"observers"}},
     }
 
     for comment in comments:
         pk, dt, category, text = comment
-        if category not in NIGHT_LOG_CATEGORIES:
+        if category not in valid_categories:
             category = "other"
 
         if category == "observers":
