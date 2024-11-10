@@ -1,10 +1,17 @@
 # Changelog
 
-## 0.1.12 - 2024-11-07
+## Next version
 
 ### 🚀 New
 
 * Create a new router `/notifications` to create and retrieve notifications. New notifications are sent over Slack or email depending on parameters and the notification level.
+
+
+## 0.1.12 - 2024-11-07
+
+### 🚀 New
+
+* Add the `/logs/notifications/{mjd}` route to retrieve the Overwatcher notifications for a given MJD.
 * Add notifications section to night log email and plain-text version.
 
 
