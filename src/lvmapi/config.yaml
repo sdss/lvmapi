@@ -8,7 +8,16 @@ slack:
   token: null
   default_channel: lvm-notifications
   level_channels:
-    CRITICAL: lvm-critical
+    CRITICAL: lvm-alerts
+
+notifications:
+  critical:
+    email_template: data/critical_error_email_template.html
+    email_recipients:
+      - lvm-critical@sdss.org
+    email_server: smtp-01.lco.cl
+    email_from: LVM Critical Alerts <lvm-critical@lco.cl>
+    email_reply_to: lvm-critical@sdss.org
 
 database:
   uri: postgresql://sdss_user@10.8.38.26:5432/lvmdb

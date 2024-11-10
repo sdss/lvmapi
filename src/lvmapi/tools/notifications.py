@@ -11,11 +11,16 @@ from __future__ import annotations
 import datetime
 import enum
 import json
+import pathlib
 import re
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from typing import Any, cast
 
 import psycopg
+from jinja2 import Environment, FileSystemLoader
 from psycopg.rows import dict_row
 from psycopg.sql import SQL, Identifier
 
@@ -147,23 +152,11 @@ async def create_notification(
     slack = slack_channel is not False
     email = email_on_critical and level == NotificationLevel.CRITICAL
 
-    if write_to_database:
-        message_db = format_message_for_db(message)
-        await insert_to_database(
-            table,
-            [
-                {
-                    "date": date,
-                    "mjd": get_sjd("LCO", date=date),
-                    "message": message_db,
-                    "level": level.value.lower(),
-                    "payload": payload_str,
-                    "slack": slack,
-                    "email": email,
-                }
-            ],
-            columns=["date", "mjd", "message", "level", "payload", "slack", "email"],
-        )
+    if email:
+        try:
+            await send_critical_error_email(message)
+        except Exception as ee:
+            print(f"Error sending critical error email: {ee}")
 
     if slack_channel is not False:
         default_channel: str
@@ -194,3 +187,72 @@ async def create_notification(
                 mentions=mentions,
                 **slack_extra_params,
             )
+
+    if write_to_database:
+        message_db = format_message_for_db(message)
+        await insert_to_database(
+            table,
+            [
+                {
+                    "date": date,
+                    "mjd": get_sjd("LCO", date=date),
+                    "message": message_db,
+                    "level": level.value.lower(),
+                    "payload": payload_str,
+                    "slack": slack,
+                    "email": email,
+                }
+            ],
+            columns=["date", "mjd", "message", "level", "payload", "slack", "email"],
+        )
+
+
+async def send_critical_error_email(message: str):
+    """Sends a critical error email."""
+
+    root = pathlib.Path(__file__).parents[1]
+    template = root / config["notifications.critical.email_template"]
+    loader = FileSystemLoader(template.parent)
+
+    print(template, template.parent)
+
+    env = Environment(
+        loader=loader,
+        lstrip_blocks=True,
+        trim_blocks=True,
+    )
+    html_template = env.get_template(template.name)
+
+    html_message = html_template.render(message=message.strip())
+
+    recipients = config["notifications.critical.email_recipients"]
+    from_address = config["notifications.critical.email_from"]
+
+    email_server = config["notifications.critical.email_server"]
+    email_host, *email_rest = email_server.split(":")
+    email_port: int = 0
+    if len(email_rest) == 1:
+        email_port = int(email_rest[0])
+
+    email_reply_to = config["notifications.critical.email_reply_to"]
+
+    msg = MIMEMultipart("alternative" if html_message else "mixed")
+    msg["Subject"] = "LVM Critical Alert"
+    msg["From"] = from_address
+    msg["To"] = ", ".join(recipients)
+    msg["Reply-To"] = email_reply_to
+
+    plaintext_email = f"""A critical alert was raised in the LVM system.
+
+The error message is shown below:
+
+{message}
+
+    """
+    msg.attach(MIMEText(plaintext_email, "plain"))
+
+    html = MIMEText(html_message, "html")
+    msg.attach(html)
+
+    with smtplib.SMTP(host=email_host, port=email_port) as smtp:
+        smtp.sendmail(from_address, recipients, msg.as_string())

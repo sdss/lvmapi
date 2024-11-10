@@ -1,0 +1,94 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+      }
+
+      div.header {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+      }
+
+      img.header-image {
+        padding: 4px;
+        width: 100px;
+      }
+
+      a, a:visited, a:link {
+        text-decoration: none;
+        color: black;
+      }
+
+      h1.header-text {
+        font-size: 2.25em;
+        font-weight: 600;
+        align-self: center;
+      }
+
+      div.section {
+        padding: 30px 0px 0px 0px;
+        font-size: 14pt;
+        font-weight: 600
+      }
+
+      div.section ~ hr {
+        width: 100%;
+        margin: 5px 0px 15px 0px;
+      }
+
+      ul {
+        list-style-position: outside;
+      }
+
+      li {
+        white-space: pre-line;
+      }
+
+      li + li {
+        margin-top: 10px;
+      }
+
+      pre {
+        width: 95%;
+        padding: 10px;
+        margin: 0;
+        overflow: auto;
+        overflow-y: hidden;
+        font-size: 12px;
+        line-height: 20px;
+        border: 1px solid #777;
+      }
+      pre code {
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <a href="https://lvm-web.lco.cl">
+        <img class="header-image" src="https://github.com/sdss/lvmapi/raw/refs/heads/main/src/lvmapi/data/lvm_logo.png" />
+      </a>
+      <div style="flex-grow: 1"></div>
+      <h1 class="header-text">
+        <a href="https://lvm-web.lco.cl">
+          SDSS-V LVM Critical Alert
+        </a>
+      </h1>
+    </div>
+    <hr style="width: 100%" />
+
+    <div style="padding: 10px 0px;">
+      A critical error has been raised in the LVM system. Please see the details below.
+    </div>
+
+    <div style="padding: 10px 0px;">
+      <pre><code>{{- message }}</code></pre>
+    </dic>
+
+  </body>
+
+</html>
