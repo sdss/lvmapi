@@ -84,7 +84,6 @@ LightsStatus: type[BaseModel] = create_model(
 class NPSBody(BaseModel):
     """Model for NPS data."""
 
-    nps: Annotated[str, Field(description="The NPS to control.")]
     outlet: Annotated[str, Field(description="The outlet to control or 'all'.")]
     state: Annotated[bool, Field(description="The state to set (on/off).")]
 
@@ -232,9 +231,16 @@ async def route_get_nps(
     }
 
 
-@router.put("/nps/{nps}", summary="Reads an NPS", dependencies=[AuthDependency])
+@router.put("/nps/{nps}", summary="Sets an NPS switch")
 async def route_put_nps(
-    data: Annotated[NPSBody, Body(description="The NPS data to set.")],
+    nps: Annotated[
+        Literal["calib"],
+        Path(description="The NPS for which to set the data."),
+    ],
+    data: Annotated[
+        NPSBody,
+        Body(description="The NPS data to set."),
+    ],
 ) -> bool:
     """Sets the state of an NPS outlet."""
 
@@ -247,9 +253,9 @@ async def route_put_nps(
                     status_code=400,
                     detail="Cannot turn all outlets on.",
                 )
-            await send_clu_command(f"lvmnps.{data.nps} all-off")
+            await send_clu_command(f"lvmnps.{nps} all-off")
         else:
-            await send_clu_command(f"lvmnps.{data.nps} {command} {data.outlet}")
+            await send_clu_command(f"lvmnps.{nps} {command} {data.outlet}")
     except RuntimeError:
         return False
 
