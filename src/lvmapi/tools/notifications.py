@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime
 import enum
 import json
+import re
 
 from typing import Any, cast
 
@@ -86,6 +87,25 @@ async def get_notifications(sjd: int | None = None):
     return notifications
 
 
+def format_message_for_db(message: str) -> str:
+    """Formats a message for storage in the database.
+
+    Currently the only thing that is changed is replacing the Slack-flavoured
+    link style (``<https://example.com|example>``) with a standard Markdown
+    link format.
+
+    """
+
+    message = re.sub(
+        r"(.*)<(.+)\|([\w\s]+)>",
+        r"\1[\3](\2)",
+        message,
+        flags=re.ASCII | re.IGNORECASE,
+    )
+
+    return message
+
+
 async def create_notification(
     message: str,
     level: NotificationLevel | str = NotificationLevel.INFO,
@@ -128,13 +148,14 @@ async def create_notification(
     email = email_on_critical and level == NotificationLevel.CRITICAL
 
     if write_to_database:
+        message_db = format_message_for_db(message)
         await insert_to_database(
             table,
             [
                 {
                     "date": date,
                     "mjd": get_sjd("LCO", date=date),
-                    "message": message,
+                    "message": message_db,
                     "level": level.value.lower(),
                     "payload": payload_str,
                     "slack": slack,
