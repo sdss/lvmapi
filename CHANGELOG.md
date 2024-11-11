@@ -9,6 +9,7 @@
 ### ✨ Improved
 
 * Allow to update LN2 fill records in the database. Add ``complete`` field to the LN2 fill model.
+* Use `Gort.emergency_shutdown()` for the `/macros/shutdown` endpoint.
 
 ### 🔧 Fixed
 

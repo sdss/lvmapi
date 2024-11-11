@@ -39,10 +39,7 @@ async def shutdown_task(disable_overwatcher: bool = False):
     """Shuts down the system."""
 
     async with get_gort_client() as gort:
-        await gort.shutdown(
-            park_telescopes=True,
-            disable_overwatcher=disable_overwatcher,
-        )
+        await gort.emergency_shutdown()
 
     return True
 
