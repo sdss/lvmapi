@@ -164,9 +164,9 @@ async def get_overwatcher_status() -> OverwatcherStatusModel:
 
         try:
             observer_status = observer_command.replies.get("observer_status")
+            observer_status.pop("observing")  # Duplicated.
         except KeyError:
             observer_status = {}
-        observer_status.pop("observing")  # Duplicated.
 
     running_cal = await route_get_calibrations_current()
 
