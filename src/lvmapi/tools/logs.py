@@ -14,7 +14,7 @@ import json
 import pathlib
 import smtplib
 import warnings
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -570,8 +570,9 @@ Night metrics
 - Night length: {night_length}.
 - Number of object exposures: {n_object_exps}.
 - Time not observing: {time_lost}
-- Efficiency (without readout): {efficiency_no_readout}%
+- Efficiency (with nominal overheads): {efficiency_nominal}%
 - Efficiency (with readout): {efficiency_no_readout}%
+- Efficiency (without readout): {efficiency_no_readout}%
 
 Exposure data
 -------------
@@ -623,6 +624,9 @@ Notifications
         "night_length": secs_to_hours(metrics["night_length"]),
         "n_object_exps": metrics["n_object_exps"],
         "time_lost": secs_to_hours(metrics["time_lost"])
+        if metrics["night_started"]
+        else "-",
+        "efficiency_nominal": metrics["efficiency_nominal"]
         if metrics["night_started"]
         else "-",
         "efficiency_no_readout": metrics["efficiency_no_readout"]
@@ -710,6 +714,7 @@ async def email_night_log(
         "night_length": secs_to_hours(metrics["night_length"]),
         "n_object_exps": metrics["n_object_exps"],
         "time_lost": secs_to_hours(metrics["time_lost"]),
+        "efficiency_nominal": metrics["efficiency_nominal"],
         "efficiency_no_readout": metrics["efficiency_no_readout"],
         "efficiency_readout": metrics["efficiency_readout"],
         "night_started": metrics["night_started"],
@@ -784,6 +789,7 @@ class NightMetricsDict(TypedDict):
     time_lost: float
     efficiency_no_readout: float
     efficiency_readout: float
+    efficiency_nominal: float
     night_started: bool
     night_ended: bool
 
@@ -791,7 +797,8 @@ class NightMetricsDict(TypedDict):
 def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
     """Retrieves automatically calculated metrics for the night."""
 
-    READOUT_OVERHEAD: float = 60
+    READOUT_OVERHEAD: float = 50
+    NOMINAL_OVERHEAD: float = 90
 
     sjd = sjd or get_sjd("LCO")
 
@@ -818,6 +825,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
             "time_lost": 0.0,
             "efficiency_no_readout": 0.0,
             "efficiency_readout": 0.0,
+            "efficiency_nominal": 0.0,
             "night_started": False,
             "night_ended": False,
         }
@@ -840,6 +848,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
             "time_lost": twilight_start.unix - twilight_end.unix,
             "efficiency_no_readout": 0.0,
             "efficiency_readout": 0.0,
+            "efficiency_nominal": 0.0,
             "night_started": True,
             "night_ended": False,
         }
@@ -857,7 +866,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
     exposures = exposures.filter(
         polars.col.image_type == "object",
         polars.col.obstime > twilight_end.datetime,
-        polars.col.endtime < twilight_start.datetime,
+        polars.col.endtime < (twilight_start.datetime + timedelta(seconds=300)),
     )
 
     n_exp = exposures.height
@@ -866,6 +875,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
     # Efficiency with and without taking into account readout.
     eff_no_readout = total_exp_time / current_night_length
     eff_readout = (total_exp_time + n_exp * READOUT_OVERHEAD) / current_night_length
+    eff_nominal = (total_exp_time + n_exp * NOMINAL_OVERHEAD) / current_night_length
 
     return {
         "sjd": sjd,
@@ -877,6 +887,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
         "time_lost": round(night_length - total_exp_time, 2),
         "efficiency_no_readout": round(eff_no_readout * 100, 2),
         "efficiency_readout": round(eff_readout * 100, 2),
+        "efficiency_nominal": round(eff_nominal * 100, 2),
         "night_started": now.unix >= twilight_end.unix,
         "night_ended": now.unix >= twilight_start.unix,
     }

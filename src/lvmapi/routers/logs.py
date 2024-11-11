@@ -143,7 +143,11 @@ class NightMetrics(BaseModel):
     ]
     efficiency_readout: Annotated[
         float,
-        Field(description="Efficiency assuming 60s readout, as percentage"),
+        Field(description="Efficiency assuming 50s readout, as percentage"),
+    ]
+    efficiency_nominal: Annotated[
+        float,
+        Field(description="Efficiency assuming 90s overhead, as percentage"),
     ]
     night_started: Annotated[
         bool,
