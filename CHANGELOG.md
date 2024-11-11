@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Allow to update LN2 fill records in the database. Add ``complete`` field to the LN2 fill model.
+
+
 ## 0.1.13 - 2024-11-10
 
 ### 🚀 New
