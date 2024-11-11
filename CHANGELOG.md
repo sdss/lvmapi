@@ -1,6 +1,6 @@
 # Changelog
 
-## Next version
+## 0.1.14 - 2024-11-11
 
 ### 🚀 New
 
