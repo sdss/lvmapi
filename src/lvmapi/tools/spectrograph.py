@@ -427,6 +427,7 @@ class FillMetadataModel(BaseModel):
     """Request model for the ``/fills/register`` endpoint."""
 
     action: str
+    complete: bool
     start_time: datetime | None
     end_time: datetime | None
     purge_start: datetime | None
@@ -456,6 +457,10 @@ class FillMetadataReturn(BaseModel):
     action: Annotated[
         str,
         Field(description="LN2 action performed"),
+    ]
+    complete: Annotated[
+        bool,
+        Field(description="Is the fill complete?"),
     ]
     start_time: Annotated[
         datetime | None,
@@ -579,6 +584,7 @@ async def retrieve_fill_metadata(
     return FillMetadataReturn(
         pk=pk,
         action=data.action,
+        complete=data.complete,
         start_time=data.start_time,
         end_time=data.end_time,
         purge_start=data.purge_start,
