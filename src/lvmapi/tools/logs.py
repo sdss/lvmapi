@@ -877,6 +877,6 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
         "time_lost": round(night_length - total_exp_time, 2),
         "efficiency_no_readout": round(eff_no_readout * 100, 2),
         "efficiency_readout": round(eff_readout * 100, 2),
-        "night_started": now >= twilight_end.unix,
-        "night_ended": now >= twilight_start.unix,
+        "night_started": now.unix >= twilight_end.unix,
+        "night_ended": now.unix >= twilight_start.unix,
     }
