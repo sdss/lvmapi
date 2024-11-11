@@ -19,7 +19,7 @@ import psycopg.sql
 from lvmapi import config
 
 
-__all__ = ["timed_cache"]
+__all__ = ["timed_cache", "get_db_connection", "insert_to_database"]
 
 
 def timed_cache(seconds: float):
@@ -58,7 +58,7 @@ def timed_cache(seconds: float):
     return _wrapper
 
 
-def get_db_connect():
+def get_db_connection():
     """Returns a connection to the database."""
 
     uri = config["database.uri"]
@@ -118,7 +118,7 @@ async def insert_to_database(
         *columns_sql,
     )
 
-    async with await get_db_connect() as aconn:
+    async with await get_db_connection() as aconn:
         async with aconn.cursor() as acursor:
             for row in data:
                 values = [row.get(col, None) for col in columns]

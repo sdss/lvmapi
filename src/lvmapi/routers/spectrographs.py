@@ -122,6 +122,10 @@ class RegisterFillPostModel(BaseModel):
         str,
         Field(description="LN2 action performed"),
     ]
+    done: Annotated[
+        bool,
+        Field(description="Is the action complete?"),
+    ]
     start_time: Annotated[
         str | None,
         Field(description="Start time of the action"),
@@ -189,6 +193,10 @@ class RegisterFillPostModel(BaseModel):
     valve_times: Annotated[
         dict[str, dict[str, str | bool | None]] | None,
         Field(description="Valve open/close times"),
+    ]
+    pk: Annotated[
+        int | None,
+        Field(description="Primary key of the record to update."),
     ]
 
 
@@ -355,7 +363,7 @@ async def route_get_fills_measurements(
 
 @router.post("/fills/register", summary="Register an LN2 fill")
 async def route_post_fills_register(data: RegisterFillPostModel) -> int:
-    """Registers an LN2 fill."""
+    """Registers or updates an LN2 fill in the database."""
 
     try:
         pk = await register_ln2_fill(**data.model_dump())

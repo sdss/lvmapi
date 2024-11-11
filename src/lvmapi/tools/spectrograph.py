@@ -33,6 +33,7 @@ from lvmopstools.devices.specs import (
 from lvmopstools.devices.thermistors import channel_to_valve, read_thermistors
 
 from lvmapi import config
+from lvmapi.tools.general import get_db_connection
 from lvmapi.tools.influxdb import query_influxdb
 from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
 
@@ -337,6 +338,7 @@ async def retrieve_fill_measurements(
 
 async def register_ln2_fill(
     *,
+    pk: int | None,
     action: str,
     start_time: str | None,
     end_time: str | None,
@@ -355,62 +357,70 @@ async def register_ln2_fill(
     log_data: list[dict] | None,
     plot_paths: dict[str, str] | None,
     valve_times: dict[str, dict[str, str | bool | None]] | None,
+    done: bool = True,
 ) -> int:
     """Registers LN2 fill data in the database."""
 
-    uri = config["database.uri"]
     table: list[str] = config["database.tables.ln2_fill"].split(".")
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acur:
-            await acur.execute(
-                psycopg.sql.SQL(
-                    """
-INSERT INTO {} (start_time, end_time, purge_start, purge_complete,
-                fill_start, fill_complete, fail_time, abort_time,
-                failed, aborted, error, action, log_file, json_file,
-                configuration, log_data, plot_paths, valve_times)
-VALUES (%(start_time)s, %(end_time)s, %(purge_start)s, %(purge_complete)s,
-        %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
-        %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s,
-        %(json_file)s, %(configuration)s, %(log_data)s, %(plot_paths)s,
-        %(valve_times)s)
-RETURNING pk;
-"""
-                ).format(psycopg.sql.Identifier(*table)),
-                {
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "purge_start": purge_start,
-                    "purge_complete": purge_complete,
-                    "fill_start": fill_start,
-                    "fill_complete": fill_complete,
-                    "fail_time": fail_time,
-                    "abort_time": abort_time,
-                    "failed": failed,
-                    "aborted": aborted,
-                    "error": error,
-                    "action": action,
-                    "log_file": log_file,
-                    "json_file": json_file,
-                    "configuration": json.dumps(configuration)
-                    if configuration
-                    else None,
-                    "log_data": json.dumps(log_data) if log_data else None,
-                    "plot_paths": json.dumps(plot_paths) if plot_paths else None,
-                    "valve_times": json.dumps(valve_times) if valve_times else None,
-                },
-            )
+    columns = """(start_time, end_time, purge_start, purge_complete,
+fill_start, fill_complete, fail_time, abort_time,
+failed, aborted, error, action, log_file, json_file,
+configuration, log_data, plot_paths, valve_times, done)"""
 
+    values_placeholders = """(%(start_time)s, %(end_time)s, %(purge_start)s,
+%(purge_complete)s, %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
+%(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s, %(json_file)s,
+%(configuration)s, %(log_data)s, %(plot_paths)s, %(valve_times)s, %(done)s)"""
+
+    params = {
+        "start_time": start_time,
+        "end_time": end_time,
+        "purge_start": purge_start,
+        "purge_complete": purge_complete,
+        "fill_start": fill_start,
+        "fill_complete": fill_complete,
+        "fail_time": fail_time,
+        "abort_time": abort_time,
+        "failed": failed,
+        "aborted": aborted,
+        "error": error,
+        "action": action,
+        "log_file": log_file,
+        "json_file": json_file,
+        "configuration": json.dumps(configuration) if configuration else None,
+        "log_data": json.dumps(log_data) if log_data else None,
+        "plot_paths": json.dumps(plot_paths) if plot_paths else None,
+        "valve_times": json.dumps(valve_times) if valve_times else None,
+        "done": done,
+    }
+
+    if pk is None:
+        query = psycopg.sql.SQL("INSERT INTO {} {} VALUES {} RETURNING pk;").format(
+            psycopg.sql.Identifier(*table),
+            columns,
+            values_placeholders,
+        )
+    else:
+        query = psycopg.sql.SQL(
+            "UPDATE {} SET {} = {} WHERE pk = %(pk)s RETURNING pk;"
+        ).format(
+            psycopg.sql.Identifier(*table),
+            columns,
+            values_placeholders,
+        )
+        params["pk"] = pk
+
+    async with await get_db_connection() as aconn:
+        async with aconn.cursor() as acur:
+            await acur.execute(query, params)
             await aconn.commit()
             returned = await acur.fetchone()
 
     if returned is None:
         raise ValueError("Could not retrieve primary key.")
 
-    pk = returned[0]
-
-    return pk
+    return returned[0]
 
 
 class FillMetadataModel(BaseModel):
