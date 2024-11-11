@@ -398,16 +398,16 @@ configuration, log_data, plot_paths, valve_times, complete)"""
     if pk is None:
         query = psycopg.sql.SQL("INSERT INTO {} {} VALUES {} RETURNING pk;").format(
             psycopg.sql.Identifier(*table),
-            columns,
-            values_placeholders,
+            psycopg.sql.SQL(columns),
+            psycopg.sql.SQL(values_placeholders),
         )
     else:
         query = psycopg.sql.SQL(
             "UPDATE {} SET {} = {} WHERE pk = %(pk)s RETURNING pk;"
         ).format(
             psycopg.sql.Identifier(*table),
-            columns,
-            values_placeholders,
+            psycopg.sql.SQL(columns),
+            psycopg.sql.SQL(values_placeholders),
         )
         params["pk"] = pk
 
