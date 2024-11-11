@@ -32,7 +32,7 @@ async def route_get_shutdown(
 ) -> str:
     """Schedules an emergency shutdown of the enclosure and telescopes."""
 
-    task = await shutdown_task.kiq(disable_overwtcher=disable_overwatcher)
+    task = await shutdown_task.kiq(disable_overwatcher=disable_overwatcher)
     return task.task_id
 
 

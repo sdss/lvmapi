@@ -10,6 +10,10 @@
 
 * Allow to update LN2 fill records in the database. Add ``complete`` field to the LN2 fill model.
 
+### 🔧 Fixed
+
+* Fix typo in argument in the shutdown recipe.
+
 
 ## 0.1.13 - 2024-11-10
 
