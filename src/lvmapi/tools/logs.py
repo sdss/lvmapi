@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from typing import Any, Literal, get_args, overload
+from typing import Any, Literal, TypedDict, get_args, overload
 
 import polars
 import psycopg
@@ -30,9 +30,9 @@ from pydantic import BaseModel
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
-from lvmapi.tools.notifications import get_notifications
+from lvmapi.tools.notifications import create_notification, get_notifications
 from lvmapi.tools.rabbitmq import CluClient
-from lvmapi.tools.slack import post_message
+from lvmapi.tools.schedule import get_ephemeris_summary
 
 
 class ExposureDataDict(BaseModel):
@@ -565,6 +565,14 @@ Other
 -----
 {other}
 
+Night metrics
+-------------
+- Night length: {night_length}.
+- Number of object exposures: {n_object_exps}.
+- Time not observing: {time_lost}
+- Efficiency (without readout): {efficiency_no_readout}%
+- Efficiency (with readout): {efficiency_no_readout}%
+
 Exposure data
 -------------
 {exposure_data}
@@ -610,6 +618,21 @@ Notifications
 
     notifications = await get_notifications(sjd)
 
+    metrics = get_night_metrics(sjd)
+    metrics_data = {
+        "night_length": secs_to_hours(metrics["night_length"]),
+        "n_object_exps": metrics["n_object_exps"],
+        "time_lost": secs_to_hours(metrics["time_lost"])
+        if metrics["night_started"]
+        else "-",
+        "efficiency_no_readout": metrics["efficiency_no_readout"]
+        if metrics["night_started"]
+        else "-",
+        "efficiency_readout": metrics["efficiency_readout"]
+        if metrics["night_started"]
+        else "-",
+    }
+
     return nigh_log.format(
         date=date,
         sjd=sjd,
@@ -620,7 +643,17 @@ Notifications
         versions="\n".join(versions_l),
         exposure_data=exposure_table or "No exposures found",
         notifications="\n".join(notifications_to_list(notifications)),
+        **metrics_data,
     )
+
+
+def secs_to_hours(secs: float) -> str:
+    """Converts seconds to hours."""
+
+    hours = int(secs / 3600)
+    minutes = int((secs % 3600) / 60)
+
+    return f"{hours}h{minutes:02d}m"
 
 
 async def email_night_log(
@@ -672,6 +705,16 @@ async def email_night_log(
     versions = await get_actor_versions()
     notifications = await get_notifications(sjd)
 
+    metrics = get_night_metrics(sjd)
+    metrics_data = {
+        "night_length": secs_to_hours(metrics["night_length"]),
+        "n_object_exps": metrics["n_object_exps"],
+        "time_lost": secs_to_hours(metrics["time_lost"]),
+        "efficiency_no_readout": metrics["efficiency_no_readout"],
+        "efficiency_readout": metrics["efficiency_readout"],
+        "night_started": metrics["night_started"],
+    }
+
     html_message = html_template.render(
         sjd=sjd,
         lvmweb_url=lvmweb_url,
@@ -683,6 +726,7 @@ async def email_night_log(
         exposure_table=exposure_table.strip() if exposure_table else None,
         software_versions=versions,
         notifications=("\n".join(notifications_to_list(notifications))).strip(),
+        metrics=metrics_data,
     )
 
     recipients = config["night_logs.email_recipients"]
@@ -722,6 +766,117 @@ async def email_night_log(
                 await aconn.commit()
 
     if send_slack_notification:
-        await post_message(
-            f"The night log for MJD {sjd} can be found <{lvmweb_url}|here>."
+        await create_notification(
+            f"The night log for MJD {sjd} can be found <{lvmweb_url}|here>.",
+            level="INFO",
         )
+
+
+class NightMetricsDict(TypedDict):
+    """A dictionary of night metrics."""
+
+    sjd: int
+    twilight_start: float
+    twilight_end: float
+    night_length: float
+    n_object_exps: int
+    total_exp_time: float
+    time_lost: float
+    efficiency_no_readout: float
+    efficiency_readout: float
+    night_started: bool
+    night_ended: bool
+
+
+def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
+    """Retrieves automatically calculated metrics for the night."""
+
+    READOUT_OVERHEAD: float = 60
+
+    sjd = sjd or get_sjd("LCO")
+
+    exposures = get_exposure_data(sjd, as_dataframe=True)
+    ephemeris = get_ephemeris_summary(sjd)
+
+    # Get beginning and end of the night.
+    twilight_end = Time(ephemeris["twilight_end"], format="jd")
+    twilight_start = Time(ephemeris["twilight_start"], format="jd")
+
+    night_length = twilight_start.unix - twilight_end.unix
+    current_night_length = night_length
+
+    now = Time.now()
+
+    if now.unix < twilight_end.unix and now.unix < twilight_start.unix:
+        return {
+            "sjd": sjd,
+            "twilight_end": ephemeris["twilight_end"],
+            "twilight_start": ephemeris["twilight_start"],
+            "night_length": round(night_length, 2),
+            "n_object_exps": 0,
+            "total_exp_time": 0.0,
+            "time_lost": 0.0,
+            "efficiency_no_readout": 0.0,
+            "efficiency_readout": 0.0,
+            "night_started": False,
+            "night_ended": False,
+        }
+
+    if now.unix > twilight_end.unix and now.unix < twilight_start.unix:
+        twilight_start = now
+        current_night_length = twilight_start.unix - twilight_end.unix
+
+    if (
+        exposures.height == 0
+        or exposures.filter(polars.col.image_type == "object").height == 0
+    ):
+        return {
+            "sjd": sjd,
+            "twilight_end": ephemeris["twilight_end"],
+            "twilight_start": ephemeris["twilight_start"],
+            "night_length": round(night_length, 2),
+            "n_object_exps": 0,
+            "total_exp_time": 0.0,
+            "time_lost": twilight_start.unix - twilight_end.unix,
+            "efficiency_no_readout": 0.0,
+            "efficiency_readout": 0.0,
+            "night_started": True,
+            "night_ended": False,
+        }
+
+    # Calculate exposure endtime
+    exposures = exposures.with_columns(
+        obstime=polars.col.obstime.str.to_datetime(),
+        endtime=polars.from_epoch(
+            polars.col.obstime.dt.timestamp("ms") / 1000 + polars.col.exposure_time,
+            time_unit="s",
+        ),
+    )
+
+    # Filter exposures that started during the night.
+    exposures = exposures.filter(
+        polars.col.image_type == "object",
+        polars.col.obstime > twilight_end.datetime,
+        polars.col.endtime < twilight_start.datetime,
+    )
+
+    n_exp = exposures.height
+    total_exp_time = exposures["exposure_time"].sum()
+
+    # Efficiency with and without taking into account readout.
+    eff_no_readout = total_exp_time / current_night_length
+    eff_readout = (total_exp_time + n_exp * READOUT_OVERHEAD) / current_night_length
+
+    return {
+        "sjd": sjd,
+        "twilight_end": ephemeris["twilight_end"],
+        "twilight_start": ephemeris["twilight_start"],
+        "night_length": night_length,
+        "n_object_exps": n_exp,
+        "total_exp_time": round(total_exp_time, 2),
+        "time_lost": round(night_length - total_exp_time, 2),
+        "efficiency_no_readout": round(eff_no_readout * 100, 2),
+        "efficiency_readout": round(eff_readout * 100, 2),
+        "night_started": now >= twilight_end.unix,
+        "night_ended": now >= twilight_start.unix,
+    }

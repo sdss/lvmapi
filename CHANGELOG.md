@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* Added `/logs/night-logs/{mjd}/metrics` endpoint to retrieve metrics for a given night (night length, time lost, efficiency). These data are also included in the night log.
+
 ### ✨ Improved
 
 * Allow to update LN2 fill records in the database. Add ``complete`` field to the LN2 fill model.

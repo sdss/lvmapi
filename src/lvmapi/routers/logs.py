@@ -30,6 +30,7 @@ from lvmapi.tools.logs import (
     get_exposures,
     get_night_log_data,
     get_night_log_mjds,
+    get_night_metrics,
     get_plaintext_night_log,
     get_spectro_mjds,
 )
@@ -70,6 +71,10 @@ class NightLogData(BaseModel):
         dict[str, list[NightLogComment]],
         Field(description="The list of comments, organised by category"),
     ] = {}
+    metrics: Annotated[
+        NightMetrics,
+        Field(description="The night metrics"),
+    ]
     exposure_table: Annotated[
         str | None,
         Field(description="The exposure table for the night log"),
@@ -102,6 +107,52 @@ class NightLogPostComment(BaseModel):
             "the comment will be updated."
         ),
     ] = None
+
+
+class NightMetrics(BaseModel):
+    """Model for night metrics."""
+
+    sjd: Annotated[int, Field(description="The Sloan MJD")]
+    twilight_end: Annotated[
+        float,
+        Field(description="Evening twilight as JD"),
+    ]
+    twilight_start: Annotated[
+        float,
+        Field(description="Morning twilight as JD"),
+    ]
+    night_length: Annotated[
+        float,
+        Field(description="Night length in seconds"),
+    ]
+    n_object_exps: Annotated[
+        int,
+        Field(description="Number of science exposures"),
+    ]
+    total_exp_time: Annotated[
+        float,
+        Field(description="Total time exposing science in seconds"),
+    ]
+    time_lost: Annotated[
+        float,
+        Field(description="Time not exposing in seconds"),
+    ]
+    efficiency_no_readout: Annotated[
+        float,
+        Field(description="Efficiency not taking into account readout, as percentage"),
+    ]
+    efficiency_readout: Annotated[
+        float,
+        Field(description="Efficiency assuming 60s readout, as percentage"),
+    ]
+    night_started: Annotated[
+        bool,
+        Field(description="Whether the night has started"),
+    ]
+    night_ended: Annotated[
+        bool,
+        Field(description="Whether the night has ended"),
+    ]
 
 
 router = APIRouter(prefix="/logs", tags=["logs"])
@@ -213,7 +264,7 @@ async def route_get_night_logs_mjd(
             "Use 0 for tonight's log."
         ),
     ],
-):
+) -> NightLogData:
     """Returns the night log data for an MJD."""
 
     from .notifications import route_get_notifications
@@ -227,14 +278,15 @@ async def route_get_night_logs_mjd(
     }
 
     exposure_table_ascii = await get_exposure_table_ascii(mjd)
-
     notifications = await route_get_notifications(mjd)
+    metrics = get_night_metrics(mjd)
 
     return NightLogData(
         **data,
         comments=comments,
         exposure_table=exposure_table_ascii,
         notifications=notifications,
+        metrics=NightMetrics(**metrics),
     )
 
 
@@ -276,3 +328,18 @@ async def route_get_night_logs_mjd_plaintext(
     data = await get_plaintext_night_log(mjd)
 
     return data
+
+
+@router.get("/night-logs/{mjd}/metrics", summary="Night metrics")
+async def route_get_night_logs_metrics(
+    mjd: Annotated[
+        int,
+        Path(description="The MJD for which to retrieve night log."),
+    ],
+):
+    """Returns the night metrics."""
+
+    mjd = mjd if mjd > 0 else get_sjd("LCO")
+    data = get_night_metrics(mjd)
+
+    return NightMetrics(**data)

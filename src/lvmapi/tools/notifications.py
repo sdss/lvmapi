@@ -145,7 +145,11 @@ async def create_notification(
 
     date = datetime.datetime.now()
     payload_str = json.dumps(payload)
-    level = NotificationLevel(level)
+
+    if isinstance(level, str):
+        level = NotificationLevel(level.upper())
+    else:
+        level = NotificationLevel(level)
 
     table = config["database.tables.notification"]
 

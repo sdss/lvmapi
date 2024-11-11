@@ -126,6 +126,22 @@
     {% endif %}
 
     <div class="section">
+      Night metrics
+    </div>
+    <hr />
+    {% if metrics %}
+      <ul>
+        <li>Night length: {{ metrics.night_length }}</li>
+        <li>Number of object exposures: {{ metrics.n_object_exps }}</li>
+        <li>Time not observing: {{ metrics.time_lost if metrics.night_started else "N/A" }}</li>
+        <li>Efficiency (without readout): {{ metrics.efficiency_no_readout|string + "%" if metrics.night_started else "N/A" }}</li>
+        <li>Efficiency (with readout): {{ metrics.efficiency_readout|string + "%" if metrics.night_started else "N/A" }}</li>
+      </ul>
+    {% else %}
+      <div>Metrics not available.</div>
+    {% endif %}
+
+    <div class="section">
       Exposures
     </div>
     <hr />
