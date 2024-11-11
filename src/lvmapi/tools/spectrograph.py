@@ -357,7 +357,7 @@ async def register_ln2_fill(
     log_data: list[dict] | None,
     plot_paths: dict[str, str] | None,
     valve_times: dict[str, dict[str, str | bool | None]] | None,
-    done: bool = True,
+    complete: bool = True,
 ) -> int:
     """Registers LN2 fill data in the database."""
 
@@ -366,12 +366,12 @@ async def register_ln2_fill(
     columns = """(start_time, end_time, purge_start, purge_complete,
 fill_start, fill_complete, fail_time, abort_time,
 failed, aborted, error, action, log_file, json_file,
-configuration, log_data, plot_paths, valve_times, done)"""
+configuration, log_data, plot_paths, valve_times, complete)"""
 
     values_placeholders = """(%(start_time)s, %(end_time)s, %(purge_start)s,
 %(purge_complete)s, %(fill_start)s, %(fill_complete)s, %(fail_time)s, %(abort_time)s,
 %(failed)s, %(aborted)s, %(error)s, %(action)s, %(log_file)s, %(json_file)s,
-%(configuration)s, %(log_data)s, %(plot_paths)s, %(valve_times)s, %(done)s)"""
+%(configuration)s, %(log_data)s, %(plot_paths)s, %(valve_times)s, %(complete)s)"""
 
     params = {
         "start_time": start_time,
@@ -392,7 +392,7 @@ configuration, log_data, plot_paths, valve_times, done)"""
         "log_data": json.dumps(log_data) if log_data else None,
         "plot_paths": json.dumps(plot_paths) if plot_paths else None,
         "valve_times": json.dumps(valve_times) if valve_times else None,
-        "done": done,
+        "complete": complete,
     }
 
     if pk is None:

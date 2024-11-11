@@ -122,7 +122,7 @@ class RegisterFillPostModel(BaseModel):
         str,
         Field(description="LN2 action performed"),
     ]
-    done: Annotated[
+    complete: Annotated[
         bool,
         Field(description="Is the action complete?"),
     ]
