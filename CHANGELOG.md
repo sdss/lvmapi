@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* [#14](https://github.com/sdss/lvmapi/pull/14) Add `/transparency` endpoint to retrieve transparency data.
+
 ### 🔧 Fixed
 
 * Correctly calculate time lost in night metrics while the night is ongoing.

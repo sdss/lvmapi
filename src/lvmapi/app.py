@@ -29,6 +29,7 @@ from lvmapi.routers import (
     spectrographs,
     tasks,
     telescopes,
+    transparency,
     weather,
 )
 from lvmapi.tools.kubernetes import Kubernetes
@@ -51,6 +52,7 @@ app.include_router(kubernetes.router)
 app.include_router(actors.router)
 app.include_router(logs.router)
 app.include_router(notifications.router)
+app.include_router(transparency.router)
 
 
 @app.get("/id")
