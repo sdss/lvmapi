@@ -89,6 +89,6 @@ night_logs:
   email_recipients:
     - lvm-operations@sdss.org
     - lvm-inst@sdss.org
-  email_server: smtp-01.lco.cl
+  email_server: smtp-02.lco.cl
   email_from: LVM Night Log <lvm-nightlog@lco.cl>
   email_reply_to: lvm-operations@sdss.org

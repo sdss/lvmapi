@@ -1,10 +1,14 @@
 # Changelog
 
-## Next version
+## 0.1.15 - 2024-11-12
 
 ### 🚀 New
 
 * [#14](https://github.com/sdss/lvmapi/pull/14) Add `/transparency` endpoint to retrieve transparency data.
+
+### ✨ Improved
+
+* Switch to using `smtp-02.lco.cl` as mail server.
 
 ### 🔧 Fixed
 
