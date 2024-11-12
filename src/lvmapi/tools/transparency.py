@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import polars
+
 from lvmapi.tools.influxdb import query_influxdb
 
 
@@ -16,12 +18,19 @@ async def get_transparency(start_time: float, end_time: float):
 
     query = rf"""
 from(bucket: "actors")
-  |> range(start: {start_time*1000}, stop: {end_time*1000})
+  |> range(start: {int(start_time)}, stop: {int(end_time)})
   |> filter(fn: (r) => (r["_measurement"] =~ /lvm\.[a-z]+\.guider/) and
                         (r["_field"] == "measured_pointing.zero_point"))
   |> yield(name: "mean")
 """
 
     data = await query_influxdb(query)
+
+    # Clean up the dataframe.
+    data = data.select(
+        time=polars.col._time,
+        telescope=polars.col._measurement.str.extract(r"lvm\.([a-z]+)\.guider"),
+        zero_point=polars.col._value,
+    )
 
     return data
