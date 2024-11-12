@@ -133,7 +133,7 @@
       <ul>
         <li>Night length: {{ metrics.night_length }}</li>
         <li>Number of object exposures: {{ metrics.n_object_exps }}</li>
-        <li>Time not observing: {{ metrics.time_lost if metrics.night_started else "N/A" }}</li>
+        <li>Time lost: {{ metrics.time_lost if metrics.night_started else "N/A" }}</li>
         <li>Efficiency (with nominal overheads): {{ metrics.efficiency_nominal|string + "%" if metrics.night_started else "N/A" }}</li>
         <li>Efficiency (with readout): {{ metrics.efficiency_readout|string + "%" if metrics.night_started else "N/A" }}</li>
         <li>Efficiency (without readout): {{ metrics.efficiency_no_readout|string + "%" if metrics.night_started else "N/A" }}</li>
