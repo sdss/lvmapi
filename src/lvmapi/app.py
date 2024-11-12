@@ -8,12 +8,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 
 import taskiq_fastapi
 from fastapi import FastAPI, HTTPException, Request
 
-from lvmapi import auth
+from lvmapi import auth, config
 from lvmapi.broker import broker, broker_shutdown, broker_startup
 from lvmapi.routers import (
     actors,
@@ -33,6 +34,12 @@ from lvmapi.routers import (
     weather,
 )
 from lvmapi.tools.kubernetes import Kubernetes
+
+
+logger = logging.getLogger("uvicorn.error")
+
+if config._CONFIG_FILE is not None:
+    logger.info(f"Using configuration from {config._CONFIG_FILE}.")
 
 
 app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"})

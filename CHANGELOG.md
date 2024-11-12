@@ -9,6 +9,7 @@
 ### ✨ Improved
 
 * Switch to using `smtp-02.lco.cl` as mail server.
+* Allow to define an external configuration file via the `$LVMAPI_CONFIG_PATH` environment variable.
 
 ### 🔧 Fixed
 
