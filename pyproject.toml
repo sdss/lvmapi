@@ -1,6 +1,6 @@
 [project]
 name = "lvmapi"
-version = "0.1.15a0"
+version = "0.1.15"
 description = "REST API for LVM operations"
 authors = [
     { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" }
