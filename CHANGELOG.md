@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🔧 Fixed
+
+* Correctly calculate time lost in night metrics while the night is ongoing.
+
+
 ## 0.1.14 - 2024-11-11
 
 ### 🚀 New
