@@ -93,7 +93,7 @@ class NightLogPostComment(BaseModel):
         Field(description="The MJD associated with the comment"),
     ]
     category: Annotated[
-        Literal["weather", "issues", "other", "observers"],
+        Literal["weather", "issues", "other", "observers", "overwatcher"],
         Field(description="The category of the comment"),
     ]
     comment: Annotated[

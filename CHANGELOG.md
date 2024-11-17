@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Add self-reported Overwatcher comments to the night log.
+
+
 ## 0.1.15 - 2024-11-12
 
 ### 🚀 New

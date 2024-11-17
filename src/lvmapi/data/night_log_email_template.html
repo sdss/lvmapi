@@ -126,6 +126,20 @@
     {% endif %}
 
     <div class="section">
+      Overwatcher self-reported comments
+    </div>
+    <hr />
+    {% if overwatcher %}
+      <ul>
+        {% for comment in overwatcher %}
+          <li>{{ comment.comment }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div>No comments.</div>
+    {% endif %}
+
+    <div class="section">
       Night metrics
     </div>
     <hr />

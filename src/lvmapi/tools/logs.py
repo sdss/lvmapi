@@ -327,7 +327,7 @@ async def create_night_log_entry(mjd: int | None = None):
     return mjd
 
 
-NightLogCategories = Literal["weather", "issues", "other", "observers"]
+NightLogCategories = Literal["weather", "issues", "other", "observers", "overwatcher"]
 
 
 async def add_night_log_comment(
@@ -565,6 +565,10 @@ Other
 -----
 {other}
 
+Overwatcher self-reported
+-------------------------
+{overwatcher}
+
 Night metrics
 -------------
 - Night length: {night_length}.
@@ -593,9 +597,10 @@ Notifications
     observers = data["observers"] or "Overwatcher"
 
     comments = data["comments"]
-    weather = ["- {}".format(comments["comment"]) for comments in comments["weather"]]
-    issues = ["- {}".format(comments["comment"]) for comments in comments["issues"]]
-    other = ["- {}".format(comments["comment"]) for comments in comments["other"]]
+    weather = ["- {}".format(comms["comment"]) for comms in comments["weather"]]
+    issues = ["- {}".format(comms["comment"]) for comms in comments["issues"]]
+    other = ["- {}".format(comms["comment"]) for comms in comments["other"]]
+    overwatcher = ["- {}".format(comms["comment"]) for comms in comments["overwatcher"]]
 
     exposure_table = await get_exposure_table_ascii(
         sjd,
@@ -644,6 +649,7 @@ Notifications
         weather="\n".join(weather) or "No comments",
         issues="\n".join(issues) or "No comments",
         other="\n".join(other) or "No comments",
+        overwatcher="\n".join(overwatcher) or "No comments",
         versions="\n".join(versions_l),
         exposure_data=exposure_table or "No exposures found",
         notifications="\n".join(notifications_to_list(notifications)),
@@ -728,6 +734,7 @@ async def email_night_log(
         weather=data["comments"]["weather"],
         issues=data["comments"]["issues"],
         other=data["comments"]["other"],
+        overwatcher=data["comments"]["overwatcher"],
         exposure_table=exposure_table.strip() if exposure_table else None,
         software_versions=versions,
         notifications=("\n".join(notifications_to_list(notifications))).strip(),
