@@ -565,8 +565,8 @@ Other
 -----
 {other}
 
-Overwatcher self-reported
--------------------------
+Overwatcher
+-----------
 {overwatcher}
 
 Night metrics
