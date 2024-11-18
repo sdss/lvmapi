@@ -573,7 +573,7 @@ Night metrics
 -------------
 - Night length: {night_length}.
 - Number of object exposures: {n_object_exps}.
-- Time not observing: {time_lost}
+- Time not exposing: {time_lost}
 - Efficiency (with nominal overheads): {efficiency_nominal}%
 - Efficiency (with readout): {efficiency_no_readout}%
 - Efficiency (without readout): {efficiency_no_readout}%
