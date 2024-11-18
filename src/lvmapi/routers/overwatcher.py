@@ -48,6 +48,16 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is the overwatcher taking cals?"),
     ] = False
 
+    focusing: Annotated[
+        bool,
+        Field(description="Is the overwatcher focusing the telescopes?"),
+    ] = False
+
+    troubleshooting: Annotated[
+        bool,
+        Field(description="Is the overwatcher in troubleshooting mode?"),
+    ] = False
+
     night: Annotated[
         bool | None,
         Field(description="Is currently night (after twilight)?"),
