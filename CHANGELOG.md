@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.17 - 2024-11-19
+
+### ✨ Improved
+
+* Add `focusing` and `troubleshooting` fields to `OverwatcherStatusModel`.
+* Rename `Time not observing` to `Time not exposing` in the night logs.
+
+
 ## 0.1.16 - 2024-11-17
 
 ### ✨ Improved
