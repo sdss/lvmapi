@@ -24,8 +24,10 @@ from(bucket: "actors")
   |> yield(name: "mean")
 """
 
+    DT_TYPE = polars.Datetime(time_unit="ms", time_zone="UTC")
     SCHEMA: dict[str, polars.DataType] = {
-        "time": polars.Datetime(time_unit="ms", time_zone="UTC"),
+        "date": DT_TYPE,
+        "timestamp": polars.Float64(),
         "telescope": polars.String(),
         "zero_point": polars.Float32(),
     }
@@ -37,7 +39,8 @@ from(bucket: "actors")
 
     # Clean up the dataframe.
     data = data.select(
-        time=polars.col._time,
+        date=polars.col._time,
+        timestamp=polars.col._time.cast(DT_TYPE).dt.timestamp("ms").truediv(1_000),
         telescope=polars.col._measurement.str.extract(r"lvm\.([a-z]+)\.guider"),
         zero_point=polars.col._value,
     ).cast(SCHEMA)  # type: ignore

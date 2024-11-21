@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Add `/transparency/summary/{telescope}` endpoint.
+
+
 ## 0.1.17 - 2024-11-19
 
 ### ✨ Improved
