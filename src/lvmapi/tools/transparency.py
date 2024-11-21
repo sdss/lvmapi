@@ -24,13 +24,22 @@ from(bucket: "actors")
   |> yield(name: "mean")
 """
 
+    SCHEMA: dict[str, polars.DataType] = {
+        "time": polars.Datetime(time_unit="ms", time_zone="UTC"),
+        "telescope": polars.String(),
+        "zero_point": polars.Float32(),
+    }
+
     data = await query_influxdb(query)
+
+    if len(data) == 0:
+        return polars.DataFrame(None, schema=SCHEMA)
 
     # Clean up the dataframe.
     data = data.select(
         time=polars.col._time,
         telescope=polars.col._measurement.str.extract(r"lvm\.([a-z]+)\.guider"),
         zero_point=polars.col._value,
-    )
+    ).cast(SCHEMA)  # type: ignore
 
     return data

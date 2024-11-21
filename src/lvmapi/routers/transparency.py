@@ -47,7 +47,7 @@ class TransparencyData(BaseModel):
     zero_point: Annotated[float, Field(description="Zero-point value")]
 
 
-@router.get("/", summary="Transparency measurements")
+@router.get("", summary="Transparency measurements")
 async def route_get_transparency(
     start_time: Annotated[
         float | None,
