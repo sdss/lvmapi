@@ -27,12 +27,12 @@ from jinja2 import Environment, FileSystemLoader
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
 
+from lvmopstools.schedule import get_ephemeris_summary
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config
 from lvmapi.tools.notifications import create_notification, get_notifications
 from lvmapi.tools.rabbitmq import CluClient
-from lvmapi.tools.schedule import get_ephemeris_summary
 
 
 class ExposureDataDict(BaseModel):

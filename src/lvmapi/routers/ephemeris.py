@@ -13,9 +13,8 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from lvmopstools.schedule import get_ephemeris_summary
 from sdsstools import get_sjd
-
-from lvmapi.tools.schedule import get_ephemeris_summary
 
 
 class EphemerisSummaryOut(BaseModel):
