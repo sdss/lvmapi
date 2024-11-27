@@ -1,7 +1,6 @@
 ---
 influxdb:
-  host: lvm-webapp.lco.cl
-  port: 9999
+  url: http://lvm-webapp.lco.cl:9999
   org: LVM
 
 slack:

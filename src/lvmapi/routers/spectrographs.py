@@ -93,7 +93,7 @@ class CryostatsResponse(BaseModel):
         Field(description="Pressures in Torr as reported by the ion pumps"),
     ]
     thermistors: Annotated[
-        dict[str, bool | None],
+        dict[str, bool],
         Field(description="Whether the thermistors are sensing LN2"),
     ]
     purging: Annotated[

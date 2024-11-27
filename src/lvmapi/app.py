@@ -14,6 +14,8 @@ import os
 import taskiq_fastapi
 from fastapi import FastAPI, HTTPException, Request
 
+from lvmopstools.kubernetes import Kubernetes
+
 from lvmapi import auth, config
 from lvmapi.broker import broker, broker_shutdown, broker_startup
 from lvmapi.routers import (
@@ -33,7 +35,6 @@ from lvmapi.routers import (
     transparency,
     weather,
 )
-from lvmapi.tools.kubernetes import Kubernetes
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -77,7 +78,9 @@ app.add_event_handler("shutdown", broker_shutdown)
 taskiq_fastapi.init(broker, "lvmapi.app:app")
 
 # Add kubernetes API instance to state.
-app.state.kubernetes = Kubernetes()
+app.state.kubernetes = Kubernetes(
+    deployments_path=config["kubernetes.deployments_path"]
+)
 
 # Fake states for testing.
 app.state.use_fake_states = os.environ.get("LVM_USE_FAKE_STATES", "0") != "0"

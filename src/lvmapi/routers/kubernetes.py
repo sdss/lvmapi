@@ -17,7 +17,7 @@ from lvmapi.tasks import restart_kubernetes_deployment_task
 
 
 if TYPE_CHECKING:
-    from lvmapi.tools.kubernetes import Kubernetes
+    from lvmopstools.kubernetes import Kubernetes
 
 
 class DeploymentInfoResponse(BaseModel):

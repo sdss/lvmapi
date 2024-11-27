@@ -9,14 +9,16 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import warnings
 
 import polars
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
+from lvmopstools.weather import get_weather_data, is_weather_data_safe
+
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
-from lvmapi.tools.weather import get_weather_data, is_measurament_safe
 
 
 class AlertsSummary(BaseModel):
@@ -44,10 +46,12 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 async def summary(request: Request) -> AlertsSummary:
     """Summary of alerts."""
 
+    now = time.time()
+
     tasks: list[asyncio.Task] = []
     tasks.append(asyncio.create_task(spec_temperature_alerts()))
     tasks.append(asyncio.create_task(enclosure_alerts()))
-    tasks.append(asyncio.create_task(get_weather_data(start_time=3600)))
+    tasks.append(asyncio.create_task(get_weather_data(start_time=now - 3600)))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -70,14 +74,14 @@ async def summary(request: Request) -> AlertsSummary:
     dew_point_alert = None
 
     if not isinstance(weather_data, BaseException) and weather_data.height > 0:
-        wind_alert = not is_measurament_safe(
+        wind_alert = not is_weather_data_safe(
             weather_data,
             "wind_speed_avg",
             threshold=35,
             reopen_value=30,
         )
 
-        humidity_alert = not is_measurament_safe(
+        humidity_alert = not is_weather_data_safe(
             weather_data,
             "relative_humidity",
             threshold=80,

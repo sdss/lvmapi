@@ -31,10 +31,10 @@ from lvmopstools.devices.specs import (
     spectrograph_temperatures,
 )
 from lvmopstools.devices.thermistors import channel_to_valve, read_thermistors
+from lvmopstools.influxdb import query_influxdb
 
 from lvmapi import config
 from lvmapi.tools.general import get_db_connection
-from lvmapi.tools.influxdb import query_influxdb
 from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
 
 
@@ -89,7 +89,11 @@ async def spectrograph_temperatures_history(
         {sensor_filter}
     """
 
-    results = await query_influxdb(query)
+    results = await query_influxdb(
+        config["influxdb.url"],
+        query,
+        org=config["influxdb.org"],
+    )
 
     if len(results) == 0:
         return polars.DataFrame(
@@ -183,7 +187,11 @@ from(bucket: "spec")
   |> keep(columns: ["_time", "channel_name", "_value"])
 """
 
-    data = await query_influxdb(query)
+    data = await query_influxdb(
+        config["influxdb.url"],
+        query,
+        org=config["influxdb.org"],
+    )
 
     if interval is None:
         result: dict[str, bool] = {}
@@ -252,7 +260,11 @@ async def retrieve_fill_measurements(
         |> yield(name: "mean")
     """  # noqa: E501
 
-    data_cryo = await query_influxdb(query_cryo)
+    data_cryo = await query_influxdb(
+        config["influxdb.url"],
+        query_cryo,
+        org=config["influxdb.org"],
+    )
 
     pressure_data = data_cryo.filter(polars.col._measurement == "pressure")
 

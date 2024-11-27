@@ -8,12 +8,14 @@
 
 from __future__ import annotations
 
+from time import time
+
 from typing import Annotated
 
 import polars
 from fastapi import APIRouter, HTTPException, Query
 
-from lvmapi.tools.weather import get_weather_data
+from lvmopstools.weather import get_weather_data
 
 
 router = APIRouter(prefix="/weather", tags=["weather"])
@@ -57,7 +59,8 @@ async def route_get_weather(
     elif any([start_time, end_time]) and not all([start_time, end_time]):
         raise HTTPException(400, "start_time and end_time must be both defined.")
     else:
-        df = await get_weather_data(station=station, start_time=delta_time)
+        now = time.time()
+        df = await get_weather_data(station=station, start_time=now - delta_time)
 
     if last and len(df) > 0:
         df = df.tail(1)

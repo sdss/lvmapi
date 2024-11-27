@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import polars
 
-from lvmapi.tools.influxdb import query_influxdb
+from lvmopstools.influxdb import query_influxdb
+
+from lvmapi import config
 
 
 async def get_transparency(start_time: float, end_time: float):
@@ -32,7 +34,11 @@ from(bucket: "actors")
         "zero_point": polars.Float32(),
     }
 
-    data = await query_influxdb(query)
+    data = await query_influxdb(
+        config["influxdb.url"],
+        query,
+        org=config["influxdb.org"],
+    )
 
     if len(data) == 0:
         return polars.DataFrame(None, schema=SCHEMA)
