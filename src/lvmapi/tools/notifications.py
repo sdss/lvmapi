@@ -218,8 +218,6 @@ async def send_critical_error_email(message: str):
     template = root / config["notifications.critical.email_template"]
     loader = FileSystemLoader(template.parent)
 
-    print(template, template.parent)
-
     env = Environment(
         loader=loader,
         lstrip_blocks=True,
@@ -252,7 +250,7 @@ The error message is shown below:
 
 {message}
 
-    """
+"""
     msg.attach(MIMEText(plaintext_email, "plain"))
 
     html = MIMEText(html_message, "html")
