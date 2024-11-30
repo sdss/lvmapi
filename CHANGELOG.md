@@ -1,10 +1,14 @@
 # Changelog
 
-## Next version
+## 0.2.0 - 2024-11-30
 
 ### ✨ Improved
 
 * Add `/transparency/summary/{telescope}` endpoint.
+
+### ⚙️ Engineering
+
+* Moved code from the schedule, InfluxDB, and weather modules to the `lvmoptools` package.
 
 
 ## 0.1.17 - 2024-11-19
