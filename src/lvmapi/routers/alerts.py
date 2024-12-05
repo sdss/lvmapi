@@ -13,14 +13,13 @@ import time
 import warnings
 
 import polars
-from aiocache import Cache, cached
-from aiocache.serializers import PickleSerializer
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from lvmopstools.weather import get_weather_data, is_weather_data_safe
 
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
+from lvmapi.tools.general import cache_response
 
 
 class AlertsSummary(BaseModel):
@@ -45,16 +44,11 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 @router.get("/")
 @router.get("/summary")
-@cached(
-    ttl=60,
-    cache=Cache.REDIS,  # type: ignore
-    key="alerts_summary",
-    serializer=PickleSerializer(),
-    port=6379,
-    namespace="lvmapi",
-)
-async def summary(request: Request) -> AlertsSummary:
+@cache_response("alerts:summary", ttl=60, response_model=AlertsSummary)
+async def summary():
     """Summary of alerts."""
+
+    from lvmapi.app import app
 
     now = time.time()
 
@@ -110,11 +104,11 @@ async def summary(request: Request) -> AlertsSummary:
     door_alert = enclosure_alerts_response.get("door_alert", None)
 
     # These fake states are just for testing.
-    if request.app.state.use_fake_states:
-        humidity_alert = request.app.state.fake_states["humidity_alert"]
-        wind_alert = request.app.state.fake_states["wind_alert"]
-        rain_sensor_alarm = request.app.state.fake_states["rain_alert"]
-        door_alert = request.app.state.fake_states["door_alert"]
+    if app.state.use_fake_states:
+        humidity_alert = app.state.fake_states["humidity_alert"]
+        wind_alert = app.state.fake_states["wind_alert"]
+        rain_sensor_alarm = app.state.fake_states["rain_alert"]
+        door_alert = app.state.fake_states["door_alert"]
 
     return AlertsSummary(
         humidity_alert=humidity_alert,

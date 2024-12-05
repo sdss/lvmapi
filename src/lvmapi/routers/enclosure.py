@@ -13,8 +13,6 @@ import enum
 
 from typing import Annotated, Any, Literal
 
-from aiocache import Cache, cached
-from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import BaseModel, Field, create_model, field_validator
 
@@ -23,6 +21,7 @@ from sdsstools.utils import GatheringTaskGroup
 
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import move_dome_task
+from lvmapi.tools.general import cache_response
 from lvmapi.tools.rabbitmq import send_clu_command
 
 
@@ -37,7 +36,9 @@ class PLCStatus(BaseModel):
     labels: list[str] = []
 
     @field_validator("value", mode="before")
-    def cast_value(cls, value: str) -> int:
+    def cast_value(cls, value: str | int) -> int:
+        if isinstance(value, int):
+            return value
         return int(value, 16)
 
     @field_validator("labels", mode="after")
@@ -93,15 +94,8 @@ class NPSBody(BaseModel):
 @router.get("")
 @router.get("/")
 @router.get("/status")
-@cached(
-    ttl=5,
-    cache=Cache.REDIS,  # type: ignore
-    key="enclosure_status",
-    serializer=PickleSerializer(),
-    port=6379,
-    namespace="lvmapi",
-)
-async def status() -> EnclosureStatus:
+@cache_response("enclosure:status", ttl=60, response_model=EnclosureStatus)
+async def status():
     """Performs an emergency shutdown of the enclosure and telescopes."""
 
     try:
