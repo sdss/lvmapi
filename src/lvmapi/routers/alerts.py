@@ -13,6 +13,8 @@ import time
 import warnings
 
 import polars
+from aiocache import Cache, cached
+from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
@@ -43,6 +45,14 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 @router.get("/")
 @router.get("/summary")
+@cached(
+    ttl=60,
+    cache=Cache.REDIS,  # type: ignore
+    key="alerts_summary",
+    serializer=PickleSerializer(),
+    port=6379,
+    namespace="lvmapi",
+)
 async def summary(request: Request) -> AlertsSummary:
     """Summary of alerts."""
 
