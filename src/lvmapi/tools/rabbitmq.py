@@ -77,8 +77,8 @@ class CluClient:
             # which is already initialised.
             return
 
-        host_default = os.environ.get("RABBITMQ_HOST", config["rabbitmq.host"])
-        port_default = int(os.environ.get("RABBITMQ_PORT", config["rabbitmq.port"]))
+        host_default = os.environ.get("RABBITMQ_HOST", "10.8.38.21")
+        port_default = int(os.environ.get("RABBITMQ_PORT", 5672))
 
         self.host: str = host or host_default
         self.port: int = port or port_default
