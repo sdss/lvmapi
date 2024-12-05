@@ -44,7 +44,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 @router.get("/")
 @router.get("/summary")
-@cache_response("alerts:summary", ttl=60, response_model=AlertsSummary)
+@cache_response("alerts:summary", ttl=30, response_model=AlertsSummary)
 async def summary():
     """Summary of alerts."""
 

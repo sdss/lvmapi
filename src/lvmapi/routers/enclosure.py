@@ -94,9 +94,9 @@ class NPSBody(BaseModel):
 @router.get("")
 @router.get("/")
 @router.get("/status")
-@cache_response("enclosure:status", ttl=60, response_model=EnclosureStatus)
+@cache_response("enclosure:status", ttl=15, response_model=EnclosureStatus)
 async def status():
-    """Performs an emergency shutdown of the enclosure and telescopes."""
+    """Returns the enclosure status."""
 
     try:
         async with GatheringTaskGroup() as group:
