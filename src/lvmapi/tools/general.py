@@ -9,17 +9,25 @@
 from __future__ import annotations
 
 import functools
-from datetime import datetime, timedelta
+import json
+from datetime import datetime, timedelta, timezone
 
-from typing import Any
+from typing import Any, Type, TypeVar
 
 import psycopg
 import psycopg.sql
+from aiocache import Cache
+from fastapi import HTTPException
+from pydantic import BaseModel
 
 from lvmapi import config
 
 
-__all__ = ["timed_cache", "get_db_connection", "insert_to_database"]
+__all__ = [
+    "timed_cache",
+    "get_db_connection",
+    "insert_to_database",
+]
 
 
 def timed_cache(seconds: float):
@@ -39,7 +47,7 @@ def timed_cache(seconds: float):
 
     def _wrapper(f):
         update_delta = timedelta(seconds=seconds)
-        next_update = datetime.utcnow() + update_delta
+        next_update = datetime.now(timezone.utc) + update_delta
 
         # Apply @lru_cache to f with no cache size limit
         f = functools.lru_cache(None)(f)
@@ -47,7 +55,7 @@ def timed_cache(seconds: float):
         @functools.wraps(f)
         def _wrapped(*args, **kwargs):
             nonlocal next_update
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if now >= next_update:
                 f.cache_clear()
                 next_update = now + update_delta
@@ -123,3 +131,59 @@ async def insert_to_database(
             for row in data:
                 values = [row.get(col, None) for col in columns]
                 await acursor.execute(query, values)
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def cache_response(
+    key: str,
+    ttl: int = 60,
+    namespace: str = "lvmapi",
+    response_model: Type[T] | None = None,
+):
+    """Caching decorator for FastAPI endpoints.
+
+    See https://dev.to/sivakumarmanoharan/caching-in-fastapi-unlocking-high-performance-development-20ej
+
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            cache_key = f"{namespace}:{key}"
+
+            assert Cache.REDIS
+            cache = Cache.REDIS(
+                endpoint="localhost",  # type: ignore
+                port=6379,  # type: ignore
+                namespace=namespace,
+            )
+
+            # Try to retrieve data from cache
+            cached_value = await cache.get(cache_key)
+            if cached_value:
+                if response_model:
+                    return response_model(**json.loads(cached_value))
+                return json.loads(cached_value)
+
+            # Call the actual function if cache is not hit
+            response: T | Any = await func(*args, **kwargs)
+
+            try:
+                # Store the response in Redis with a TTL
+                if response_model:
+                    cacheable = response.model_dump_json()
+                else:
+                    cacheable = json.dumps(response)
+
+                await cache.set(cache_key, cacheable, ttl=ttl)
+
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Error caching data: {e}")
+
+            return response
+
+        return wrapper
+
+    return decorator

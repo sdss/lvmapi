@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from typing import TYPE_CHECKING
 
 from lvmopstools.clu import CluClient, send_clu_command
@@ -21,6 +23,10 @@ if TYPE_CHECKING:
 
 
 __all__ = ["CluClient", "send_clu_command", "ping_actors"]
+
+
+# CluClient is a singleton. Create a client with lvmapi name.
+CluClient(name=f"lvmapi-{uuid.uuid4()}")
 
 
 async def ping_actors(actors: list[str] | None = None):
