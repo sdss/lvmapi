@@ -13,6 +13,8 @@ import enum
 
 from typing import Annotated, Any, Literal
 
+from aiocache import Cache, cached
+from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import BaseModel, Field, create_model, field_validator
 
@@ -91,6 +93,14 @@ class NPSBody(BaseModel):
 @router.get("")
 @router.get("/")
 @router.get("/status")
+@cached(
+    ttl=5,
+    cache=Cache.REDIS,  # type: ignore
+    key="enclosure_status",
+    serializer=PickleSerializer(),
+    port=6379,
+    namespace="lvmapi",
+)
 async def status() -> EnclosureStatus:
     """Performs an emergency shutdown of the enclosure and telescopes."""
 
