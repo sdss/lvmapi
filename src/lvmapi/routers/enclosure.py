@@ -14,6 +14,7 @@ import enum
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Body, HTTPException, Path
+from fastapi_cache.decorator import cache
 from pydantic import BaseModel, Field, create_model, field_validator
 
 from lvmopstools.devices import read_nps
@@ -21,7 +22,6 @@ from sdsstools.utils import GatheringTaskGroup
 
 from lvmapi.auth import AuthDependency
 from lvmapi.tasks import move_dome_task
-from lvmapi.tools.general import cache_response
 from lvmapi.tools.rabbitmq import send_clu_command
 
 
@@ -94,8 +94,8 @@ class NPSBody(BaseModel):
 @router.get("")
 @router.get("/")
 @router.get("/status")
-@cache_response("enclosure:status", ttl=15, response_model=EnclosureStatus)
-async def status():
+@cache(30, namespace="lvmapi")
+async def status(param: int):
     """Returns the enclosure status."""
 
     try:

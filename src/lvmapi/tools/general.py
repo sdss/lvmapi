@@ -9,15 +9,12 @@
 from __future__ import annotations
 
 import functools
-import json
 from datetime import datetime, timedelta, timezone
 
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 
 import psycopg
 import psycopg.sql
-from aiocache import Cache
-from fastapi import HTTPException
 from pydantic import BaseModel
 
 from lvmapi import config
@@ -134,56 +131,3 @@ async def insert_to_database(
 
 
 T = TypeVar("T", bound=BaseModel)
-
-
-def cache_response(
-    key: str,
-    ttl: int = 60,
-    namespace: str = "lvmapi",
-    response_model: Type[T] | None = None,
-):
-    """Caching decorator for FastAPI endpoints.
-
-    See https://dev.to/sivakumarmanoharan/caching-in-fastapi-unlocking-high-performance-development-20ej
-
-    """
-
-    def decorator(func):
-        @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            cache_key = f"{namespace}:{key}"
-
-            assert Cache.REDIS
-            cache = Cache.REDIS(
-                endpoint="localhost",  # type: ignore
-                port=6379,  # type: ignore
-                namespace=namespace,
-            )
-
-            # Try to retrieve data from cache
-            cached_value = await cache.get(cache_key)
-            if cached_value:
-                if response_model:
-                    return response_model(**json.loads(cached_value))
-                return json.loads(cached_value)
-
-            # Call the actual function if cache is not hit
-            response: T | Any = await func(*args, **kwargs)
-
-            try:
-                # Store the response in Redis with a TTL
-                if response_model:
-                    cacheable = response.model_dump_json()
-                else:
-                    cacheable = json.dumps(response)
-
-                await cache.set(cache_key, cacheable, ttl=ttl)
-
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error caching data: {e}")
-
-            return response
-
-        return wrapper
-
-    return decorator

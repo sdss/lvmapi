@@ -14,12 +14,12 @@ import warnings
 
 import polars
 from fastapi import APIRouter
+from fastapi_cache.decorator import cache
 from pydantic import BaseModel
 
 from lvmopstools.weather import get_weather_data, is_weather_data_safe
 
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
-from lvmapi.tools.general import cache_response
 
 
 class AlertsSummary(BaseModel):
@@ -44,7 +44,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 @router.get("/")
 @router.get("/summary")
-@cache_response("alerts:summary", ttl=30, response_model=AlertsSummary)
+@cache(expire=30, namespace="lvmapi")
 async def summary():
     """Summary of alerts."""
 
