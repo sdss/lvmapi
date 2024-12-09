@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Cache alerts and enclosure status.
+
+
 ## 0.2.0 - 2024-11-30
 
 ### ✨ Improved
