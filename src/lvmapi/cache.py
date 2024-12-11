@@ -10,45 +10,22 @@ from __future__ import annotations
 
 import hashlib
 import json
-from contextlib import asynccontextmanager
 from functools import partial
 
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
-from redis.asyncio.client import Redis
-
-from lvmapi.broker import broker_shutdown, broker_startup
 
 
 if TYPE_CHECKING:
-    from fastapi import FastAPI
     from starlette.requests import Request
     from starlette.responses import Response
 
 
-__all__ = ["cache_lifespan", "valis_cache_key_builder", "lvmapi_cache"]
+__all__ = ["valis_cache_key_builder", "lvmapi_cache"]
 
 
 lvmapi_cache = partial(cache, namespace="lvmapi")
-
-
-@asynccontextmanager
-async def cache_lifespan(_: FastAPI) -> AsyncIterator[None]:
-    redis = Redis.from_url("redis://localhost")
-    FastAPICache.init(
-        RedisBackend(redis),
-        prefix="fastapi-cache",
-        key_builder=valis_cache_key_builder,
-    )
-
-    await broker_startup()
-
-    yield
-
-    await broker_shutdown()
 
 
 async def valis_cache_key_builder(

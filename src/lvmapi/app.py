@@ -10,15 +10,21 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import asynccontextmanager
+
+from typing import AsyncIterator
 
 import taskiq_fastapi
 from fastapi import FastAPI, HTTPException, Request
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis.asyncio.client import Redis
 
 from lvmopstools.kubernetes import Kubernetes
 
 from lvmapi import auth, config
-from lvmapi.broker import broker
-from lvmapi.cache import cache_lifespan
+from lvmapi.broker import broker, broker_shutdown, broker_startup
+from lvmapi.cache import valis_cache_key_builder
 from lvmapi.routers import (
     actors,
     alerts,
@@ -44,7 +50,26 @@ if config._CONFIG_FILE is not None:
     logger.info(f"Using configuration from {config._CONFIG_FILE}.")
 
 
-app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"}, lifespan=cache_lifespan)
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # Start cache backend.
+    redis = Redis.from_url("redis://localhost")
+    FastAPICache.init(
+        RedisBackend(redis),
+        prefix="fastapi-cache",
+        key_builder=valis_cache_key_builder,
+    )
+
+    # Start task broker.
+    await broker_startup()
+
+    yield
+
+    # Shutdown cache backend.
+    await broker_shutdown()
+
+
+app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"}, lifespan=lifespan)
 
 app.include_router(auth.router)
 app.include_router(telescopes.router)
@@ -70,10 +95,6 @@ async def get_id_route(request: Request):
 
     return id(request.app)
 
-
-# Lifecycle events for the broker.
-# app.add_event_handler("startup", broker_startup)
-# app.add_event_handler("shutdown", broker_shutdown)
 
 # Integration with FastAPI.
 taskiq_fastapi.init(broker, "lvmapi.app:app")
