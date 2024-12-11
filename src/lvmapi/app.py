@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from lvmopstools.kubernetes import Kubernetes
 
 from lvmapi import auth, config
-from lvmapi.broker import broker, broker_shutdown, broker_startup
+from lvmapi.broker import broker
 from lvmapi.cache import cache_lifespan
 from lvmapi.routers import (
     actors,
@@ -72,8 +72,8 @@ async def get_id_route(request: Request):
 
 
 # Lifecycle events for the broker.
-app.add_event_handler("startup", broker_startup)
-app.add_event_handler("shutdown", broker_shutdown)
+# app.add_event_handler("startup", broker_startup)
+# app.add_event_handler("shutdown", broker_shutdown)
 
 # Integration with FastAPI.
 taskiq_fastapi.init(broker, "lvmapi.app:app")

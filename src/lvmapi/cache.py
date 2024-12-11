@@ -20,6 +20,8 @@ from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
 from redis.asyncio.client import Redis
 
+from lvmapi.broker import broker_shutdown, broker_startup
+
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -41,7 +43,12 @@ async def cache_lifespan(_: FastAPI) -> AsyncIterator[None]:
         prefix="fastapi-cache",
         key_builder=valis_cache_key_builder,
     )
+
+    await broker_startup()
+
     yield
+
+    await broker_shutdown()
 
 
 async def valis_cache_key_builder(
