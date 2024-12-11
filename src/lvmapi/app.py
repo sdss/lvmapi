@@ -11,19 +11,14 @@ from __future__ import annotations
 import logging
 import os
 
-from typing import AsyncIterator
-
 import taskiq_fastapi
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.concurrency import asynccontextmanager
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from redis.asyncio.client import Redis
 
 from lvmopstools.kubernetes import Kubernetes
 
 from lvmapi import auth, config
 from lvmapi.broker import broker, broker_shutdown, broker_startup
+from lvmapi.cache import cache_lifespan
 from lvmapi.routers import (
     actors,
     alerts,
@@ -49,14 +44,7 @@ if config._CONFIG_FILE is not None:
     logger.info(f"Using configuration from {config._CONFIG_FILE}.")
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    redis = Redis.from_url("redis://localhost")
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    yield
-
-
-app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"}, lifespan=lifespan)
+app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"}, lifespan=cache_lifespan)
 
 app.include_router(auth.router)
 app.include_router(telescopes.router)
