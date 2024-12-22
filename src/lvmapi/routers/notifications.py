@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import datetime
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Sequence
 
 from fastapi import APIRouter, HTTPException, Path
 from pydantic import BaseModel, Field
@@ -62,10 +62,14 @@ class NotificationPost(BaseModel):
     payload: Annotated[
         dict[str, Any], Field(description="The payload of the notification.")
     ] = {}
-    slack_channel: Annotated[
-        str | bool | None,
+    slack_channels: Annotated[
+        str | Sequence[str] | None,
         Field(description="The Slack channel where to send the message."),
     ] = None
+    slack: Annotated[
+        bool,
+        Field(description="Whether to send the notification to Slack."),
+    ] = True
     email_on_critical: Annotated[
         bool, Field(description="Whether to send an email if the level is CRITICAL.")
     ] = True
@@ -106,7 +110,8 @@ async def route_post_create_notification(notification: NotificationPost):
             notification.message,
             level=NotificationLevel(notification.level.upper()),
             payload=notification.payload,
-            slack_channel=notification.slack_channel,
+            slack=notification.slack,
+            slack_channels=notification.slack_channels,
             email_on_critical=notification.email_on_critical,
             write_to_database=notification.write_to_database,
             slack_extra_params=notification.slack_extra_params,
