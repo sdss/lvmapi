@@ -20,6 +20,7 @@ from lvmopstools.weather import get_weather_data, is_weather_data_safe
 
 from lvmapi.cache import lvmapi_cache
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
+from lvmapi.tools.general import is_host_up
 
 
 class AlertsSummary(BaseModel):
@@ -38,14 +39,21 @@ class AlertsSummary(BaseModel):
     heater_camera_alerts: dict[str, bool] | None = None
 
 
+class ConnectivityResponse(BaseModel):
+    """Observatory connectivity status."""
+
+    internet: bool
+    lco: bool
+
+
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 
-@router.get("")
-@router.get("/")
-@router.get("/summary")
+@router.get("", summary="Summary of alerts")
+@router.get("/", summary="Summary of alerts")
+@router.get("/summary", summary="Summary of alerts")
 @lvmapi_cache(expire=30)
-async def summary():
+async def route_get_summary():
     """Summary of alerts."""
 
     from lvmapi.app import app
@@ -123,3 +131,13 @@ async def summary():
         o2_alert=o2_alert,
         o2_room_alerts=o2_alerts,
     )
+
+
+@router.get("/connectivity", summary="Observatory connectivity status")
+async def route_get_connectivity():
+    """Checks the connectivity of LVM to the outside world and other LCO networks."""
+
+    internet = await is_host_up("8.8.8.8")  # Google DNS
+    lco = await is_host_up("10.8.8.46")  # clima.lco.cl
+
+    return ConnectivityResponse(internet=internet, lco=lco)

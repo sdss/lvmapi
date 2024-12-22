@@ -8,16 +8,18 @@
 
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import Any
 
 import psycopg
 import psycopg.sql
-from pydantic import BaseModel
+from nmap3 import NmapHostDiscovery
+
+from sdsstools.utils import run_in_executor
 
 from lvmapi import config
 
 
-__all__ = ["get_db_connection", "insert_to_database"]
+__all__ = ["get_db_connection", "insert_to_database", "is_host_up"]
 
 
 def get_db_connection():
@@ -87,4 +89,33 @@ async def insert_to_database(
                 await acursor.execute(query, values)
 
 
-T = TypeVar("T", bound=BaseModel)
+async def is_host_up(host: str) -> bool:
+    """Returns whether a host is up.
+
+    Parameters
+    ----------
+    host
+        The host to check.
+
+    Returns
+    -------
+    is_up
+        ``True`` if the host is up, ``False`` otherwise.
+
+    """
+
+    nmap = NmapHostDiscovery()
+    result = await run_in_executor(
+        nmap.nmap_no_portscan,
+        host,
+        args="--host-timeout=1 --max-retries=2",
+    )
+
+    if (
+        host not in result
+        or "state" not in result[host]
+        or "state" not in result[host]["state"]
+    ):
+        return False
+
+    return result[host]["state"]["state"] == "up"
