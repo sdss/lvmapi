@@ -27,7 +27,7 @@ from jinja2 import Environment, FileSystemLoader
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
 
-from lvmopstools.schedule import get_ephemeris_summary
+from lvmopstools.ephemeris import get_ephemeris_summary
 from sdsstools import get_sjd, run_in_executor
 
 from lvmapi import config

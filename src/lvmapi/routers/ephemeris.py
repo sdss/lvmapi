@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from lvmopstools.schedule import get_ephemeris_summary
+from lvmopstools.ephemeris import get_ephemeris_summary
 from sdsstools import get_sjd
 
 
