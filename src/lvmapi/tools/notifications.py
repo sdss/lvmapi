@@ -9,39 +9,23 @@
 from __future__ import annotations
 
 import datetime
-import enum
 import json
-import pathlib
 import re
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
-from typing import Any, cast
+from typing import Any, Sequence
 
 import psycopg
-from jinja2 import Environment, FileSystemLoader
 from psycopg.rows import dict_row
 from psycopg.sql import SQL, Identifier
 
+from lvmopstools.notifications import NotificationLevel, send_notification
 from sdsstools import get_sjd
 
 from lvmapi import config
 from lvmapi.tools.general import insert_to_database
-from lvmapi.tools.slack import post_message
 
 
-__all__ = ["get_notifications"]
-
-
-class NotificationLevel(enum.Enum):
-    """Allowed notification levels."""
-
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+__all__ = ["fill_notifications_mjd", "get_notifications", "create_notification"]
 
 
 async def fill_notifications_mjd():
@@ -113,12 +97,14 @@ def format_message_for_db(message: str) -> str:
 
 async def create_notification(
     message: str,
-    level: NotificationLevel | str = NotificationLevel.INFO,
     payload: dict[str, Any] = {},
-    slack_channel: str | bool | None = None,
+    level: NotificationLevel | str = NotificationLevel.INFO,
+    slack: bool = True,
+    slack_channels: str | Sequence[str] | None = None,
     email_on_critical: bool = True,
-    write_to_database: bool = True,
     slack_extra_params: dict[str, Any] = {},
+    email_params: dict[str, Any] = {},
+    write_to_database: bool = True,
 ):
     """Creates a new notification.
 
@@ -126,74 +112,59 @@ async def create_notification(
     ----------
     message
         The message of the notification. Can be formatted in Markdown.
+    payload
+        A dictionary with extra information to store with the notification.
+        The payload is stored as a JSON string in the database and not emitted over
+        Slack or email.
     level
         The level of the notification.
-    payload
-        A dictionary with additional information to be stored with the notification.
-        This data is not send over email or Slack, only stored in the database.
-    slack_channel
+    slack
+        Whether to send the notification to Slack.
+    slack_channels
         The Slack channel where to send the notification. If not provided, the default
         channel is used. Can be set to false to disable sending the Slack notification.
     email_on_critical
         Whether to send an email if the notification level is ``CRITICAL``.
-    write_to_database
-        Whether to write the notification to the database.
     slack_extra_params
         A dictionary of extra parameters to pass to ``post_message``.
+    email_params
+        A dictionary of extra parameters to pass to :obj:`.send_critical_error_email`.
+    write_to_database
+        Whether to write the notification to the database.
+
+    Returns
+    -------
+    message
+        The message that was sent.
 
     """
-
-    date = datetime.datetime.now()
-    payload_str = json.dumps(payload)
 
     if isinstance(level, str):
         level = NotificationLevel(level.upper())
     else:
         level = NotificationLevel(level)
 
+    date = datetime.datetime.now()
+    payload_str = json.dumps(payload)
+
     table = config["database.tables.notification"]
 
-    slack = slack_channel is not False
-    email = email_on_critical and level == NotificationLevel.CRITICAL
-
-    if email:
-        try:
-            await send_critical_error_email(message)
-        except Exception as ee:
-            print(f"Error sending critical error email: {ee}")
-
-    if slack_channel is not False:
-        default_channel: str
-        if slack_channel is None or slack_channel is True:
-            default_channel = cast(str, config["slack.default_channel"])
-        else:
-            default_channel = slack_channel
-
-        # We send the message to the default channel plus any other channel that
-        # matches the level of the notification.
-        channels: set[str] = {default_channel}
-
-        level_channels = cast(dict[str, str], config["slack.level_channels"])
-        if level.value in level_channels:
-            channels.add(level_channels[level.value])
-
-        # Send Slack message(s)
-        for channel in channels:
-            mentions = (
-                ["@channel"]
-                if level == NotificationLevel.CRITICAL
-                or level == NotificationLevel.ERROR
-                else []
-            )
-            await post_message(
-                message,
-                channel=channel,
-                mentions=mentions,
-                **slack_extra_params,
-            )
+    message = await send_notification(
+        message,
+        level=level,
+        slack=slack,
+        slack_channels=slack_channels,
+        email_on_critical=email_on_critical,
+        slack_extra_params=slack_extra_params,
+        email_params=email_params,
+    )
 
     if write_to_database:
         message_db = format_message_for_db(message)
+
+        # Was an email sent?
+        email = email_on_critical and level == NotificationLevel.CRITICAL
+
         await insert_to_database(
             table,
             [
@@ -209,52 +180,3 @@ async def create_notification(
             ],
             columns=["date", "mjd", "message", "level", "payload", "slack", "email"],
         )
-
-
-async def send_critical_error_email(message: str):
-    """Sends a critical error email."""
-
-    root = pathlib.Path(__file__).parents[1]
-    template = root / config["notifications.critical.email_template"]
-    loader = FileSystemLoader(template.parent)
-
-    env = Environment(
-        loader=loader,
-        lstrip_blocks=True,
-        trim_blocks=True,
-    )
-    html_template = env.get_template(template.name)
-
-    html_message = html_template.render(message=message.strip())
-
-    recipients = config["notifications.critical.email_recipients"]
-    from_address = config["notifications.critical.email_from"]
-
-    email_server = config["notifications.critical.email_server"]
-    email_host, *email_rest = email_server.split(":")
-    email_port: int = 0
-    if len(email_rest) == 1:
-        email_port = int(email_rest[0])
-
-    email_reply_to = config["notifications.critical.email_reply_to"]
-
-    msg = MIMEMultipart("alternative" if html_message else "mixed")
-    msg["Subject"] = "LVM Critical Alert"
-    msg["From"] = from_address
-    msg["To"] = ", ".join(recipients)
-    msg["Reply-To"] = email_reply_to
-
-    plaintext_email = f"""A critical alert was raised in the LVM system.
-
-The error message is shown below:
-
-{message}
-
-"""
-    msg.attach(MIMEText(plaintext_email, "plain"))
-
-    html = MIMEText(html_message, "html")
-    msg.attach(html)
-
-    with smtplib.SMTP(host=email_host, port=email_port) as smtp:
-        smtp.sendmail(from_address, recipients, msg.as_string())

@@ -8,9 +8,6 @@
 
 from __future__ import annotations
 
-import functools
-from datetime import datetime, timedelta, timezone
-
 from typing import Any, TypeVar
 
 import psycopg
@@ -20,47 +17,7 @@ from pydantic import BaseModel
 from lvmapi import config
 
 
-__all__ = [
-    "timed_cache",
-    "get_db_connection",
-    "insert_to_database",
-]
-
-
-def timed_cache(seconds: float):
-    """A cache decorator that expires after a certain time.
-
-    Modified from https://gist.github.com/Morreski/c1d08a3afa4040815eafd3891e16b945
-
-    This only works for synchronous functions. For asynchronous functions, use
-    ``aiocache.cached``.
-
-    Parameters
-    ----------
-    seconds
-        Number of seconds after which the cache is cleared.
-
-    """
-
-    def _wrapper(f):
-        update_delta = timedelta(seconds=seconds)
-        next_update = datetime.now(timezone.utc) + update_delta
-
-        # Apply @lru_cache to f with no cache size limit
-        f = functools.lru_cache(None)(f)
-
-        @functools.wraps(f)
-        def _wrapped(*args, **kwargs):
-            nonlocal next_update
-            now = datetime.now(timezone.utc)
-            if now >= next_update:
-                f.cache_clear()
-                next_update = now + update_delta
-            return f(*args, **kwargs)
-
-        return _wrapped
-
-    return _wrapper
+__all__ = ["get_db_connection", "insert_to_database"]
 
 
 def get_db_connection():

@@ -13,7 +13,8 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
-import lvmapi.tools.slack
+from lvmopstools.slack import get_user_id, post_message
+
 from lvmapi import config
 
 
@@ -86,7 +87,7 @@ async def route_post_message(message: Message) -> None:
     """Sends a message to the Slack channel."""
 
     try:
-        await lvmapi.tools.slack.post_message(
+        await post_message(
             message.text,
             blocks=message.blocks,
             channel=message.channel,
@@ -142,7 +143,7 @@ async def route_get_user_id(user: str) -> str | None:
     """Gets the ``userID`` of the user whose ``name`` or ``real_name`` matches."""
 
     try:
-        user_id = await lvmapi.tools.slack.get_user_id(user)
+        user_id = await get_user_id(user)
     except NameError:
         return None
     except Exception as err:
