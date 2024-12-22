@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* [#17](https://github.com/sdss/lvmapi/pull/17) Add `/alerts/connectivity` endpoint to check the access to the internet and LCO services from LVM.
+
 ### ✨ Improved
 
 * Cache alerts and enclosure status.
