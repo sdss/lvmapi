@@ -72,6 +72,25 @@ wheels = [
 ]
 
 [[package]]
+name = "aiocsv"
+version = "1.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/33/78/bd4a85d195e57e72837415ef81d26ce6db6fdf185dce8d4f6a7c099ed4af/aiocsv-1.3.2.tar.gz", hash = "sha256:806d93465c7808d58d3ff0d2bba270fb4d04b934be6a1e95d0834c50a510910e", size = 24837 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/b3/548e5b377f65d3ae02c0674a54de76c150c8d050f4fe7b0e43be866ba1be/aiocsv-1.3.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:7c25ad8afbf79d28ec3320e608c7f38d3eff93e96ebbbd2430ae8fa0f6e7631b", size = 26420 },
+    { url = "https://files.pythonhosted.org/packages/0d/bc/2659b85488b520d66b31ac83f42f7493653f61a4941b4f0807f3f73bd3e0/aiocsv-1.3.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4004569bff39cb839a335b8f673a6496fd5b0b6e074c7adb7aee4a0c8379ea22", size = 49433 },
+    { url = "https://files.pythonhosted.org/packages/41/c2/0f7d38cf5411350b8448f7c5c77f65247224fa96edfc7a5e997deb5fc96d/aiocsv-1.3.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:e9c98f8d760add0b52274523baa4b81dde4a3c96f79222d3d4d6965bac9cdcbd", size = 54346 },
+    { url = "https://files.pythonhosted.org/packages/33/e6/5e661bc89cd094a7d92f5883c16f9651a52c4a8f38623c8de1851d7ffa84/aiocsv-1.3.2-cp311-cp311-win_amd64.whl", hash = "sha256:9edb342b0d7dba94d8976f46ba5814b8d8704d67a45e1b8a6579ab0ba04309e7", size = 29090 },
+    { url = "https://files.pythonhosted.org/packages/52/b5/48e8b825d8ec9ffbb47ebbc381702d5dfb59ef01ad00174bf43123b860cf/aiocsv-1.3.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:db943a463cb6828ba81bd7c083c6dd4c96edac4880b8638af81798d694405e26", size = 26497 },
+    { url = "https://files.pythonhosted.org/packages/94/6f/cb2d7b751a03433a30e7a645f0b3a126f5f2ecb0947c3da5a04496c06767/aiocsv-1.3.2-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:10780033a1ed3da825f2256449d177b7106b3c5a2d64bd683eab37f1fdee1e36", size = 51459 },
+    { url = "https://files.pythonhosted.org/packages/c2/19/67edf04b47168a2639d73ebaae25f2459d7284d10a5e7a2fef72a69bb31e/aiocsv-1.3.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8c7aee34ceff4eaa654f01acbdba648297f5f9532dc7a23fac62defec28e0fe5", size = 55921 },
+    { url = "https://files.pythonhosted.org/packages/13/39/ee5645807a947736c87ab7c0dfcdbceb7d7f8d1d31cb7d52992cbd5d6d44/aiocsv-1.3.2-cp312-cp312-win_amd64.whl", hash = "sha256:59b0ea2d9e73539d4c1276467c4457acafa995717ea1b5340f3737f2cde2f71a", size = 29137 },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.4.4"
 source = { registry = "https://pypi.org/simple" }
@@ -966,6 +985,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/b3/1edc89584b8d1bc5226cf508b67ab64da3ba83041cab348861e6f4392326/influxdb_client-1.48.0-py3-none-any.whl", hash = "sha256:410db15db761df7ea98adb333c7a03f05bcc2ceef4830cefb7071b888be2b827", size = 746177 },
 ]
 
+[package.optional-dependencies]
+async = [
+    { name = "aiocsv" },
+    { name = "aiohttp" },
+]
+
 [[package]]
 name = "iniconfig"
 version = "2.0.0"
@@ -1147,7 +1172,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lvmgort", specifier = ">=1.3.0" },
-    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack"], specifier = ">=0.5.4" },
+    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack"], specifier = ">=0.5.5" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.18.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.2" },
@@ -1205,7 +1230,7 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.5.4"
+version = "0.5.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
@@ -1223,9 +1248,9 @@ dependencies = [
     { name = "strenum" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b2/02/4c0b1e339e8149a55d8893f20df8ae5369e98ec5039fc5d583a5ddedbfd5/lvmopstools-0.5.4.tar.gz", hash = "sha256:6ec46d278d11bb649970f70cf27072c312334cad9fdfb3735ddb2cfff7f9c771", size = 130722 }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/f2/3586a60bc52d847715b5bd1edac479e0ab334101c976cec52af3f387528a/lvmopstools-0.5.5.tar.gz", hash = "sha256:35ba56f68e9a2ae03ad372387cf5d6e233da203a779fd216c275ad055fbdc980", size = 130720 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/1a/a4900dab2764ca671e3b6a32c91f479ba970f55d234f084e27f0818f78b8/lvmopstools-0.5.4-py3-none-any.whl", hash = "sha256:f8f1ee50e3d23f288d425071a7d0d80fd02ce2d12914e8aceaeb2e0f06d8c8c4", size = 138914 },
+    { url = "https://files.pythonhosted.org/packages/e9/b8/c4489945d1dcbe46b4c33c1754139e641da53fd230f86ca38548b0c543eb/lvmopstools-0.5.5-py3-none-any.whl", hash = "sha256:8913772cde5ce744ac03e0bac0aa34455b799734057d712501867fba063a41d1", size = 138911 },
 ]
 
 [package.optional-dependencies]
@@ -1234,7 +1259,7 @@ ephemeris = [
     { name = "astropy" },
 ]
 influxdb = [
-    { name = "influxdb-client" },
+    { name = "influxdb-client", extra = ["async"] },
 ]
 kubernetes = [
     { name = "kubernetes" },
