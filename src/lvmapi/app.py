@@ -99,10 +99,11 @@ async def get_id_route(request: Request):
 # Integration with FastAPI.
 taskiq_fastapi.init(broker, "lvmapi.app:app")
 
-# Add kubernetes API instance to state.
-app.state.kubernetes = Kubernetes(
-    deployments_path=config["kubernetes.deployments_path"]
-)
+# Add kubernetes API instance to state. Ignore when running tests in GitHub Actions.
+if not os.getenv("GITHUB_ACTIONS", False):
+    app.state.kubernetes = Kubernetes(
+        deployments_path=config["kubernetes.deployments_path"]
+    )
 
 # Fake states for testing.
 app.state.use_fake_states = os.environ.get("LVM_USE_FAKE_STATES", "0") != "0"
