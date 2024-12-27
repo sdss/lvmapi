@@ -13,7 +13,7 @@ dependencies = [
     "sdsstools>=1.9.1",
     "fastapi[standard]>=0.112.0",
     "lvmgort>=1.3.0",
-    "lvmopstools[influxdb,kubernetes,ephemeris]>=0.5.2",
+    "lvmopstools[influxdb,kubernetes,ephemeris]>=0.5.3",
     "gunicorn>=22.0.0",
     "uvicorn[standard]>=0.24.0",
     "sdss-clu>=2.3.2",
@@ -60,9 +60,9 @@ dev = [
 package = true
 default-groups = ["dev"]
 
-[tool.uv.sources]
+# [tool.uv.sources]
 # lvmgort = { git = "https://github.com/sdss/lvmgort", branch = "overwatcher" }
-lvmopstools = { git = "https://github.com/sdss/lvmopstools", branch = "main" }
+# lvmopstools = { git = "https://github.com/sdss/lvmopstools", branch = "main" }
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
