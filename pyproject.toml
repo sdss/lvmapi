@@ -48,7 +48,11 @@ dev = [
     "doc8>=0.8.0",
     "ipdb>=0.12.3",
     "ruff>=0.5.0",
-    "poethepoet>=0.24.2"
+    "poethepoet>=0.24.2",
+    "pytest>=8.3.4",
+    "pytest-sugar>=1.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.25.0",
 ]
 
 [tool.uv]
@@ -93,6 +97,24 @@ section-order = ["future", "standard-library", "typing", "third-party", "sdss", 
 [tool.ruff.lint.isort.sections]
 typing = ["typing"]
 sdss = ["sdsstools", "clu", "drift", "lvmopstools"]
+
+[tool.pytest.ini_options]
+addopts = "--cov lvmapi --cov-report xml --cov-report html --cov-report term -W ignore"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+branch = true
+include = ["src/lvmapi/*"]
+omit = [
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "# pragma: no cover"
+]
 
 [build-system]
 requires = ["hatchling"]
