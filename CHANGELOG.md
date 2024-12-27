@@ -1,10 +1,14 @@
 # Changelog
 
-## Next version
+## 0.2.1 - 2024-12-27
 
 ### 🚀 New
 
 * [#17](https://github.com/sdss/lvmapi/pull/17) Add `/alerts/connectivity` endpoint to check the access to the internet and LCO services from LVM.
+
+## 🏷️ Changed
+
+* [#16](https://github.com/sdss/lvmapi/pull/16) Move `slack` and a lot of the `notifications` code to `lvmopstools`.
 
 ### ✨ Improved
 

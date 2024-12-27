@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from typing import Any, Literal, TypedDict, get_args, overload
+from typing import TYPE_CHECKING, Any, Literal, get_args, overload
 
 import polars
 import psycopg
@@ -33,6 +33,10 @@ from sdsstools import get_sjd, run_in_executor
 from lvmapi import config
 from lvmapi.tools.notifications import create_notification, get_notifications
 from lvmapi.tools.rabbitmq import CluClient
+
+
+if TYPE_CHECKING:
+    from typing_extensions import TypedDict
 
 
 class ExposureDataDict(BaseModel):
