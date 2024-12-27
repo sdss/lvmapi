@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🔧 Fixed
+
+* Use `lvmopstools` 0.5.4 with fix to the InfluxDB client and install the `slack` extra.
+
+
 ## 0.2.1 - 2024-12-27
 
 ### 🚀 New

@@ -1104,7 +1104,7 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "lvmgort" },
-    { name = "lvmopstools", extra = ["ephemeris", "influxdb", "kubernetes"] },
+    { name = "lvmopstools", extra = ["ephemeris", "influxdb", "kubernetes", "slack"] },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "polars" },
     { name = "psycopg", extra = ["binary"] },
@@ -1147,7 +1147,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lvmgort", specifier = ">=1.3.0" },
-    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris"], specifier = ">=0.5.3" },
+    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack"], specifier = ">=0.5.4" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.18.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.2" },
@@ -1205,7 +1205,7 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.5.3"
+version = "0.5.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
@@ -1223,9 +1223,9 @@ dependencies = [
     { name = "strenum" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/00/d9/62bac213583f0a2830061a29b81148e8854bf4cd0057b0f3ef6669f5fe9f/lvmopstools-0.5.3.tar.gz", hash = "sha256:6538a2edb69e16e2695501cf6a04fa5031fde622d1c488cfe9d09f397b687da9", size = 130712 }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/02/4c0b1e339e8149a55d8893f20df8ae5369e98ec5039fc5d583a5ddedbfd5/lvmopstools-0.5.4.tar.gz", hash = "sha256:6ec46d278d11bb649970f70cf27072c312334cad9fdfb3735ddb2cfff7f9c771", size = 130722 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/35/101023897e8388191a9ec3959fff836a40fd8ab1e1d6f8c408abf549e5b8/lvmopstools-0.5.3-py3-none-any.whl", hash = "sha256:138dfed9478d207618a0dfb7408690cccf635866a88306f0eb04120a4b6ede32", size = 138905 },
+    { url = "https://files.pythonhosted.org/packages/d1/1a/a4900dab2764ca671e3b6a32c91f479ba970f55d234f084e27f0818f78b8/lvmopstools-0.5.4-py3-none-any.whl", hash = "sha256:f8f1ee50e3d23f288d425071a7d0d80fd02ce2d12914e8aceaeb2e0f06d8c8c4", size = 138914 },
 ]
 
 [package.optional-dependencies]
@@ -1238,6 +1238,9 @@ influxdb = [
 ]
 kubernetes = [
     { name = "kubernetes" },
+]
+slack = [
+    { name = "slack-sdk" },
 ]
 
 [[package]]
@@ -2464,6 +2467,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050 },
+]
+
+[[package]]
+name = "slack-sdk"
+version = "3.34.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/ff/6eb67fd5bd179fa804dbd859d88d872d3ae343955e63a319a73a132d406f/slack_sdk-3.34.0.tar.gz", hash = "sha256:ff61db7012160eed742285ea91f11c72b7a38a6500a7f6c5335662b4bc6b853d", size = 233629 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/2d/8724ef191cb64907de1e4e4436462955501e00f859a53d0aa794d0d060ff/slack_sdk-3.34.0-py2.py3-none-any.whl", hash = "sha256:c61f57f310d85be83466db5a98ab6ae3bb2e5587437b54fa0daa8fae6a0feffa", size = 292480 },
 ]
 
 [[package]]
