@@ -14,6 +14,10 @@
 
 * Cache alerts and enclosure status.
 
+### ⚙️ Engineering
+
+* Add initial framework for testing.
+
 
 ## 0.2.0 - 2024-11-30
 
