@@ -443,7 +443,18 @@ async def delete_night_log_comment(pk: int):
     return True
 
 
-async def get_night_log_data(sjd: int | None = None):
+class NightLogDataDict(TypedDict):
+    """A dictionary of night log data."""
+
+    mjd: int
+    current: bool
+    exists: bool
+    sent: bool
+    observers: str | None
+    comments: dict[str, list[dict[str, Any]]]
+
+
+async def get_night_log_data(sjd: int | None = None) -> NightLogDataDict:
     """Returns the comments and other relevant data for the night log."""
 
     uri = config["database.uri"]
@@ -485,11 +496,14 @@ async def get_night_log_data(sjd: int | None = None):
             "mjd": sjd,
             "current": sjd == get_sjd("LCO"),
             "exists": False,
+            "sent": False,
+            "observers": None,
+            "comments": {category: [] for category in get_args(NightLogCategories)},
         }
 
     valid_categories = set(get_args(NightLogCategories))
 
-    result = {
+    result: NightLogDataDict = {
         "mjd": sjd,
         "current": sjd == get_sjd("LCO"),
         "exists": True,
@@ -689,6 +703,10 @@ async def email_night_log(
     html_template = env.get_template(template.name)
 
     data = await get_night_log_data(sjd)
+    if not data["exists"]:
+        await create_night_log_entry(sjd)
+        data["exists"] = True
+
     exposure_table = await get_exposure_table_ascii(
         sjd,
         columns=[

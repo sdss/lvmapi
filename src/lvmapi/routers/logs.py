@@ -13,7 +13,7 @@ from datetime import datetime
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from sdsstools import get_sjd
@@ -329,7 +329,11 @@ async def route_get_night_logs_mjd_plaintext(
     """Returns the night log as a plain-text string."""
 
     mjd = mjd if mjd > 0 else get_sjd("LCO")
-    data = await get_plaintext_night_log(mjd)
+
+    try:
+        data = await get_plaintext_night_log(mjd)
+    except Exception as err:
+        raise HTTPException(status_code=400, detail=str(err))
 
     return data
 
