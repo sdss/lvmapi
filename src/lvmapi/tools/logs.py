@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from typing import TYPE_CHECKING, Any, Literal, get_args, overload
+from typing import Any, Literal, get_args, overload
 
 import polars
 import psycopg
@@ -26,6 +26,7 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 from psycopg.sql import SQL, Identifier
 from pydantic import BaseModel
+from typing_extensions import TypedDict
 
 from lvmopstools.ephemeris import get_ephemeris_summary
 from sdsstools import get_sjd, run_in_executor
@@ -33,10 +34,6 @@ from sdsstools import get_sjd, run_in_executor
 from lvmapi import config
 from lvmapi.tools.notifications import create_notification, get_notifications
 from lvmapi.tools.rabbitmq import CluClient
-
-
-if TYPE_CHECKING:
-    from typing_extensions import TypedDict
 
 
 class ExposureDataDict(BaseModel):
