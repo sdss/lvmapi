@@ -12,6 +12,7 @@
 ### 🔧 Fixed
 
 * Use `lvmopstools` 0.5.5 with fix to the InfluxDB client and install the `slack` extra.
+* Add `lvm.spec.fibsel` to list of actors.
 
 
 ## 0.2.2 - 2024-12-27

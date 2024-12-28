@@ -34,6 +34,7 @@ actors:
     - lvm.sci.km
     - lvm.skye.km
     - lvm.skyw.km
+    - lvm.spec.fibsel
     - lvm.sci.guider
     - lvm.spec.guider
     - lvm.skye.guider
@@ -59,6 +60,7 @@ actors:
     lvm.sci.km: lvmtan
     lvm.skye.km: lvmtan
     lvm.skyw.km: lvmtan
+    lvm.spec.fibsel: lvmtan
     lvm.sci.guider: lvmguider
     lvm.spec.guider: lvmguider
     lvm.skye.guider: lvmguider
