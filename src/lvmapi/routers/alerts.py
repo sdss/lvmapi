@@ -52,7 +52,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("", summary="Summary of alerts")
 @router.get("/", summary="Summary of alerts")
 @router.get("/summary", summary="Summary of alerts")
-@lvmapi_cache(expire=30)
+@lvmapi_cache(expire=10)
 async def route_get_summary():
     """Summary of alerts."""
 

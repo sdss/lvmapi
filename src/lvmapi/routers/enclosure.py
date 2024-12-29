@@ -94,7 +94,7 @@ class NPSBody(BaseModel):
 @router.get("")
 @router.get("/")
 @router.get("/status")
-@lvmapi_cache(expire=30)
+@lvmapi_cache(expire=3)
 async def status():
     """Returns the enclosure status."""
 
