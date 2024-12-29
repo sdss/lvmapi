@@ -4,7 +4,7 @@
 
 ### 🚀 New
 
-* Add `/actors/actor-to-deployment` route.
+* Add `/actors/actor-to-deployment` and `/actors/deployment-to-actors` routes.
 
 ### 🔧 Fixed
 

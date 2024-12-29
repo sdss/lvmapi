@@ -71,6 +71,21 @@ async def get_actor_to_deployment_route() -> dict[str, str]:
     return config["actors.actor_to_deployment"]
 
 
+@router.get("/deployment-to-actors", summary="Get deployment to actors mapping")
+async def get_deployment_to_actors_route() -> dict[str, list[str]]:
+    """Returns the deployment to actors mapping."""
+
+    actor_to_deployment = config["actors.actor_to_deployment"]
+
+    deployment_to_actors = {}
+    for actor, deployment in actor_to_deployment.items():
+        if deployment not in deployment_to_actors:
+            deployment_to_actors[deployment] = []
+        deployment_to_actors[deployment].append(actor)
+
+    return deployment_to_actors
+
+
 @router.get("/ping", summary="Actor ping")
 async def get_ping_route(actors: list[str] | None = None) -> dict[str, bool]:
     """Pings a list of actors."""
