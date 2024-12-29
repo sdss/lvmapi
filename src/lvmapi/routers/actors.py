@@ -64,6 +64,13 @@ async def get_actor_health(request: Request) -> list[HealthResponse]:
     return health
 
 
+@router.get("/actor-to-deployment", summary="Get actor to deployment mapping")
+async def get_actor_to_deployment_route() -> dict[str, str]:
+    """Returns the actor to deployment mapping."""
+
+    return config["actors.actor_to_deployment"]
+
+
 @router.get("/ping", summary="Actor ping")
 async def get_ping_route(actors: list[str] | None = None) -> dict[str, bool]:
     """Pings a list of actors."""

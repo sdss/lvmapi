@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* Add `/actors/actor-to-deployment` route.
+
 ### 🔧 Fixed
 
 * Fix a potential case in which sending the night log email would fail if it had not yet been created.
