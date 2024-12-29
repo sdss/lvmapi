@@ -59,6 +59,8 @@ class EnclosureStatus(BaseModel):
     registers: dict[str, bool | float | int]
 
     dome_status: PLCStatus
+    dome_percent_open: float
+
     safety_status: PLCStatus
     lights_status: PLCStatus
 
@@ -91,11 +93,10 @@ class NPSBody(BaseModel):
     state: Annotated[bool, Field(description="The state to set (on/off).")]
 
 
-@router.get("")
-@router.get("/")
-@router.get("/status")
+@router.get("/", summary="Enclosure status")
+@router.get("/status", summary="Enclosure status")
 @lvmapi_cache(expire=3)
-async def status():
+async def enclosure_route_get_status() -> EnclosureStatus:
     """Returns the enclosure status."""
 
     try:
@@ -117,6 +118,7 @@ async def status():
                 "value": reply["dome_status"],
                 "labels": reply["dome_status_labels"].split(","),
             }
+            status_data["dome_percent_open"] = reply["dome_percent_open"]
         elif "lights" in reply:
             status_data["lights_status"] = {
                 "name": "lights",
