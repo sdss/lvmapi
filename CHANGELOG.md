@@ -10,7 +10,7 @@
 
 * Return `dome_percent_open` in enclosure status endpoint.
 
-## 🏷️ Changed
+### 🏷️ Changed
 
 * Reduce ttl for cache in enclosure endpoints.
 
