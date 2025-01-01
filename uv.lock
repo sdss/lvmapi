@@ -259,11 +259,11 @@ wheels = [
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2024.12.23.0.33.24"
+version = "0.2024.12.30.0.33.36"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/46/6f/e425652becd72edeb6b4b320f835c3629e6cc8b048d31e9849ca2faac54e/astropy_iers_data-0.2024.12.23.0.33.24.tar.gz", hash = "sha256:f9bb8f676233f5bb564fdffa4b81af28160e3040a796dcaf0a9436f842fee951", size = 1887154 }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/9a/f31af0d80da5a10645ccb67f71b43e0fba30dbcf1d07d3a8015e2413b3c7/astropy_iers_data-0.2024.12.30.0.33.36.tar.gz", hash = "sha256:5cb8dc129c2a39d5a62fa345e166833976050a78d85e99d93ef247e310703f12", size = 1887695 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/4d/565740d9ac54640c09d2fdd22ef3583103438fb97305a9cfb66595a4b259/astropy_iers_data-0.2024.12.23.0.33.24-py3-none-any.whl", hash = "sha256:40d3c6b6a5cf4dc6ad91b92b7e0f949e5366234e3c4440302247429fc8294302", size = 1940192 },
+    { url = "https://files.pythonhosted.org/packages/d1/7d/ac618eb2a847e9e40fa5c9386003a01c98bee5ccc13fa7aa38c265266c9f/astropy_iers_data-0.2024.12.30.0.33.36-py3-none-any.whl", hash = "sha256:dbf3e85b65842ce1871dc71f6f255b298805d93362e7c16fe1801f7ca4ae39b3", size = 1940708 },
 ]
 
 [[package]]
@@ -1118,7 +1118,7 @@ wheels = [
 
 [[package]]
 name = "lvmapi"
-version = "0.2.4a0"
+version = "0.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
@@ -1590,15 +1590,15 @@ wheels = [
 
 [[package]]
 name = "poethepoet"
-version = "0.31.1"
+version = "0.32.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pastel" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/96/15bce512c8027696b20586b18ac4b239afe8d312dbaa2a0099e8fb8f8424/poethepoet-0.31.1.tar.gz", hash = "sha256:d6b66074edf85daf115bb916eae0afd6387d19e1562e1c9ef7d61d5c585696aa", size = 61520 }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/f6/1692a42cf426494d89dbc693ba55ebd653bd2e84bbb6b3da4127b87956df/poethepoet-0.32.0.tar.gz", hash = "sha256:a700be02e932e1a8907ae630928fc769ea9a77986189ba6867e6e3fd8f60e5b7", size = 62962 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/e1/04f56c9d848d6135ca3328c5a2ca84d3303c358ad7828db290385e36a8cc/poethepoet-0.31.1-py3-none-any.whl", hash = "sha256:7fdfa0ac6074be9936723e7231b5bfaad2923e96c674a9857e81d326cf8ccdc2", size = 80238 },
+    { url = "https://files.pythonhosted.org/packages/27/12/2994011e33d37772228439fe215fc022ff180b161ab7bd8ea5ac92717556/poethepoet-0.32.0-py3-none-any.whl", hash = "sha256:fba84c72d923feac228d1ea7734c5a54701f2e71fad42845f027c0fbf998a073", size = 81717 },
 ]
 
 [[package]]
