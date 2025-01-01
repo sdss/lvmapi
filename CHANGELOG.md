@@ -6,6 +6,14 @@
 
 * Add `/actors/actor-to-deployment` and `/actors/deployment-to-actors` routes.
 
+### ✨ Improved
+
+* Return `dome_percent_open` in enclosure status endpoint.
+
+## 🏷️ Changed
+
+* Reduce ttl for cache in enclosure endpoints.
+
 ### 🔧 Fixed
 
 * Fix a potential case in which sending the night log email would fail if it had not yet been created.
