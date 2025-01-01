@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.4 - 2025-01-01
+## 0.2.5 - 2025-01-01
 
 ### 🚀 New
 
@@ -17,6 +17,11 @@
 ### 🔧 Fixed
 
 * Fix a potential case in which sending the night log email would fail if it had not yet been created.
+
+
+## 0.2.4 - 2025-01-01
+
+This version was yanked due to an issue during the release.
 
 
 ## 0.2.3 - 2024-12-27
