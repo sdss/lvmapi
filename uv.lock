@@ -1140,6 +1140,7 @@ dependencies = [
     { name = "redis", extra = ["hiredis"] },
     { name = "sdss-clu" },
     { name = "sdsstools" },
+    { name = "sentry-sdk", extra = ["fastapi"] },
     { name = "taskiq" },
     { name = "taskiq", extra = ["reload"], marker = "sys_platform != 'darwin'" },
     { name = "taskiq-aio-pika" },
@@ -1183,6 +1184,7 @@ requires-dist = [
     { name = "redis", extras = ["hiredis"], specifier = ">=5.0.3" },
     { name = "sdss-clu", specifier = ">=2.3.2" },
     { name = "sdsstools", specifier = ">=1.9.1" },
+    { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2.19.2" },
     { name = "taskiq", marker = "sys_platform == 'darwin'", specifier = ">=0.11.7" },
     { name = "taskiq", extras = ["reload"], marker = "sys_platform != 'darwin'", specifier = ">=0.11.7" },
     { name = "taskiq-aio-pika", specifier = ">=0.4.1" },
@@ -2417,6 +2419,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f8/ec/de86a9cce5b5480e9630d0e537fea4fab91c77a188b1e3ac780fc2334d0d/sdsstools-1.9.1.tar.gz", hash = "sha256:509f41ce02b96ab0e97262ef4b4b79ce400e749900d9bf36d50e909d963df963", size = 49298 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/1c/0afb9da73688f89702743edf5a0a5a9f3c7b51b6ae43cb66d7d43d2de4ee/sdsstools-1.9.1-py3-none-any.whl", hash = "sha256:ce2b1f4787859467dee5ed4af9362cd803f60d2b88bee88512b5847032ea4283", size = 55946 },
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "2.19.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/36/4a/eccdcb8c2649d53440ae1902447b86e2e2ad1bc84207c80af9696fa07614/sentry_sdk-2.19.2.tar.gz", hash = "sha256:467df6e126ba242d39952375dd816fbee0f217d119bf454a8ce74cf1e7909e8d", size = 299047 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/4d/74597bb6bcc23abc774b8901277652c61331a9d4d0a8d1bdb20679b9bbcb/sentry_sdk-2.19.2-py2.py3-none-any.whl", hash = "sha256:ebdc08228b4d131128e568d696c210d846e5b9d70aa0327dec6b1272d9d40b84", size = 322942 },
+]
+
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
 ]
 
 [[package]]

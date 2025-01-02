@@ -36,6 +36,7 @@ dependencies = [
     "fastapi-cache2>=0.2.2",
     "python3-nmap>=1.9.1",
     "typing-extensions>=4.12.2",
+    "sentry-sdk[fastapi]>=2.19.2",
 ]
 
 [project.urls]
@@ -68,6 +69,7 @@ default-groups = ["dev"]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
 env.LVMAPI_PASSWORD = "$2b$12$doiNxsJiL/lGdBMu/zLv5em4GVsUVH7e.YK3EAqxu1NU8qzXxKrti"  # "12345"
 env.SECRET_KEY = "33744caf930b8c695ec39221dd158e9c5fda13d0d19d1417ec71cf189aad6508"
+env.LVMAPI_ENVIRONMENT = "development"
 args = [
   { name = "port", default = "8888" }
 ]

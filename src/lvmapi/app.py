@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 
 from typing import AsyncIterator
 
+import sentry_sdk
 import taskiq_fastapi
 from fastapi import FastAPI, HTTPException, Request
 from fastapi_cache import FastAPICache
@@ -22,7 +23,7 @@ from redis.asyncio.client import Redis
 
 from lvmopstools.kubernetes import Kubernetes
 
-from lvmapi import auth, config
+from lvmapi import __version__, auth, config
 from lvmapi.broker import broker, broker_shutdown, broker_startup
 from lvmapi.cache import valis_cache_key_builder
 from lvmapi.routers import (
@@ -68,6 +69,21 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # Shutdown cache backend.
     await broker_shutdown()
 
+
+sentry_sdk.init(
+    dsn=os.getenv("LVMAPI_SENTRY_DSN", None),
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+    },
+    release=f"lvmapi@{__version__}",
+    environment=os.getenv("LVMAPI_ENVIRONMENT", "production"),
+)
 
 app = FastAPI(swagger_ui_parameters={"tagsSorter": "alpha"}, lifespan=lifespan)
 
@@ -171,5 +187,15 @@ async def route_get_get_fake_state(state: str):
 
 
 @app.get("/")
-def root(request: Request):
+def root():
     return {}
+
+
+@app.get("/test")
+def test():
+    return {"result": True}
+
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    return 1 / 0

@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Log traffic and errors to Sentry.
+
+
 ## 0.2.5 - 2025-01-01
 
 ### 🚀 New
