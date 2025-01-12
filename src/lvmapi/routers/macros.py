@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import os
+
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -31,6 +33,27 @@ async def route_get_shutdown(
     ],
 ) -> str:
     """Schedules an emergency shutdown of the enclosure and telescopes."""
+
+    task = await shutdown_task.kiq(disable_overwatcher=disable_overwatcher)
+    return task.task_id
+
+
+@router.get("/shutdownLCO", summary="Runs the shutdown macro (LCO internal version)")
+async def route_get_shutdown_lco(
+    override_code: Annotated[
+        str,
+        Query(description="An override code to allow shutting without authentication."),
+    ],
+    disable_overwatcher: Annotated[
+        bool,
+        Query(description="Disables the Overwatcher after closing the dome."),
+    ],
+) -> str:
+    """Schedules an emergency shutdown of the enclosure and telescopes."""
+
+    lco_override_code = os.getenv("LCO_OVERRIDE_CODE", None)
+    if lco_override_code is None or override_code != lco_override_code:
+        raise HTTPException(status_code=401, detail="Invalid override code.")
 
     task = await shutdown_task.kiq(disable_overwatcher=disable_overwatcher)
     return task.task_id
