@@ -259,11 +259,11 @@ wheels = [
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2025.1.6.0.33.42"
+version = "0.2025.1.13.0.34.51"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7d/8a/de7f87e461ba32901e0b212c8331d1476e7744f17828bf12ecaf9fdb396d/astropy_iers_data-0.2025.1.6.0.33.42.tar.gz", hash = "sha256:0c7e61bcadbafa7db073074eb5f90754449fab65e59abbbc9a65004b5eb4e763", size = 1888427 }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/3c/1e22649b559f0d18001f9a5e8b095fbe7330c3aac560a9c46bc1b2012841/astropy_iers_data-0.2025.1.13.0.34.51.tar.gz", hash = "sha256:de6fafd52088f589e2ef5bf797242965f3dfd77b667ea066f941fc98ddeda604", size = 1889484 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/55/59/95b2bd9c63a8574e60d2352e2935ff8790a3acedef4288fb190a6456734c/astropy_iers_data-0.2025.1.6.0.33.42-py3-none-any.whl", hash = "sha256:32fb70d788e200f70cba1e44f0b1798a51836ac586920bd168e73ec312aae773", size = 1941331 },
+    { url = "https://files.pythonhosted.org/packages/fe/8d/d34ae967711c9efe73649be698f07eaf1006e7c4148b7da5f30abf07fcf1/astropy_iers_data-0.2025.1.13.0.34.51-py3-none-any.whl", hash = "sha256:fa2667ff7a1fb9fa9344b6c110dcc4949b3f307a99f6fe058051c4d795299a22", size = 1942309 },
 ]
 
 [[package]]
@@ -1118,7 +1118,7 @@ wheels = [
 
 [[package]]
 name = "lvmapi"
-version = "0.2.6a0"
+version = "0.2.6"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
@@ -1232,7 +1232,7 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.5.6"
+version = "0.5.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
@@ -1250,9 +1250,9 @@ dependencies = [
     { name = "strenum" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/27/a5/adac19ec225a6ff758e1524c970c621e220fe3cae1d01da948498dbbb3e7/lvmopstools-0.5.6.tar.gz", hash = "sha256:6b8a19c665199e98878c326537967541d251578f19f56a3a71c8eef5ba87238b", size = 130717 }
+sdist = { url = "https://files.pythonhosted.org/packages/76/f6/67f42a851059c9e3eb5e324c6637b7a7554ea07388537251852ff1102e19/lvmopstools-0.5.7.tar.gz", hash = "sha256:5db9b3a7705cbd803b0620bf864f345b1dde8c83ea3799823fd49b74c924292f", size = 130882 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/7d/e165190d49e3b4610ab8f4bc7bd1fe84831b20e4c6bb74d8dec36d50f8ce/lvmopstools-0.5.6-py3-none-any.whl", hash = "sha256:ec2a1043e7816065e9909432d194bf0baa6231ac6930c1a6b254fb58baf6a029", size = 138902 },
+    { url = "https://files.pythonhosted.org/packages/c7/08/af578d92de27320aad5da41e0ecc8ab0ccca71172ea08425dbe71911b4d8/lvmopstools-0.5.7-py3-none-any.whl", hash = "sha256:fe38e958a3bda5c8171eac261eff66dff9525f3bdb6393c41fe0da63e3f1b169", size = 139128 },
 ]
 
 [package.optional-dependencies]
@@ -1887,11 +1887,11 @@ wheels = [
 
 [[package]]
 name = "pycron"
-version = "3.1.1"
+version = "3.1.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ee/a9/bd7c28cfdc45728b3e2d7203e236943eb645a210d21e4e9f534356237aa2/pycron-3.1.1.tar.gz", hash = "sha256:6de8a555f721c74aa0bb681071a97da3d784ebf8ccea1d2bb9a3e66460b87da2", size = 4374 }
+sdist = { url = "https://files.pythonhosted.org/packages/02/0c/2366dfbb3765662fc9d71d7fa847ddf4f3cd43195dea151bc05a49fda118/pycron-3.1.2.tar.gz", hash = "sha256:114c71bc61002b850a416e33e72a8c6de75b9f5c4228e86d7babd8a7ea232d94", size = 4172 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/2c/b038f9bcde67def9a51bdf4d64d399d6853addb6844991cec64b04e95c33/pycron-3.1.1-py3-none-any.whl", hash = "sha256:bf676a66b8dcf69edf1d3fd1d8f3f2b9468a2a007012c89a14e9d087d3f76198", size = 4862 },
+    { url = "https://files.pythonhosted.org/packages/60/65/2de047e5396970f3a11b06823d7bcd1108f61787ee21ff33ab7e9fce6635/pycron-3.1.2-py3-none-any.whl", hash = "sha256:30e4a01889dfb471e80cc76a5c0ab87e675146a7f6d2d66a2e4bdb4e2975ef3d", size = 4838 },
 ]
 
 [[package]]
@@ -2259,16 +2259,16 @@ wheels = [
 
 [[package]]
 name = "rich-toolkit"
-version = "0.12.0"
+version = "0.13.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/88/58c193e2e353b0ef8b4b9a91031bbcf8a9a3b431f5ebb4f55c3f3b1992e8/rich_toolkit-0.12.0.tar.gz", hash = "sha256:facb0b40418010309f77abd44e2583b4936656f6ee5c8625da807564806a6c40", size = 71673 }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/8a/71cfbf6bf6257ea785d1f030c22468f763eea1b3e5417620f2ba9abd6dca/rich_toolkit-0.13.2.tar.gz", hash = "sha256:fea92557530de7c28f121cbed572ad93d9e0ddc60c3ca643f1b831f2f56b95d3", size = 72288 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/3c/3b66696fc8a6c980674851108d7d57fbcbfedbefb3d8b61a64166dc9b18e/rich_toolkit-0.12.0-py3-none-any.whl", hash = "sha256:a2da4416384410ae871e890db7edf8623e1f5e983341dbbc8cc03603ce24f0ab", size = 13012 },
+    { url = "https://files.pythonhosted.org/packages/7e/1b/1c2f43af46456050b27810a7a013af8a7e12bc545a0cdc00eb0df55eb769/rich_toolkit-0.13.2-py3-none-any.whl", hash = "sha256:f3f6c583e5283298a2f7dbd3c65aca18b7f818ad96174113ab5bec0b0e35ed61", size = 13566 },
 ]
 
 [[package]]
@@ -2424,15 +2424,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.19.2"
+version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/36/4a/eccdcb8c2649d53440ae1902447b86e2e2ad1bc84207c80af9696fa07614/sentry_sdk-2.19.2.tar.gz", hash = "sha256:467df6e126ba242d39952375dd816fbee0f217d119bf454a8ce74cf1e7909e8d", size = 299047 }
+sdist = { url = "https://files.pythonhosted.org/packages/68/e8/6a366c0cd5e129dda6ecb20ff097f70b18182c248d4c27e813c21f98992a/sentry_sdk-2.20.0.tar.gz", hash = "sha256:afa82713a92facf847df3c6f63cec71eb488d826a50965def3d7722aa6f0fdab", size = 300125 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/4d/74597bb6bcc23abc774b8901277652c61331a9d4d0a8d1bdb20679b9bbcb/sentry_sdk-2.19.2-py2.py3-none-any.whl", hash = "sha256:ebdc08228b4d131128e568d696c210d846e5b9d70aa0327dec6b1272d9d40b84", size = 322942 },
+    { url = "https://files.pythonhosted.org/packages/e6/0f/6f7e6cd0f4a141752caef3f79300148422fdf2b8b68b531f30b2b0c0cbda/sentry_sdk-2.20.0-py2.py3-none-any.whl", hash = "sha256:c359a1edf950eb5e80cffd7d9111f3dbeef57994cb4415df37d39fda2cf22364", size = 322576 },
 ]
 
 [package.optional-dependencies]

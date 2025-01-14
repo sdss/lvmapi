@@ -1,10 +1,11 @@
 # Changelog
 
-## Next version
+## 0.2.6 - 2025-01-14
 
 ### 🚀 New
 
 * Log traffic and errors to Sentry.
+* Add `/macros/shutdownLCO` endpoint for internal use at LCO.
 
 
 ## 0.2.5 - 2025-01-01
