@@ -1118,7 +1118,7 @@ wheels = [
 
 [[package]]
 name = "lvmapi"
-version = "0.2.6"
+version = "0.2.7a0"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
