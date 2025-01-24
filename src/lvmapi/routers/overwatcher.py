@@ -68,6 +68,11 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is it safe to observe?"),
     ] = None
 
+    alerts: Annotated[
+        list[str],
+        Field(description="Safety alerts"),
+    ] = []
+
     allow_calibrations: Annotated[
         bool,
         Field(description="Is the overwatcher allowed to take cals?"),

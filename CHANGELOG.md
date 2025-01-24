@@ -6,6 +6,10 @@
 
 * Added `/overwatcher/reset` route.
 
+### ✨ Improved
+
+* Report alerts in the `/overwatcher/status` route.
+
 
 ## 0.2.6 - 2025-01-14
 
