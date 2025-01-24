@@ -253,6 +253,16 @@ async def put_allow_calibrations_enabled(
         await clu.send_command("lvm.overwatcher", command)
 
 
+@router.get("/reset", summary="Resets the Overwatcher")
+async def get_reset_overwatcher():
+    """Resets the Overwatcher."""
+
+    async with CluClient() as clu:
+        cmd = await clu.send_command("lvm.overwatcher", "reset")
+
+    return cmd.status.did_succeed
+
+
 @router.get("/logs", summary="Returns a list of log files")
 async def get_logs_files_route():
     """Returns a list of log files."""

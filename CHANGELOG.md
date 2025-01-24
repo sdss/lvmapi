@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Added `/overwatcher/reset` route.
+
+
 ## 0.2.6 - 2025-01-14
 
 ### 🚀 New
