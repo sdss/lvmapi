@@ -305,3 +305,15 @@ async def route_put_nps(
         return False
 
     return True
+
+
+@router.get("/engineering-mode/disable", summary="Disable engineering mode")
+async def route_get_emode_disable():
+    """Disables the engineering mode and bypasses."""
+
+    try:
+        await send_clu_command("lvmecp engineering-mode disable")
+    except Exception as ee:
+        raise HTTPException(status_code=500, detail=str(ee))
+
+    return True

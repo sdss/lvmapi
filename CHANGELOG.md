@@ -5,6 +5,7 @@
 ### ✨ Improved
 
 * Include the `engineering_mode` data in enclosure status response.
+* Add route `/enclosure/engineering-mode/disable`.
 
 
 ## 0.2.7 - 2025-01-26
