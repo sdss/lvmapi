@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Include the `engineering_mode` data in enclosure status response.
+
+
 ## 0.2.7 - 2025-01-26
 
 ### 🚀 New

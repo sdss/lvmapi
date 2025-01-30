@@ -53,6 +53,39 @@ class O2Status(BaseModel):
     spectrograph_room: float
 
 
+class EngineeringMode(BaseModel):
+    """Engineering mode data."""
+
+    enabled: Annotated[
+        bool,
+        Field(description="Whether engineering mode is enabled."),
+    ]
+    started_at: Annotated[
+        str | None,
+        Field(description="Time when engineering mode started."),
+    ]
+    ends_at: Annotated[
+        str | None,
+        Field(description="Time when engineering mode will end."),
+    ]
+    plc_software_bypass: Annotated[
+        bool,
+        Field(description="Whether the PLC software bypass is on."),
+    ]
+    plc_hardware_bypass: Annotated[
+        bool,
+        Field(description="Whether the PLC hardware bypass is on."),
+    ]
+    plc_software_bypass_mode: Annotated[
+        str,
+        Field(description="The PLC software bypass mode (remote or local)."),
+    ]
+    plc_hardware_bypass_mode: Annotated[
+        str,
+        Field(description="The PLC hardware bypass mode (remote or local)."),
+    ]
+
+
 class EnclosureStatus(BaseModel):
     """A model to represent the status of the enclosure."""
 
@@ -67,6 +100,8 @@ class EnclosureStatus(BaseModel):
     o2_status: O2Status
 
     cal_lamp_state: dict[str, bool]
+
+    engineering_mode: EngineeringMode
 
 
 class Lights(enum.Enum):
@@ -136,6 +171,10 @@ async def enclosure_route_get_status() -> EnclosureStatus:
                 "utilities_room": reply["o2_percent_utilities"],
                 "spectrograph_room": reply["o2_percent_spectrograph"],
             }
+        elif "engineering_mode" in reply:
+            status_data["engineering_mode"] = EngineeringMode(
+                **reply["engineering_mode"]
+            )
 
     return EnclosureStatus(**status_data, cal_lamp_state=cal_lamp_state)
 
