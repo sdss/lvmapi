@@ -1,11 +1,17 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+* Add routes `/enclosure/engineering-mode/disable`, `/enclosure/engineering-mode/enable`, and `/enclosure/engineering-mode/reset-e-stops`.
+
+
 ## 0.2.8 - 2025-01-30
 
 ### ✨ Improved
 
 * Include the `engineering_mode` data in enclosure status response.
-* Add routes `/enclosure/engineering-mode/disable`, `/enclosure/engineering-mode/enable`, and `/enclosure/engineering-mode/reset-e-stops`.
 
 
 ## 0.2.7 - 2025-01-26
