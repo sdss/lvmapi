@@ -307,12 +307,54 @@ async def route_put_nps(
     return True
 
 
+@router.get("/engineering-mode/enable", summary="Enable engineering mode")
+async def route_get_emode_enable(
+    time_limit: Annotated[
+        int | None, Field(description="Time limit for the engineering mode in seconds.")
+    ] = None,
+    hardware_bypass: Annotated[
+        bool, Field(description="Whether to enable the hardware bypass.")
+    ] = False,
+    software_bypass: Annotated[
+        bool, Field(description="Whether to enable the software bypass.")
+    ] = False,
+):
+    """Enables the engineering mode or bypasses."""
+
+    command_parts = ["lvmecp", "engineering-mode", "enable"]
+    if time_limit:
+        command_parts += ["-t", time_limit]
+    if hardware_bypass:
+        command_parts += ["--hardware-bypass"]
+    if software_bypass:
+        command_parts += ["--software-bypass"]
+
+    try:
+        await send_clu_command(" ".join(command_parts))
+    except Exception as ee:
+        raise HTTPException(status_code=500, detail=str(ee))
+
+    return True
+
+
 @router.get("/engineering-mode/disable", summary="Disable engineering mode")
 async def route_get_emode_disable():
     """Disables the engineering mode and bypasses."""
 
     try:
         await send_clu_command("lvmecp engineering-mode disable")
+    except Exception as ee:
+        raise HTTPException(status_code=500, detail=str(ee))
+
+    return True
+
+
+@router.get("/engineering-mode/reset-e-stops", summary="Reset e-stops")
+async def route_get_emode_reset_estops():
+    """Resets the e-stops."""
+
+    try:
+        await send_clu_command("lvmecp engineering-mode reset-e-stops")
     except Exception as ee:
         raise HTTPException(status_code=500, detail=str(ee))
 
