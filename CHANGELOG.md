@@ -5,6 +5,7 @@
 ### ✨ Improved
 
 * Add routes `/enclosure/engineering-mode/disable`, `/enclosure/engineering-mode/enable`, and `/enclosure/engineering-mode/reset-e-stops`.
+* Add option `close_dome` to `/overwatcher/status/{mode}`.
 
 
 ## 0.2.8 - 2025-01-30

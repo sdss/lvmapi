@@ -12,7 +12,7 @@ import pathlib
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmapi.auth import AuthDependency
@@ -202,12 +202,12 @@ async def get_overwatcher_enabled() -> bool:
 
 
 @router.put(
-    "/status/{enable_or_disable}",
+    "/status/{mode}",
     summary="Enable or disable the overwatcher",
     dependencies=[AuthDependency],
 )
 async def put_overwatcher_enabled(
-    enable_or_disable: Annotated[
+    mode: Annotated[
         Literal["enable", "disable"],
         Path(description="Whether to enable or disable the overwatcher"),
     ],
@@ -215,15 +215,33 @@ async def put_overwatcher_enabled(
         bool,
         Query(description="Whether to stop observing immediately"),
     ] = False,
+    close_dome: Annotated[
+        bool,
+        Query(description="Whether to close the dome"),
+    ] = False,
 ):
     """Enables or disables the overwatcher."""
 
-    async with CluClient() as clu:
-        await clu.send_command(
-            "lvm.overwatcher",
-            enable_or_disable,
-            "--now" if enable_or_disable == "disable" and now else "",
+    if mode == "enable" and (now or close_dome):
+        raise HTTPException(
+            400,
+            "now and close_dome can only be used with /overwatcher/status/enable",
         )
+    elif mode == "disable":
+        if close_dome and not now:
+            raise HTTPException(
+                400,
+                "close_dome=true requires now=true.",
+            )
+
+    cmd_parts: list[str] = [mode]
+    if mode == "disable" and now:
+        cmd_parts.append("--now")
+        if close_dome:
+            cmd_parts.append("--close-dome")
+
+    async with CluClient() as clu:
+        await clu.send_command("lvm.overwatcher", mode, " ".join(cmd_parts))
 
 
 @router.get("/status/allow_calibrations", summary="Allow calibrations?")
