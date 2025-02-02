@@ -241,7 +241,7 @@ async def put_overwatcher_enabled(
             cmd_parts.append("--close-dome")
 
     async with CluClient() as clu:
-        await clu.send_command("lvm.overwatcher", mode, " ".join(cmd_parts))
+        await clu.send_command("lvm.overwatcher", " ".join(cmd_parts))
 
 
 @router.get("/status/allow_calibrations", summary="Allow calibrations?")
