@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🏷️ Changed
+
+* Dew point alert is raised when the dew point temperature is within 3 degrees of the outside temperature.
+
+
 ## 0.2.9 - 2025-02-03
 
 ### ✨ Improved

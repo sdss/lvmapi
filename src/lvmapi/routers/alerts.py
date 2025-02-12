@@ -101,7 +101,12 @@ async def route_get_summary():
         )
 
         last_weather = weather_data[-1]
-        dew_point_alert = last_weather["dew_point"][0] > last_weather["temperature"][0]
+
+        # If the dew point is within 3 degrees of the outside temperature,
+        # raise a dew point alert.
+        dew_point = last_weather["temperature"][0]
+        temperature = last_weather["temperature"][0]
+        dew_point_alert = temperature - dew_point < 3
 
     o2_alerts = {
         key: value for key, value in enclosure_alerts_response.items() if "o2_" in key
