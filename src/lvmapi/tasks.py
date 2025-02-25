@@ -126,21 +126,29 @@ async def power_cycle_ag_cameras(
 
     from lvmopstools.utils import power_cycle_ag_camera
 
+    VALID_CAMERAS = [
+        "sci-east",
+        "sci-west",
+        "skye-east",
+        "skye-west",
+        "skyw-east",
+        "skyw-west",
+        "spec-east",
+    ]
+
     if cameras is None:
-        cameras = [
-            "sci-east",
-            "sci-west",
-            "skye-east",
-            "skye-west",
-            "skyw-east",
-            "skyw-west",
-            "spec-east",
-        ]
+        cameras = VALID_CAMERAS
 
     errors: list[str] = []
 
     for camera in cameras:
+        if camera == "":
+            continue
+
         try:
+            if camera not in VALID_CAMERAS:
+                raise ValueError("invalid camera")
+
             power_cycle_ag_camera(camera, verbose=False)
         except Exception as err:
             errors.append(f"{camera}: {err}")

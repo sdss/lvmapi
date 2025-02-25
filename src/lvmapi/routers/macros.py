@@ -101,15 +101,15 @@ async def route_get_shutdown_from_dupont(request: Request) -> str:
 
 @router.get("/power_cycle_ag_cameras", summary="Power cycle the AG cameras")
 async def route_get_power_cycle_ag_cameras(
-    cameras: Annotated[
+    camera: Annotated[
         list[str] | None,
         Query(
-            description="List of cameras to power cycle. "
-            "Otherwise power cycles all the cameras."
+            description="Cameras to power cycle (accepts a list). "
+            "Otherwise power cycles all the cameras.",
         ),
     ] = None,
 ) -> str:
     """Power cycle the AG cameras."""
 
-    task = await power_cycle_ag_cameras.kiq(cameras=cameras)
+    task = await power_cycle_ag_cameras.kiq(cameras=camera)
     return task.task_id
