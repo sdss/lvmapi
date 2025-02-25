@@ -104,7 +104,7 @@ async def route_get_summary():
 
         # If the dew point is within 3 degrees of the outside temperature,
         # raise a dew point alert.
-        dew_point = last_weather["temperature"][0]
+        dew_point = last_weather["dew_point"][0]
         temperature = last_weather["temperature"][0]
         dew_point_alert = temperature - dew_point < 3
 
