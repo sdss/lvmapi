@@ -12,14 +12,11 @@ from typing import Any
 
 import psycopg
 import psycopg.sql
-from nmap3 import NmapHostDiscovery
-
-from sdsstools.utils import run_in_executor
 
 from lvmapi import config
 
 
-__all__ = ["get_db_connection", "insert_to_database", "is_host_up"]
+__all__ = ["get_db_connection", "insert_to_database"]
 
 
 def get_db_connection():
@@ -87,35 +84,3 @@ async def insert_to_database(
             for row in data:
                 values = [row.get(col, None) for col in columns]
                 await acursor.execute(query, values)
-
-
-async def is_host_up(host: str) -> bool:
-    """Returns whether a host is up.
-
-    Parameters
-    ----------
-    host
-        The host to check.
-
-    Returns
-    -------
-    is_up
-        ``True`` if the host is up, ``False`` otherwise.
-
-    """
-
-    nmap = NmapHostDiscovery()
-    result = await run_in_executor(
-        nmap.nmap_no_portscan,
-        host,
-        args="--host-timeout=1 --max-retries=2",
-    )
-
-    if (
-        host not in result
-        or "state" not in result[host]
-        or "state" not in result[host]["state"]
-    ):
-        return False
-
-    return result[host]["state"]["state"] == "up"

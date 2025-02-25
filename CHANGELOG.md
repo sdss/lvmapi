@@ -2,6 +2,10 @@
 
 ## Next version
 
+### ✨ Improved
+
+* Use `is_host_up` from `lvmopstools.utils`.
+
 ### 🏷️ Changed
 
 * Dew point alert is raised when the dew point temperature is within 3 degrees of the outside temperature.

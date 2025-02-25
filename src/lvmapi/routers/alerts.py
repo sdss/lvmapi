@@ -16,11 +16,11 @@ import polars
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from lvmopstools.utils import is_host_up
 from lvmopstools.weather import get_weather_data, is_weather_data_safe
 
 from lvmapi.cache import lvmapi_cache
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
-from lvmapi.tools.general import is_host_up
 
 
 class AlertsSummary(BaseModel):
