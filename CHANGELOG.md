@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* Add route `/macros/power_cycle_ag_cameras`.
+
 ### ✨ Improved
 
 * Use `is_host_up` from `lvmopstools.utils`.

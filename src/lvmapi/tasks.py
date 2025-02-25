@@ -11,10 +11,11 @@ from __future__ import annotations
 import asyncio
 import pathlib
 
-from typing import Literal
+from typing import Literal, Sequence
 
 from lvmapi.app import broker
 from lvmapi.tools.gort import get_gort_client
+from lvmapi.tools.rabbitmq import CluClient
 
 
 @broker.task()
@@ -114,3 +115,45 @@ async def park_telescopes_task():
         await gort.telescopes.park(disable=True)
 
     return True
+
+
+@broker.task()
+async def power_cycle_ag_cameras(
+    cameras: Sequence[str] | None = None,
+    reconnect: bool = True,
+):
+    """Power cycles the AG cameras."""
+
+    from lvmopstools.utils import power_cycle_ag_camera
+
+    if cameras is None:
+        cameras = [
+            "sci-east",
+            "sci-west",
+            "skye-east",
+            "skye-west",
+            "skyw-east",
+            "skyw-west",
+            "spec-east",
+        ]
+
+    errors: list[str] = []
+
+    for camera in cameras:
+        try:
+            power_cycle_ag_camera(camera, verbose=False)
+        except Exception as err:
+            errors.append(f"{camera}: {err}")
+
+    # It takes a while for the cameras to come back online.
+    await asyncio.sleep(30)
+
+    if reconnect:
+        async with get_gort_client() as gort:
+            await gort.ags.reconnect()
+
+        # Force the instance of the overwatcher to reload all its actors.
+        async with CluClient() as clu:
+            await clu.send_command("lvm.overwatcher", "reset", time_limit=60)
+
+    return {"result": len(errors) == 0, "errors": errors}

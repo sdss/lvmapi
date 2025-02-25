@@ -15,7 +15,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from lvmapi.auth import AuthDependency
-from lvmapi.tasks import cleanup_task, shutdown_task
+from lvmapi.tasks import cleanup_task, power_cycle_ag_cameras, shutdown_task
 
 
 router = APIRouter(prefix="/macros", tags=["macros"])
@@ -96,4 +96,20 @@ async def route_get_shutdown_from_dupont(request: Request) -> str:
         raise HTTPException(status_code=401, detail="Invalid request. Not authorised.")
 
     task = await shutdown_task.kiq()
+    return task.task_id
+
+
+@router.get("/power_cycle_ag_cameras", summary="Power cycle the AG cameras")
+async def route_get_power_cycle_ag_cameras(
+    cameras: Annotated[
+        list[str] | None,
+        Query(
+            description="List of cameras to power cycle. "
+            "Otherwise power cycles all the cameras."
+        ),
+    ] = None,
+) -> str:
+    """Power cycle the AG cameras."""
+
+    task = await power_cycle_ag_cameras.kiq(cameras=cameras)
     return task.task_id
