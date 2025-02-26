@@ -5,6 +5,7 @@
 ### 🚀 New
 
 * Add route `/macros/power_cycle_ag_cameras`.
+* Add route `/system/ping`.
 
 ### ✨ Improved
 

@@ -38,6 +38,7 @@ from lvmapi.routers import (
     overwatcher,
     slack,
     spectrographs,
+    system,
     tasks,
     telescopes,
     transparency,
@@ -103,6 +104,7 @@ app.include_router(actors.router)
 app.include_router(logs.router)
 app.include_router(notifications.router)
 app.include_router(transparency.router)
+app.include_router(system.router)
 
 
 @app.get("/id")

@@ -1207,7 +1207,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lvmgort", specifier = ">=1.3.0" },
-    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack", "netmiko"], specifier = ">=0.5.9" },
+    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack", "netmiko"], git = "https://github.com/sdss/lvmopstools?branch=main" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.18.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.2" },
@@ -1266,8 +1266,8 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.5.9"
-source = { registry = "https://pypi.org/simple" }
+version = "0.5.10a0"
+source = { git = "https://github.com/sdss/lvmopstools?branch=main#35cca2dac2f552c1d4535529770d9093f01742a9" }
 dependencies = [
     { name = "aio-pika" },
     { name = "aiocache" },
@@ -1284,10 +1284,6 @@ dependencies = [
     { name = "sdsstools" },
     { name = "strenum" },
     { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/b8/bca01174b586e9614e103c0a454c94d06e036b96522708a1b7ba316e548e/lvmopstools-0.5.9.tar.gz", hash = "sha256:54a933446cea901dba4894cf6f69738c4122a1c7b317284798d34b8627594da9", size = 131834 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/60/0ba7d2d93fc1801e27c8b013d51064dbca380cde1371101ab667f19b8895/lvmopstools-0.5.9-py3-none-any.whl", hash = "sha256:455807f137b79de170e6d7f1301969a7509178bac49a9f53afd1450da47c448a", size = 140423 },
 ]
 
 [package.optional-dependencies]
