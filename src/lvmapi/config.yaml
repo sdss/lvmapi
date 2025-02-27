@@ -67,13 +67,13 @@ actors:
     lvm.skyw.guider: lvmguider
 
 hosts:
-  sci-east: 10.8.38.111
-  sci-west: 10.8.38.112
-  skye-east: 10.8.38.113
-  skye-west: 10.8.38.114
-  skyw-east: 10.8.38.115
-  skyw-west: 10.8.38.116
-  spec-east: 10.8.38.117
+  agcam-sci-east: 10.8.38.111
+  agcam-sci-west: 10.8.38.112
+  agcam-skye-east: 10.8.38.113
+  agcam-skye-west: 10.8.38.114
+  agcam-skyw-east: 10.8.38.115
+  agcam-skyw-west: 10.8.38.116
+  agcam-spec-east: 10.8.38.117
 
 kubernetes:
   deployments_path: /home/sdss5/config/kube
