@@ -340,3 +340,31 @@ async def route_get_calibrations_current() -> str | None:
     for cal in cals:
         if cal.status in ["running", "retrying"]:
             return cal.name
+
+
+@router.get(
+    "/calibrations/schedule-long-term",
+    summary="Schedule long-term calibrations",
+)
+async def route_get_calibrations_schedule_long_term(
+    remove: Annotated[
+        bool, Query(description="Removes the schedule calibration")
+    ] = False,
+    now: Annotated[
+        bool, Query(description="Starts the calibration immediately")
+    ] = False,
+) -> bool:
+    """Schedules the long-term calibrations."""
+
+    cmd_parts = ["schedule-long-term-calibrations"]
+    if remove:
+        cmd_parts.append("--remove")
+    if now:
+        cmd_parts.append("--now")
+
+    cmd = " ".join(cmd_parts)
+
+    async with CluClient() as clu:
+        cmd = await clu.send_command("lvm.overwatcher", f"calibrations {cmd}")
+
+    return cmd.status.did_succeed

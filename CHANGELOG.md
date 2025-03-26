@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🚀 New
+
+* Add route `/overwatcher/calibrations/schedule-long-term`.
+
+
 ## 0.2.10 - 2025-02-27
 
 ### 🚀 New
