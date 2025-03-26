@@ -147,6 +147,11 @@ class OverwatcherCalibrationModel(BaseModel):
         Field(description="Close the dome after the calibration"),
     ]
 
+    disabled: Annotated[
+        bool,
+        Field(description="Is the calibration disabled?"),
+    ]
+
 
 router = APIRouter(prefix="/overwatcher", tags=["overwatcher"])
 
