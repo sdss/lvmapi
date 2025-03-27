@@ -124,7 +124,7 @@ async def power_cycle_ag_cameras(
 ):
     """Power cycles the AG cameras."""
 
-    from lvmopstools.utils import power_cycle_ag_camera
+    from lvmopstools.devices.switch import power_cycle_ag_camera
 
     VALID_CAMERAS = [
         "sci-east",
