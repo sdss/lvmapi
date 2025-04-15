@@ -63,7 +63,10 @@ async def route_get_summary():
     tasks: list[asyncio.Task] = []
     tasks.append(asyncio.create_task(spec_temperature_alerts()))
     tasks.append(asyncio.create_task(enclosure_alerts()))
-    tasks.append(asyncio.create_task(get_weather_data(start_time=now - 3600)))
+
+    # We only care about the data for the last hour but we want to be sure that the
+    # points we care about are part of the rolling-mean average so we ask for 1.5 hours.
+    tasks.append(asyncio.create_task(get_weather_data(start_time=now - 5400)))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
