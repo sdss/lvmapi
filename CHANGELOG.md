@@ -1,5 +1,12 @@
 # Changelog
 
+### Next version
+
+### ✨ Improved
+
+* Use `lvmopstools` 0.5.13 to ensure that weather data from the API is fully returned for intervals longer than one hour.
+
+
 ## 0.2.11 - 2025-04-01
 
 ### 🚀 New
