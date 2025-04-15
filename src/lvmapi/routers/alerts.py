@@ -71,10 +71,10 @@ async def get_overwatcher_alerts() -> OverwatcherAlerts | None:
             return None
 
         alerts = status.get("alerts", None)
-        if not alerts:
+        if alerts is None:
             return None
 
-        return OverwatcherAlerts(idle=alerts.get("idle", False))
+        return OverwatcherAlerts(idle="IDLE" in alerts)
 
 
 @router.get("", summary="Summary of alerts")
