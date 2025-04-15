@@ -1,12 +1,12 @@
 # Changelog
 
-### Next version
+## Next version
 
 ### ✨ Improved
 
 * Use `lvmopstools` 0.5.13 to ensure that weather data from the API is fully returned for intervals longer than one hour.
 * Increase the lookback interval for weather data to 1.5 hours in alerts to prevent problems with the first data point.
-
+* Report Overwatcher alerts in the `/alerts` endpoint.
 
 ## 0.2.11 - 2025-04-01
 

@@ -33,6 +33,11 @@ class OverwatcherStatusModel(BaseModel):
         Field(description="Is the overwatcher enabled?"),
     ] = False
 
+    idle: Annotated[
+        bool,
+        Field(description="Is the overwatcher idle?"),
+    ] = False
+
     observing: Annotated[
         bool,
         Field(description="Is the overwatcher observing?"),

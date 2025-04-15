@@ -12,6 +12,8 @@ import asyncio
 import time
 import warnings
 
+from typing import cast
+
 import polars
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -21,6 +23,7 @@ from lvmopstools.weather import get_weather_data, is_weather_data_safe
 
 from lvmapi.cache import lvmapi_cache
 from lvmapi.tools.alerts import enclosure_alerts, spec_temperature_alerts
+from lvmapi.tools.rabbitmq import CluClient
 
 
 class AlertsSummary(BaseModel):
@@ -37,6 +40,13 @@ class AlertsSummary(BaseModel):
     o2_room_alerts: dict[str, bool] | None = None
     heater_alert: bool | None = None
     heater_camera_alerts: dict[str, bool] | None = None
+    overwatcher_alerts: OverwatcherAlerts | None = None
+
+
+class OverwatcherAlerts(BaseModel):
+    """Overwatcher alerts."""
+
+    idle: bool
 
 
 class ConnectivityResponse(BaseModel):
@@ -47,6 +57,24 @@ class ConnectivityResponse(BaseModel):
 
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
+
+
+async def get_overwatcher_alerts() -> OverwatcherAlerts | None:
+    """Checks the status of the overwatcher."""
+
+    async with CluClient() as clu:
+        status_cmd = await clu.send_command("lvm.overwatcher", "status")
+
+        try:
+            status = status_cmd.replies.get("status")
+        except KeyError:
+            return None
+
+        alerts = status.get("alerts", None)
+        if not alerts:
+            return None
+
+        return OverwatcherAlerts(idle=alerts.get("idle", False))
 
 
 @router.get("", summary="Summary of alerts")
@@ -68,9 +96,11 @@ async def route_get_summary():
     # points we care about are part of the rolling-mean average so we ask for 1.5 hours.
     tasks.append(asyncio.create_task(get_weather_data(start_time=now - 5400)))
 
+    tasks.append(asyncio.create_task(get_overwatcher_alerts()))
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    camera_alerts = results[0]
+    camera_alerts = cast(dict[str, bool] | BaseException, results[0])
     if isinstance(camera_alerts, BaseException):
         warnings.warn(f"Error getting temperature alerts: {camera_alerts}")
         camera_alerts = None
@@ -78,11 +108,11 @@ async def route_get_summary():
     else:
         camera_temperature_alert = any(camera_alerts.values())
 
-    enclosure_alerts_response = results[1]
+    enclosure_alerts_response = cast(dict | BaseException, results[1])
     if isinstance(enclosure_alerts_response, BaseException):
         enclosure_alerts_response = {}
 
-    weather_data: polars.DataFrame | BaseException = results[2]
+    weather_data = cast(polars.DataFrame | BaseException, results[2])
 
     wind_alert = None
     humidity_alert = None
@@ -126,6 +156,9 @@ async def route_get_summary():
         rain_sensor_alarm = app.state.fake_states["rain_alert"]
         door_alert = app.state.fake_states["door_alert"]
 
+    # Overwatcher alerts
+    overwatcher_alerts = cast(OverwatcherAlerts | None, results[3])
+
     return AlertsSummary(
         humidity_alert=humidity_alert,
         dew_point_alert=dew_point_alert,
@@ -138,6 +171,7 @@ async def route_get_summary():
         heater_camera_alerts={},
         o2_alert=o2_alert,
         o2_room_alerts=o2_alerts,
+        overwatcher_alerts=overwatcher_alerts,
     )
 
 
