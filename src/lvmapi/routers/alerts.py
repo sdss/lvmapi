@@ -41,6 +41,7 @@ class AlertsSummary(BaseModel):
     heater_alert: bool | None = None
     heater_camera_alerts: dict[str, bool] | None = None
     overwatcher_alerts: OverwatcherAlerts | None = None
+    engineering_override: bool = False
 
 
 class OverwatcherAlerts(BaseModel):
@@ -148,6 +149,7 @@ async def route_get_summary():
     o2_alert = any(o2_alerts.values())
     rain_sensor_alarm = enclosure_alerts_response.get("rain_sensor_alarm", None)
     door_alert = enclosure_alerts_response.get("door_alert", None)
+    engineering_override = enclosure_alerts_response.get("engineering_override", False)
 
     # These fake states are just for testing.
     if app.state.use_fake_states:
@@ -172,6 +174,7 @@ async def route_get_summary():
         o2_alert=o2_alert,
         o2_room_alerts=o2_alerts,
         overwatcher_alerts=overwatcher_alerts,
+        engineering_override=engineering_override,
     )
 
 

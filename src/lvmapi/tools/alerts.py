@@ -96,11 +96,21 @@ async def enclosure_alerts(threshold: float = 19.5):
     safety_labels = status.replies.get("safety_status_labels")
     door_alert = not ("DOOR_CLOSED" in safety_labels and "DOOR_LOCKED" in safety_labels)
 
+    engineering_override: bool = False
+    engineering_mode_data = status.replies.get("engineering_mode")
+    if (
+        engineering_mode_data["enabled"]
+        or engineering_mode_data["plc_software_bypass"]
+        or engineering_mode_data["plc_hardware_bypass"]
+    ):
+        engineering_override = True
+
     enclosure_alerts_dict = {
         "o2_spec_room": status.replies.get("o2_percent_spectrograph") < threshold,
         "o2_util_room": status.replies.get("o2_percent_utilities") < threshold,
         "rain_sensor_alarm": registers["rain_sensor_alarm"],
         "door_alert": door_alert,
+        "engineering_override": engineering_override,
     }
 
     return enclosure_alerts_dict
