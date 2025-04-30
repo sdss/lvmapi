@@ -40,7 +40,7 @@ async def broker_startup():
                 QUEUE_NAME,
                 arguments={
                     "x-dead-letter-exchange": "",
-                    "x-dead-letter-routing-key": "lvmapi-dev.dead_letter",
+                    "x-dead-letter-routing-key": "lvmapi.dead_letter",
                 },
             )
             await queue.purge()
