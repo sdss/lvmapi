@@ -9,6 +9,10 @@
 * Report Overwatcher alerts in the `/alerts` endpoint.
 * Report `engineering_mode` in `/alerts`.
 
+### 🔧 Fixed
+
+* Fix `dead-letter-routing-key` in `broker.py`.
+
 
 ## 0.2.11 - 2025-04-01
 
