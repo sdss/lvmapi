@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🔧 Fixed
+
+* Fix a case in which getting the night log would fail if an airmass was null.
+
+
 ## 0.2.12 - 2025-05-07
 
 ### ✨ Improved
