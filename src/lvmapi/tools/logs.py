@@ -158,7 +158,7 @@ def get_exposure_data(
             exposure_time=exposure_time,
             ra=ra,
             dec=dec,
-            airmass=airmass if airmass < 100 else -1,
+            airmass=airmass if airmass is not None and airmass < 100 else -1,
             lamps=lamps,
             n_standards=n_standards,
             n_cameras=n_cameras,
