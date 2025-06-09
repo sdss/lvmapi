@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 import polars
 from fastapi import APIRouter, HTTPException, Query
@@ -25,9 +25,9 @@ router = APIRouter(prefix="/weather", tags=["weather"])
 @router.get("/report", summary="Weather report")
 async def route_get_weather(
     station: Annotated[
-        str,
+        Literal["dupont", "magellan", "swope"],
         Query(description="The weather station to query"),
-    ] = "DuPont",
+    ] = "dupont",
     start_time: Annotated[
         str | None,
         Query(description="Start time for the query. ISO format."),
