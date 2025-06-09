@@ -2,6 +2,10 @@
 
 ## Next version
 
+### ✨ Improved
+
+* Use `lvmopstools` 0.5.15 to update the weather API endpoint.
+
 ### 🔧 Fixed
 
 * Fix a case in which getting the night log would fail if an airmass was null.
