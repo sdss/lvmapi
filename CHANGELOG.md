@@ -4,7 +4,7 @@
 
 ### ✨ Improved
 
-* Use `lvmopstools` 0.5.15 to update the weather API endpoint.
+* Use `lvmopstools` 0.5.16 to update the weather API endpoint.
 
 ### 🔧 Fixed
 
