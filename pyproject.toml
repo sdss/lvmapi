@@ -76,10 +76,11 @@ args = [
 deps = ['taskiq']
 
 [tool.poe.tasks.taskiq]
-shell = "taskiq worker -r lvmapi.app:broker lvmapi.tasks --log-level $log_level &"
+shell = "taskiq worker -r lvmapi.app:broker lvmapi.tasks --log-level $log_level --ack-type $ack_type &"
 env.TASKIQ_QUEUE_NAME = 'lvmapi-dev'
 args = [
-    { name = "log-level", default = "ERROR" }
+    { name = "log-level", default = "ERROR" },
+    { name = "ack-type", default = "when_received" }
 ]
 
 [tool.ruff]

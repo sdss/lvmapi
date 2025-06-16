@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Change default `taskiq` acknowledgement type to `when_received`.
+
+
 ## 0.2.13 - 2025-06-13
 
 ### ✨ Improved
