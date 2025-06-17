@@ -4,7 +4,7 @@
 
 ### ✨ Improved
 
-* Change default `taskiq` acknowledgement type to `when_received`.
+* Change default `taskiq` acknowledgement type to `when_received` in `poe` development script.
 
 
 ## 0.2.13 - 2025-06-13
