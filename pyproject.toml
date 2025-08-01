@@ -63,7 +63,7 @@ default-groups = ["dev"]
 
 [tool.uv.sources]
 # lvmgort = { git = "https://github.com/sdss/lvmgort", branch = "overwatcher" }
-# lvmopstools = { git = "https://github.com/sdss/lvmopstools", branch = "main" }
+lvmopstools = { git = "https://github.com/sdss/lvmopstools", branch = "main" }
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
