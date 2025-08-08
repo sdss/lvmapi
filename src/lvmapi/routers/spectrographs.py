@@ -298,7 +298,10 @@ async def route_get_ion() -> dict[str, IonPumpResponse]:
 
     ion_pump_data = await read_ion_pumps()
 
-    return {key: IonPumpResponse(**value) for key, value in ion_pump_data.items()}
+    return {
+        key: IonPumpResponse(pressure=value["pressure"], on=value["on"])
+        for key, value in ion_pump_data.items()
+    }
 
 
 @router.get("/cryostats", summary="Cryostat information")
