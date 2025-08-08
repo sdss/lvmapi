@@ -14,7 +14,7 @@ import ipaddress
 import os
 from datetime import UTC, datetime, timedelta
 
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -41,8 +41,8 @@ CREDENTIALS_EXCEPTION = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
-# The subnet_or_token allows requests from this domain to bypass the token validation.
-ALLOW_SUBNET: str = "10.8.38.0/24"
+# The lco_or_token allows requests from these domains to bypass the token validation.
+ALLOW_SUBNETS: Sequence[str] = ["10.8.38.0/24", "10.8.68.0/24", "127.0.0.1/32"]
 
 
 class Token(BaseModel):
@@ -116,13 +116,18 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"authorised": True}
 
 
-async def subnet_or_token(request: Request):
-    """Validates a token or allows localhost."""
+async def lco_or_token(request: Request):
+    """Allows LCO subnets to bypass the token validation.
+
+    Otherwise behaves as validate_token.
+
+    """
 
     if request.client:
         host = request.client.host
-        if ipaddress.ip_address(host) in ipaddress.ip_network(ALLOW_SUBNET):
-            return {"authorised": True}
+        for ip in ALLOW_SUBNETS:
+            if ipaddress.ip_address(host) in ipaddress.ip_network(ip):
+                return {"authorised": True}
 
     token = await oauth2_scheme(request)
     if not token:
@@ -162,6 +167,13 @@ async def login_for_access_token(
 @router.get("/test", dependencies=[Depends(validate_token)])
 async def route_get_test():
     """A simple route to test validation."""
+
+    return True
+
+
+@router.get("/test/lco", dependencies=[Depends(lco_or_token)])
+async def route_get_test_lco():
+    """A simple route to test validation from LCO."""
 
     return True
 
