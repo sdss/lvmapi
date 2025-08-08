@@ -265,7 +265,7 @@ async def route_get_nps(
     """Returns the state of a network power switch."""
 
     try:
-        nps_data = await read_nps()
+        nps_data = await read_nps(nps)
     except Exception as ee:
         raise HTTPException(500, detail=str(ee))
 

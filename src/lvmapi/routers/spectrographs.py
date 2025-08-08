@@ -323,7 +323,7 @@ async def route_get_cryostats():
     filling = {}
 
     try:
-        nps = await read_nps()
+        nps = await read_nps(["sp1", "sp2", "sp3"])
         purging = nps["sp1.purge"]["state"]
         for key, value in nps.items():
             if match := re.match(r"sp[1-3]\.([rzb][1-3])", key):
