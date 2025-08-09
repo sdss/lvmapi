@@ -7,6 +7,7 @@
 * Change default `taskiq` acknowledgement type to `when_received` in `poe` development script.
 * Improve typing in `/spectrographs/ion` endpoint.
 * Query only on NPS in `/enclosure/nps/{nps}` instead of commanding all the NPS actors and then selecting the one we want.
+* Update `lvmopstools` to 0.5.18.
 
 
 ## 0.2.13 - 2025-06-13
