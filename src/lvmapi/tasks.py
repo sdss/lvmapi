@@ -124,7 +124,7 @@ async def power_cycle_ag_cameras(
 ):
     """Power cycles the AG cameras."""
 
-    from lvmopstools.devices.switch import power_cycle_ag_camera
+    from lvmopstools.devices.ags import power_cycle_ag_camera
 
     VALID_CAMERAS = [
         "sci-east",
@@ -149,7 +149,7 @@ async def power_cycle_ag_cameras(
             if camera not in VALID_CAMERAS:
                 raise ValueError("invalid camera")
 
-            power_cycle_ag_camera(camera, verbose=False)
+            await power_cycle_ag_camera(camera, verbose=False)
         except Exception as err:
             errors.append(f"{camera}: {err}")
 
@@ -157,9 +157,6 @@ async def power_cycle_ag_cameras(
     await asyncio.sleep(30)
 
     if reconnect:
-        async with get_gort_client() as gort:
-            await gort.ags.reconnect()
-
         # Force the instance of the overwatcher to reload all its actors.
         async with CluClient() as clu:
             await clu.send_command("lvm.overwatcher", "reset", time_limit=60)

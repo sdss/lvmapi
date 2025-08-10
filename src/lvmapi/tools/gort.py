@@ -50,7 +50,7 @@ async def get_gort_client(
         if not gort.connected:
             await gort.init()
     else:
-        gort = await Gort(verbosity=verbosity).init()
+        gort = await Gort(verbosity=verbosity, override_overwatcher=True).init()
         if app:
             app.state.gort = gort
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Update `lvmopstools` to 0.5.19 to support power cycling AG cameras connected to a NPS.
+
+
 ## 0.2.14 - 2025-08-09
 
 ### ✨ Improved

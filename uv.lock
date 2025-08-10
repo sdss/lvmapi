@@ -1322,7 +1322,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lvmgort", specifier = ">=1.3.0" },
-    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack", "netmiko"], specifier = ">=0.5.18" },
+    { name = "lvmopstools", extras = ["influxdb", "kubernetes", "ephemeris", "slack", "netmiko"], specifier = ">=0.5.19" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "polars", specifier = ">=1.18.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.2" },
@@ -1382,7 +1382,7 @@ wheels = [
 
 [[package]]
 name = "lvmopstools"
-version = "0.5.18"
+version = "0.5.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
@@ -1402,9 +1402,9 @@ dependencies = [
     { name = "strenum" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/24/a3/0d9fb4199942cf81f75048f3a0e3e4e895df7440883e85163ac34853f1c0/lvmopstools-0.5.18.tar.gz", hash = "sha256:f7430e45d977ed3dd20a7222b5393e0c90d5bc467b887eaac66cb8f7d8f480d4", size = 133868, upload-time = "2025-08-09T15:25:53.081Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/36/445dc1b00951c84e2a0c8f88eacd680df5800b3271b163affe3b9d0e70f3/lvmopstools-0.5.19.tar.gz", hash = "sha256:cae238400d3cde679369d407f3612b0d5a6bbba02ef902b9ac8e7e47e2396c62", size = 134263, upload-time = "2025-08-10T18:00:58.428Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/d5/792399b8ad36486229a0af1bb9b97ec849f65bd3f61ce3993baf3d8fd9b5/lvmopstools-0.5.18-py3-none-any.whl", hash = "sha256:bb875cddee6ccfaac5be3bdae658bc08a3b713d3f9202dda356623e0691b6ddf", size = 143202, upload-time = "2025-08-09T15:25:51.471Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/07/452cd58f4afc3d8e9a34a0103cbcebe953f2ab1bceb5e55e3f8df96bdcc5/lvmopstools-0.5.19-py3-none-any.whl", hash = "sha256:a8a9269ff20a18eae2afa49e2cdb8d9ac23907a280112a62d0fbf583345de606", size = 144217, upload-time = "2025-08-10T18:00:57.026Z" },
 ]
 
 [package.optional-dependencies]
@@ -2299,11 +2299,11 @@ wheels = [
 
 [[package]]
 name = "pymodbus"
-version = "3.11.0"
+version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/a7/ff43634e43fedc132e876f8b82b84c103b329f66297346f43e2e6c9c04a4/pymodbus-3.11.0.tar.gz", hash = "sha256:cbb12041d67a9bcd3ab1c6f39afc7c19f23bb770def2a660b8bb72779ba51ee4", size = 161346, upload-time = "2025-08-05T15:26:23.757Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/1e/376404269feedd72fd440bb948da4e0f41f311bfa9dcf4586c7bc314c803/pymodbus-3.11.1.tar.gz", hash = "sha256:e738178d0ac5063f095d61be37422ac4105faab19fbacea9eb5a574e8e2b3122", size = 163261, upload-time = "2025-08-10T15:41:26.479Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/cd/ab6f675ae0cac8ae25103eb8b2f97e907edd3c6fe153ef4ef1d030fc62ec/pymodbus-3.11.0-py3-none-any.whl", hash = "sha256:34ef7154b32edffff77b5babd9b9aab8b4c9a1404b8badfa86f12d9e14bce02e", size = 163531, upload-time = "2025-08-05T15:26:22.068Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/2a/2920794f5342d130365a910acaebe5028006a452d70b793a66d861b3431c/pymodbus-3.11.1-py3-none-any.whl", hash = "sha256:3119a925e7723a0e729d0dd07388d2abb1b7ee7dd99be48078e88bfe7a3d024d", size = 166384, upload-time = "2025-08-10T15:41:24.429Z" },
 ]
 
 [[package]]
@@ -2888,7 +2888,7 @@ wheels = [
 
 [[package]]
 name = "sdss-clu"
-version = "2.5.0"
+version = "2.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
@@ -2902,9 +2902,9 @@ dependencies = [
     { name = "sdsstools" },
     { name = "unclick" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/19/28/a81ba6561598a85c5987156d2a806516caae76a985de90dea77c3ca03cb1/sdss_clu-2.5.0.tar.gz", hash = "sha256:9514816e3b79e201ba511c9dc902afae54a781f105c62bfa4b04c6b88474823a", size = 123793, upload-time = "2025-08-07T20:09:03.363Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/aa/90d76b10158709e4a07b2261e7cce690b73a0a01da88b3a97a2388a0e8fa/sdss_clu-2.5.3.tar.gz", hash = "sha256:174a9f02f3cca2726bb08a381cd30cf8a6fae0715b046172793d248b3cdb0e4d", size = 123933, upload-time = "2025-08-10T15:43:30.036Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/89/7601e3b6ce54e1ebcf1628cad7d6749cb64b7e73b5410ca900cb6b7a527c/sdss_clu-2.5.0-py3-none-any.whl", hash = "sha256:c017f1f07b16dab04e3b979d398ee4d4fcab93e0c3c23d00488afb3f6259f840", size = 143126, upload-time = "2025-08-07T20:09:00.954Z" },
+    { url = "https://files.pythonhosted.org/packages/db/dd/f5980da8ae650c178481437e790f207facd0ab66f76bd53eb7e532500d44/sdss_clu-2.5.3-py3-none-any.whl", hash = "sha256:83f29a0fcbff45447d57fcafaccd3b37c4e03aa681c82fd9cfc393686e3eb808", size = 143191, upload-time = "2025-08-10T15:43:28.345Z" },
 ]
 
 [[package]]
