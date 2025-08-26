@@ -81,7 +81,7 @@ async def get_overwatcher_alerts() -> OverwatcherAlerts | None:
 @router.get("", summary="Summary of alerts")
 @router.get("/", summary="Summary of alerts")
 @router.get("/summary", summary="Summary of alerts")
-@lvmapi_cache(expire=10)
+@lvmapi_cache(expire=30)
 async def route_get_summary():
     """Summary of alerts."""
 
@@ -179,6 +179,7 @@ async def route_get_summary():
 
 
 @router.get("/connectivity", summary="Observatory connectivity status")
+@lvmapi_cache(expire=30)
 async def route_get_connectivity():
     """Checks the connectivity of LVM to the outside world and other LCO networks."""
 

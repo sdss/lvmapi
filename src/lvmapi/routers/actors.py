@@ -14,6 +14,7 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
 from lvmapi import config
+from lvmapi.cache import lvmapi_cache
 from lvmapi.tasks import restart_kubernetes_deployment_task
 from lvmapi.tools.logs import get_actor_versions
 from lvmapi.tools.rabbitmq import ping_actors
@@ -39,6 +40,7 @@ async def get_actors_route() -> list[str]:
 
 
 @router.get("/health", summary="Actor health")
+@lvmapi_cache(expire=30)
 async def get_actor_health(request: Request) -> list[HealthResponse]:
     """Returns the health of all actors."""
 
@@ -87,6 +89,7 @@ async def get_deployment_to_actors_route() -> dict[str, list[str]]:
 
 
 @router.get("/ping", summary="Actor ping")
+@lvmapi_cache(expire=30)
 async def get_ping_route(actors: list[str] | None = None) -> dict[str, bool]:
     """Pings a list of actors."""
 
@@ -121,6 +124,7 @@ async def get_stop_actor_route(actor: str) -> bool:
 
 
 @router.get("/versions", summary="Get actor versions")
+@lvmapi_cache(expire=30)
 async def get_actor_versions_route(
     actor: Annotated[
         str | None,
