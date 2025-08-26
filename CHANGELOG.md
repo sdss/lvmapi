@@ -5,7 +5,7 @@
 ### ✨ Improved
 
 * Reconnect AG cameras after a power cycle.
-
+* Import the `app` in `get_gort_client` if not passed.
 
 ## 0.2.15 - 2025-08-10
 

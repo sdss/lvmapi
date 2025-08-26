@@ -43,7 +43,8 @@ async def get_gort_client(
 
     """
 
-    gort: Gort
+    if app is None:
+        from lvmapi.app import app
 
     if app and hasattr(app.state, "gort"):
         gort = app.state.gort
