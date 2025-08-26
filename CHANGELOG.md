@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Reconnect AG cameras after a power cycle.
+
+
 ## 0.2.15 - 2025-08-10
 
 ### ✨ Improved
