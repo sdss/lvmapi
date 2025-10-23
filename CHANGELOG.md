@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Include dither position in exposure data.
+
+
 ## 0.2.16 - 2025-08-29
 
 ### ✨ Improved

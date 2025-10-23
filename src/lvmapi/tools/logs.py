@@ -51,6 +51,7 @@ class ExposureDataDict(BaseModel):
     n_standards: int = 0
     n_cameras: int = 0
     object: str = ""
+    dpos: int | None = None
 
 
 def get_spectro_mjds():
@@ -137,6 +138,7 @@ def get_exposure_data(
         std_acq = [header.get(f"STD{nn}ACQ", None) for nn in range(1, 13)]
         n_standards = sum([std for std in std_acq if std is not None])
         object = header.get("OBJECT", "")
+        dpos = header.get("DPOS", None)
 
         lamps = {
             lname if not compact_lamps else lname[0]: header.get(lheader, None) == "ON"
@@ -163,6 +165,7 @@ def get_exposure_data(
             n_standards=n_standards,
             n_cameras=n_cameras,
             object=object,
+            dpos=dpos,
         )
 
     if not as_dataframe:
@@ -196,7 +199,10 @@ async def get_exposure_table_ascii(
     sjd = sjd or get_sjd("LCO")
 
     df = await run_in_executor(
-        get_exposure_data, sjd, as_dataframe=True, compact_lamps=compact_lamps
+        get_exposure_data,
+        sjd,
+        as_dataframe=True,
+        compact_lamps=compact_lamps,
     )
     assert isinstance(df, polars.DataFrame)
 
