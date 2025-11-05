@@ -140,15 +140,23 @@ async def power_cycle_ag_cameras(
         cameras = VALID_CAMERAS
 
     errors: list[str] = []
+    telescopes: set[str] = set()
 
+    # The cameras for each telescope are connected to the same PDU port.
+    # We only need to power cycle one camera per telescope.
     for camera in cameras:
         if camera == "":
             continue
 
-        try:
-            if camera not in VALID_CAMERAS:
-                raise ValueError("invalid camera")
+        if camera not in VALID_CAMERAS:
+            raise ValueError("invalid camera")
 
+        telescope = camera.split("-")[0]
+        telescopes.add(telescope)
+
+    for telescope in telescopes:
+        try:
+            camera = f"{telescope}-east"  # There is an east camera for each telescope.
             await power_cycle_ag_camera(camera, verbose=False)
         except Exception as err:
             errors.append(f"{camera}: {err}")

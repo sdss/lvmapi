@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Make `/macros/power_cycle_ag_cameras` endpoint more efficient now that all cameras are powered from PDUs.
+
+
 ## 0.2.17 - 2025-10-25
 
 ### ✨ Improved
