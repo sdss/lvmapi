@@ -157,7 +157,7 @@ async def power_cycle_ag_cameras(
     tasks = []
     for telescope in telescopes:
         camera = f"{telescope}-east"  # There is an east camera for each telescope.
-        tasks.append(power_cycle_ag_camera(camera, verbose=False))
+        tasks.append(asyncio.create_task(power_cycle_ag_camera(camera, verbose=False)))
 
     await asyncio.gather(*tasks, return_exceptions=True)
 
