@@ -154,12 +154,16 @@ async def power_cycle_ag_cameras(
         telescope = camera.split("-")[0]
         telescopes.add(telescope)
 
+    tasks = []
     for telescope in telescopes:
-        try:
-            camera = f"{telescope}-east"  # There is an east camera for each telescope.
-            await power_cycle_ag_camera(camera, verbose=False)
-        except Exception as err:
-            errors.append(f"{camera}: {err}")
+        camera = f"{telescope}-east"  # There is an east camera for each telescope.
+        tasks.append(power_cycle_ag_camera(camera, verbose=False))
+
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+    for task in tasks:
+        if isinstance(task.result(), Exception):
+            errors.append(f"{camera}: {task.result()}")
 
     # It takes a while for the cameras to come back online.
     await asyncio.sleep(30)
