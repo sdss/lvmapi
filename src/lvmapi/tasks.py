@@ -144,6 +144,9 @@ async def power_cycle_ag_cameras(
 
     # The cameras for each telescope are connected to the same PDU port.
     # We only need to power cycle one camera per telescope.
+    # WARNING: if we ever go back to having one or more cameras powered over PoE
+    # we will need to change this logic and go back to power cycling each camera
+    # individually.
     for camera in cameras:
         if camera == "":
             continue
