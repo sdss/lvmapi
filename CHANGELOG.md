@@ -6,6 +6,10 @@
 
 * Make `/macros/power_cycle_ag_cameras` endpoint more efficient now that all cameras are powered from PDUs.
 
+### 🔧 Fixed
+
+* Replace `passlib` with `pwdlib` and use `argon2id` for password hashing. `passlib` seems to have stopped working.
+
 
 ## 0.2.17 - 2025-10-25
 

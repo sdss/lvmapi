@@ -19,7 +19,7 @@ from typing import Annotated, Sequence
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 from pydantic import BaseModel
 
 
@@ -50,7 +50,7 @@ class Token(BaseModel):
     token_type: str
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -63,13 +63,13 @@ def verify_password(plain_password: str):
     if not PASSWORD:
         return False
 
-    return pwd_context.verify(plain_password, PASSWORD)
+    return password_hash.verify(plain_password, PASSWORD)
 
 
 def get_password_hash(password: str):
     """Creates a hashed password."""
 
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def authenticate(password: str):
