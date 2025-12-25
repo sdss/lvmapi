@@ -1422,6 +1422,18 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "8.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "zipp", marker = "sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f3/49/3b30cad09e7771a4982d9975a8cbf64f00d4a1ececb53297f1d9a7be1b10/importlib_metadata-8.7.1.tar.gz", hash = "sha256:49fef1ae6440c182052f407c8d34a68f72efc36db9ca90dc0113398f2fdde8bb", size = 57107, upload-time = "2025-12-21T10:00:19.278Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/5e/f8e9a1d23b9c20a551a8a02ea3637b4642e22c2626e3a13a9a29cdea99eb/importlib_metadata-8.7.1-py3-none-any.whl", hash = "sha256:5a1f80bf1daa489495071efbb095d75a634cf28a8bc299581244063b53176151", size = 27865, upload-time = "2025-12-21T10:00:18.329Z" },
+]
+
+[[package]]
 name = "importlib-resources"
 version = "6.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1619,15 +1631,17 @@ dependencies = [
     { name = "python-jose", extra = ["cryptography"] },
     { name = "python-multipart" },
     { name = "python3-nmap" },
-    { name = "redis", extra = ["hiredis"] },
+    { name = "redis", version = "6.4.0", source = { registry = "https://pypi.org/simple" }, extra = ["hiredis"], marker = "sys_platform != 'darwin'" },
+    { name = "redis", version = "7.1.0", source = { registry = "https://pypi.org/simple" }, extra = ["hiredis"], marker = "sys_platform == 'darwin'" },
     { name = "sdss-clu" },
     { name = "sdsstools" },
     { name = "sentry-sdk", extra = ["fastapi"] },
-    { name = "taskiq" },
-    { name = "taskiq", extra = ["reload"], marker = "sys_platform != 'darwin'" },
+    { name = "taskiq", version = "0.11.20", source = { registry = "https://pypi.org/simple" }, extra = ["reload"], marker = "sys_platform != 'darwin'" },
+    { name = "taskiq", version = "0.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
     { name = "taskiq-aio-pika" },
     { name = "taskiq-fastapi" },
-    { name = "taskiq-redis" },
+    { name = "taskiq-redis", version = "1.1.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
+    { name = "taskiq-redis", version = "1.2.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
     { name = "typing-extensions" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -1669,7 +1683,7 @@ requires-dist = [
     { name = "sdsstools", specifier = ">=1.9.1" },
     { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2.19.2" },
     { name = "taskiq", marker = "sys_platform == 'darwin'", specifier = ">=0.11.7" },
-    { name = "taskiq", extras = ["reload"], marker = "sys_platform != 'darwin'", specifier = ">=0.11.7" },
+    { name = "taskiq", extras = ["reload"], marker = "sys_platform != 'darwin'", specifier = ">=0.11.7,<0.12.0" },
     { name = "taskiq-aio-pika", specifier = ">=0.4.1" },
     { name = "taskiq-fastapi", specifier = ">=0.3.2" },
     { name = "taskiq-redis", specifier = ">=1.0.0" },
@@ -1703,7 +1717,8 @@ dependencies = [
     { name = "polars" },
     { name = "psycopg2-binary" },
     { name = "pydantic" },
-    { name = "redis", extra = ["hiredis"] },
+    { name = "redis", version = "6.4.0", source = { registry = "https://pypi.org/simple" }, extra = ["hiredis"], marker = "sys_platform != 'darwin'" },
+    { name = "redis", version = "7.1.0", source = { registry = "https://pypi.org/simple" }, extra = ["hiredis"], marker = "sys_platform == 'darwin'" },
     { name = "rich" },
     { name = "sdss-clu" },
     { name = "sdsstools" },
@@ -3083,10 +3098,35 @@ wheels = [
 
 [[package]]
 name = "redis"
+version = "6.4.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform != 'darwin'",
+    "python_full_version < '3.14' and sys_platform != 'darwin'",
+]
+dependencies = [
+    { name = "async-timeout", marker = "python_full_version < '3.11.3' and sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0d/d6/e8b92798a5bd67d659d51a18170e91c16ac3b59738d91894651ee255ed49/redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010", size = 4647399, upload-time = "2025-08-07T08:10:11.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/02/89e2ed7e85db6c93dfa9e8f691c5087df4e3551ab39081a4d7c6d1f90e05/redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f", size = 279847, upload-time = "2025-08-07T08:10:09.84Z" },
+]
+
+[package.optional-dependencies]
+hiredis = [
+    { name = "hiredis", marker = "sys_platform != 'darwin'" },
+]
+
+[[package]]
+name = "redis"
 version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'darwin'",
+    "python_full_version < '3.14' and sys_platform == 'darwin'",
+]
 dependencies = [
-    { name = "async-timeout", marker = "python_full_version < '3.11.3'" },
+    { name = "async-timeout", marker = "python_full_version < '3.11.3' and sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/43/c8/983d5c6579a411d8a99bc5823cc5712768859b5ce2c8afe1a65b37832c81/redis-7.1.0.tar.gz", hash = "sha256:b1cc3cfa5a2cb9c2ab3ba700864fb0ad75617b41f01352ce5779dabf6d5f9c3c", size = 4796669, upload-time = "2025-11-19T15:54:39.961Z" }
 wheels = [
@@ -3095,7 +3135,7 @@ wheels = [
 
 [package.optional-dependencies]
 hiredis = [
-    { name = "hiredis" },
+    { name = "hiredis", marker = "sys_platform == 'darwin'" },
 ]
 
 [[package]]
@@ -3695,20 +3735,27 @@ wheels = [
 
 [[package]]
 name = "taskiq"
-version = "0.12.1"
+version = "0.11.20"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "anyio" },
-    { name = "izulu" },
-    { name = "packaging" },
-    { name = "pycron" },
-    { name = "pydantic" },
-    { name = "taskiq-dependencies" },
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform != 'darwin'",
+    "python_full_version < '3.14' and sys_platform != 'darwin'",
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/92/cf/c4a47be05d85754f3e0ecc7b72131249adc067ea37517054459e94268fb1/taskiq-0.12.1.tar.gz", hash = "sha256:338dcf58eaca327e511a9380b2185bfa6a415dd79a5cf144546a2dbb95459298", size = 60536, upload-time = "2025-12-07T16:07:43.561Z" }
+dependencies = [
+    { name = "aiohttp", marker = "sys_platform != 'darwin'" },
+    { name = "anyio", marker = "sys_platform != 'darwin'" },
+    { name = "importlib-metadata", marker = "sys_platform != 'darwin'" },
+    { name = "izulu", marker = "sys_platform != 'darwin'" },
+    { name = "packaging", marker = "sys_platform != 'darwin'" },
+    { name = "pycron", marker = "sys_platform != 'darwin'" },
+    { name = "pydantic", marker = "sys_platform != 'darwin'" },
+    { name = "pytz", marker = "sys_platform != 'darwin'" },
+    { name = "taskiq-dependencies", marker = "sys_platform != 'darwin'" },
+    { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2c/80/58b1aee0934d88b5558bfe013cc6b34f684985ec44b6952a294e96048876/taskiq-0.11.20.tar.gz", hash = "sha256:598fa9b03eafd4cc9521158917382f184ba613e5c71544b9b60934c1cc055f51", size = 55964, upload-time = "2025-10-30T13:15:15.38Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/e4/a2fda3bcbb8b61108dc8e9db1a2d19a23578953db73e981f66b9d44f1207/taskiq-0.12.1-py3-none-any.whl", hash = "sha256:a8ade45e2e23edbadb972a88dec44e68c7daef83383d01fa3af48594a24a712a", size = 90668, upload-time = "2025-12-07T16:07:42.296Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/70/b5f91b22e7b6ca8b467f7a933fd7e1d4b5016186720729bb6a40bfa2251a/taskiq-0.11.20-py3-none-any.whl", hash = "sha256:29521bbd580af1b98052d4c24a33f6d4a6060bba73dcae4ce9c69c63b937cf87", size = 81873, upload-time = "2025-10-30T13:15:14.311Z" },
 ]
 
 [package.optional-dependencies]
@@ -3718,12 +3765,35 @@ reload = [
 ]
 
 [[package]]
+name = "taskiq"
+version = "0.12.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'darwin'",
+    "python_full_version < '3.14' and sys_platform == 'darwin'",
+]
+dependencies = [
+    { name = "aiohttp", marker = "sys_platform == 'darwin'" },
+    { name = "anyio", marker = "sys_platform == 'darwin'" },
+    { name = "izulu", marker = "sys_platform == 'darwin'" },
+    { name = "packaging", marker = "sys_platform == 'darwin'" },
+    { name = "pycron", marker = "sys_platform == 'darwin'" },
+    { name = "pydantic", marker = "sys_platform == 'darwin'" },
+    { name = "taskiq-dependencies", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/cf/c4a47be05d85754f3e0ecc7b72131249adc067ea37517054459e94268fb1/taskiq-0.12.1.tar.gz", hash = "sha256:338dcf58eaca327e511a9380b2185bfa6a415dd79a5cf144546a2dbb95459298", size = 60536, upload-time = "2025-12-07T16:07:43.561Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4c/e4/a2fda3bcbb8b61108dc8e9db1a2d19a23578953db73e981f66b9d44f1207/taskiq-0.12.1-py3-none-any.whl", hash = "sha256:a8ade45e2e23edbadb972a88dec44e68c7daef83383d01fa3af48594a24a712a", size = 90668, upload-time = "2025-12-07T16:07:42.296Z" },
+]
+
+[[package]]
 name = "taskiq-aio-pika"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aio-pika" },
-    { name = "taskiq" },
+    { name = "taskiq", version = "0.11.20", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
+    { name = "taskiq", version = "0.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c4/91/3c7b7af402df3299f74b6ab5a3e8b6ffbd45b1a9eaab9dce5e4e7b886709/taskiq_aio_pika-0.5.0.tar.gz", hash = "sha256:ded32dc4b9ad97ee6da7b297f393d33aad8f45bb444355ad342f1533e3d161d6", size = 7425, upload-time = "2025-11-25T08:59:14.184Z" }
 wheels = [
@@ -3745,7 +3815,8 @@ version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi" },
-    { name = "taskiq" },
+    { name = "taskiq", version = "0.11.20", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
+    { name = "taskiq", version = "0.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cf/fe/f9e885a4dd6bd4d4224e3dee05d9b38bf58102a0ef5e553e812d654dfa72/taskiq_fastapi-0.4.0.tar.gz", hash = "sha256:f683ab0aab1ab2db117d1e121e5e534f3ba4a4e5f382177012e29eca986863fb", size = 5819, upload-time = "2025-11-29T15:22:59.191Z" }
 wheels = [
@@ -3754,11 +3825,32 @@ wheels = [
 
 [[package]]
 name = "taskiq-redis"
+version = "1.1.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform != 'darwin'",
+    "python_full_version < '3.14' and sys_platform != 'darwin'",
+]
+dependencies = [
+    { name = "redis", version = "6.4.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
+    { name = "taskiq", version = "0.11.20", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/0b/5006792cbdf6e78abaab45407968d96e2a1ffd0238cd41b13a62b33880cf/taskiq_redis-1.1.2.tar.gz", hash = "sha256:f878a047abc1a0fa0ddda6e4b063d742f030858d5a4409de96261a00a992c9c9", size = 16225, upload-time = "2025-10-07T10:46:13.666Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/20/9bf19b05eb7cb275a04871f3c38bf088c108579c4c19ea2a1358d2a81334/taskiq_redis-1.1.2-py3-none-any.whl", hash = "sha256:3b69468ff99da33243314c84acfa137a4a014abad10dd44e62195bc5e4ae9947", size = 20424, upload-time = "2025-10-07T10:46:12.779Z" },
+]
+
+[[package]]
+name = "taskiq-redis"
 version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'darwin'",
+    "python_full_version < '3.14' and sys_platform == 'darwin'",
+]
 dependencies = [
-    { name = "redis" },
-    { name = "taskiq" },
+    { name = "redis", version = "7.1.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
+    { name = "taskiq", version = "0.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/35/58ec34c74c888235ecea3dba3b0e74a3902a6b70f0cd56fffa0012f03a61/taskiq_redis-1.2.1.tar.gz", hash = "sha256:8a6b7d3187798e00f27fca6d4a9d73efc559ed88e3c3c571647c9163add7af47", size = 14376, upload-time = "2025-12-19T17:36:03.45Z" }
 wheels = [
@@ -3997,20 +4089,20 @@ wheels = [
 
 [[package]]
 name = "watchdog"
-version = "6.0.0"
+version = "4.0.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/db/7d/7f3d619e951c88ed75c6037b246ddcf2d322812ee8ea189be89511721d54/watchdog-6.0.0.tar.gz", hash = "sha256:9ddf7c82fda3ae8e24decda1338ede66e1c99883db93711d8fb941eaa2d8c282", size = 131220, upload-time = "2024-11-01T14:07:13.037Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/38/764baaa25eb5e35c9a043d4c4588f9836edfe52a708950f4b6d5f714fd42/watchdog-4.0.2.tar.gz", hash = "sha256:b4dfbb6c49221be4535623ea4474a4d6ee0a9cef4a80b20c28db4d858b64e270", size = 126587, upload-time = "2024-08-11T07:38:01.623Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/c7/ca4bf3e518cb57a686b2feb4f55a1892fd9a3dd13f470fca14e00f80ea36/watchdog-6.0.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7607498efa04a3542ae3e05e64da8202e58159aa1fa4acddf7678d34a35d4f13", size = 79079, upload-time = "2024-11-01T14:06:59.472Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/51/d46dc9332f9a647593c947b4b88e2381c8dfc0942d15b8edc0310fa4abb1/watchdog-6.0.0-py3-none-manylinux2014_armv7l.whl", hash = "sha256:9041567ee8953024c83343288ccc458fd0a2d811d6a0fd68c4c22609e3490379", size = 79078, upload-time = "2024-11-01T14:07:01.431Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/57/04edbf5e169cd318d5f07b4766fee38e825d64b6913ca157ca32d1a42267/watchdog-6.0.0-py3-none-manylinux2014_i686.whl", hash = "sha256:82dc3e3143c7e38ec49d61af98d6558288c415eac98486a5c581726e0737c00e", size = 79076, upload-time = "2024-11-01T14:07:02.568Z" },
-    { url = "https://files.pythonhosted.org/packages/ab/cc/da8422b300e13cb187d2203f20b9253e91058aaf7db65b74142013478e66/watchdog-6.0.0-py3-none-manylinux2014_ppc64.whl", hash = "sha256:212ac9b8bf1161dc91bd09c048048a95ca3a4c4f5e5d4a7d1b1a7d5752a7f96f", size = 79077, upload-time = "2024-11-01T14:07:03.893Z" },
-    { url = "https://files.pythonhosted.org/packages/2c/3b/b8964e04ae1a025c44ba8e4291f86e97fac443bca31de8bd98d3263d2fcf/watchdog-6.0.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:e3df4cbb9a450c6d49318f6d14f4bbc80d763fa587ba46ec86f99f9e6876bb26", size = 79078, upload-time = "2024-11-01T14:07:05.189Z" },
-    { url = "https://files.pythonhosted.org/packages/62/ae/a696eb424bedff7407801c257d4b1afda455fe40821a2be430e173660e81/watchdog-6.0.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:2cce7cfc2008eb51feb6aab51251fd79b85d9894e98ba847408f662b3395ca3c", size = 79077, upload-time = "2024-11-01T14:07:06.376Z" },
-    { url = "https://files.pythonhosted.org/packages/b5/e8/dbf020b4d98251a9860752a094d09a65e1b436ad181faf929983f697048f/watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:20ffe5b202af80ab4266dcd3e91aae72bf2da48c0d33bdb15c66658e685e94e2", size = 79078, upload-time = "2024-11-01T14:07:07.547Z" },
-    { url = "https://files.pythonhosted.org/packages/07/f6/d0e5b343768e8bcb4cda79f0f2f55051bf26177ecd5651f84c07567461cf/watchdog-6.0.0-py3-none-win32.whl", hash = "sha256:07df1fdd701c5d4c8e55ef6cf55b8f0120fe1aef7ef39a1c6fc6bc2e606d517a", size = 79065, upload-time = "2024-11-01T14:07:09.525Z" },
-    { url = "https://files.pythonhosted.org/packages/db/d9/c495884c6e548fce18a8f40568ff120bc3a4b7b99813081c8ac0c936fa64/watchdog-6.0.0-py3-none-win_amd64.whl", hash = "sha256:cbafb470cf848d93b5d013e2ecb245d4aa1c8fd0504e863ccefa32445359d680", size = 79070, upload-time = "2024-11-01T14:07:10.686Z" },
-    { url = "https://files.pythonhosted.org/packages/33/e8/e40370e6d74ddba47f002a32919d91310d6074130fe4e17dabcafc15cbf1/watchdog-6.0.0-py3-none-win_ia64.whl", hash = "sha256:a1914259fa9e1454315171103c6a30961236f508b9b623eae470268bbcc6a22f", size = 79067, upload-time = "2024-11-01T14:07:11.845Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/b1/25acf6767af6f7e44e0086309825bd8c098e301eed5868dc5350642124b9/watchdog-4.0.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:936acba76d636f70db8f3c66e76aa6cb5136a936fc2a5088b9ce1c7a3508fc83", size = 82947, upload-time = "2024-08-11T07:37:45.388Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/90/aebac95d6f954bd4901f5d46dcd83d68e682bfd21798fd125a95ae1c9dbf/watchdog-4.0.2-py3-none-manylinux2014_armv7l.whl", hash = "sha256:e252f8ca942a870f38cf785aef420285431311652d871409a64e2a0a52a2174c", size = 82942, upload-time = "2024-08-11T07:37:46.722Z" },
+    { url = "https://files.pythonhosted.org/packages/15/3a/a4bd8f3b9381824995787488b9282aff1ed4667e1110f31a87b871ea851c/watchdog-4.0.2-py3-none-manylinux2014_i686.whl", hash = "sha256:0e83619a2d5d436a7e58a1aea957a3c1ccbf9782c43c0b4fed80580e5e4acd1a", size = 82947, upload-time = "2024-08-11T07:37:48.941Z" },
+    { url = "https://files.pythonhosted.org/packages/09/cc/238998fc08e292a4a18a852ed8274159019ee7a66be14441325bcd811dfd/watchdog-4.0.2-py3-none-manylinux2014_ppc64.whl", hash = "sha256:88456d65f207b39f1981bf772e473799fcdc10801062c36fd5ad9f9d1d463a73", size = 82946, upload-time = "2024-08-11T07:37:50.279Z" },
+    { url = "https://files.pythonhosted.org/packages/80/f1/d4b915160c9d677174aa5fae4537ae1f5acb23b3745ab0873071ef671f0a/watchdog-4.0.2-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:32be97f3b75693a93c683787a87a0dc8db98bb84701539954eef991fb35f5fbc", size = 82947, upload-time = "2024-08-11T07:37:51.55Z" },
+    { url = "https://files.pythonhosted.org/packages/db/02/56ebe2cf33b352fe3309588eb03f020d4d1c061563d9858a9216ba004259/watchdog-4.0.2-py3-none-manylinux2014_s390x.whl", hash = "sha256:c82253cfc9be68e3e49282831afad2c1f6593af80c0daf1287f6a92657986757", size = 82944, upload-time = "2024-08-11T07:37:52.855Z" },
+    { url = "https://files.pythonhosted.org/packages/01/d2/c8931ff840a7e5bd5dcb93f2bb2a1fd18faf8312e9f7f53ff1cf76ecc8ed/watchdog-4.0.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c0b14488bd336c5b1845cee83d3e631a1f8b4e9c5091ec539406e4a324f882d8", size = 82947, upload-time = "2024-08-11T07:37:55.172Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/d8/cdb0c21a4a988669d7c210c75c6a2c9a0e16a3b08d9f7e633df0d9a16ad8/watchdog-4.0.2-py3-none-win32.whl", hash = "sha256:0d8a7e523ef03757a5aa29f591437d64d0d894635f8a50f370fe37f913ce4e19", size = 82935, upload-time = "2024-08-11T07:37:56.668Z" },
+    { url = "https://files.pythonhosted.org/packages/99/2e/b69dfaae7a83ea64ce36538cc103a3065e12c447963797793d5c0a1d5130/watchdog-4.0.2-py3-none-win_amd64.whl", hash = "sha256:c344453ef3bf875a535b0488e3ad28e341adbd5a9ffb0f7d62cefacc8824ef2b", size = 82934, upload-time = "2024-08-11T07:37:57.991Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/0b/43b96a9ecdd65ff5545b1b13b687ca486da5c6249475b1a45f24d63a1858/watchdog-4.0.2-py3-none-win_ia64.whl", hash = "sha256:baececaa8edff42cd16558a639a9b0ddf425f93d892e8392a56bf904f5eff22c", size = 82933, upload-time = "2024-08-11T07:37:59.573Z" },
 ]
 
 [[package]]
@@ -4268,4 +4360,13 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/86/0f0dccb6e59a9e7f122c5afd43568b1d31b8ab7dda5f1b01fb5c7025c9a9/yarl-1.22.0-cp314-cp314t-win_amd64.whl", hash = "sha256:9fb17ea16e972c63d25d4a97f016d235c78dd2344820eb35bc034bc32012ee27", size = 96292, upload-time = "2025-10-06T14:12:15.398Z" },
     { url = "https://files.pythonhosted.org/packages/48/b7/503c98092fb3b344a179579f55814b613c1fbb1c23b3ec14a7b008a66a6e/yarl-1.22.0-cp314-cp314t-win_arm64.whl", hash = "sha256:9f6d73c1436b934e3f01df1e1b21ff765cd1d28c77dfb9ace207f746d4610ee1", size = 85171, upload-time = "2025-10-06T14:12:16.935Z" },
     { url = "https://files.pythonhosted.org/packages/73/ae/b48f95715333080afb75a4504487cbe142cae1268afc482d06692d605ae6/yarl-1.22.0-py3-none-any.whl", hash = "sha256:1380560bdba02b6b6c90de54133c81c9f2a453dee9912fe58c1dcced1edb7cff", size = 46814, upload-time = "2025-10-06T14:12:53.872Z" },
+]
+
+[[package]]
+name = "zipp"
+version = "3.23.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/02/0f2892c661036d50ede074e376733dca2ae7c6eb617489437771209d4180/zipp-3.23.0.tar.gz", hash = "sha256:a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166", size = 25547, upload-time = "2025-06-08T17:06:39.4Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl", hash = "sha256:071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e", size = 10276, upload-time = "2025-06-08T17:06:38.034Z" },
 ]
