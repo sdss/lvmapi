@@ -63,7 +63,7 @@ async def spec_temperature_alerts(
     return temp_alerts_dict
 
 
-async def enclosure_alerts(threshold: float = 19.5):
+async def enclosure_alerts(threshold: float = 19.5) -> dict[str, bool]:
     """Returns O2 and rain sensor enclosure alerts.
 
     Parameters
@@ -93,8 +93,9 @@ async def enclosure_alerts(threshold: float = 19.5):
 
     registers = status.replies.get("registers")
 
-    safety_labels = status.replies.get("safety_status_labels")
+    safety_labels = status.replies.get("safety_status_labels").split(",")
     door_alert = not ("DOOR_CLOSED" in safety_labels and "DOOR_LOCKED" in safety_labels)
+    e_stops = "E_STOP" in safety_labels
 
     engineering_override: bool = False
     engineering_mode_data = status.replies.get("engineering_mode")
@@ -110,6 +111,7 @@ async def enclosure_alerts(threshold: float = 19.5):
         "o2_util_room": status.replies.get("o2_percent_utilities") < threshold,
         "rain_sensor_alarm": registers["rain_sensor_alarm"],
         "door_alert": door_alert,
+        "e_stops": e_stops,
         "engineering_override": engineering_override,
     }
 

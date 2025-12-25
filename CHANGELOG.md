@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Include enclosure e-stop status in alerts route.
+
+
 ## 0.2.18 - 2025-11-06
 
 ### ✨ Improved

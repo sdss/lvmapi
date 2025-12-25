@@ -34,6 +34,7 @@ class AlertsSummary(BaseModel):
     wind_alert: bool | None = None
     rain: bool | None = None
     door_alert: bool | None = None
+    e_stops: bool | None = None
     camera_temperature_alert: bool | None = None
     camera_alerts: dict[str, bool] | None = None
     o2_alert: bool | None = None
@@ -149,6 +150,7 @@ async def route_get_summary():
     o2_alert = any(o2_alerts.values())
     rain_sensor_alarm = enclosure_alerts_response.get("rain_sensor_alarm", None)
     door_alert = enclosure_alerts_response.get("door_alert", None)
+    e_stops = enclosure_alerts_response.get("e_stops", None)
     engineering_override = enclosure_alerts_response.get("engineering_override", False)
 
     # These fake states are just for testing.
@@ -166,6 +168,7 @@ async def route_get_summary():
         dew_point_alert=dew_point_alert,
         rain=rain_sensor_alarm,
         door_alert=door_alert,
+        e_stops=e_stops,
         wind_alert=wind_alert,
         camera_temperature_alert=camera_temperature_alert,
         camera_alerts=camera_alerts,
