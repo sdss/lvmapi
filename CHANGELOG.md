@@ -6,6 +6,10 @@
 
 * Include enclosure e-stop status in alerts route.
 
+### 🔧 Fixed
+
+* Restrict `taskiq` to `<0.12.0` to avoid a [reload issue](https://github.com/taskiq-python/taskiq/issues/565).
+
 
 ## 0.2.18 - 2025-11-06
 
