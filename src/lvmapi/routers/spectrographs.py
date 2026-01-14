@@ -210,8 +210,11 @@ class ManualFillRequestBody(BaseModel):
     ] = None
     clear_lock: Annotated[
         bool,
-        Field(description="If true, clears any existing lock before starting the fill."),
+        Field(
+            description="If true, clears any existing lock before starting the fill."
+        ),
     ] = True
+
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
 
