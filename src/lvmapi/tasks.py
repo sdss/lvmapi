@@ -219,7 +219,14 @@ async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
             response.raise_for_status()
             data = response.json()
     except httpx.HTTPError as err:
-        return {"result": False, "error": str(err)}
+        return {"result": False, "pk": None, "error": str(err)}
+
+    if not data.get("result", False):
+        return {
+            "result": False,
+            "pk": None,
+            "error": data.get("error", "Unknown error"),
+        }
 
     elapsed: float = 0
     while True:
@@ -231,6 +238,15 @@ async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
         elapsed += 5
 
         if elapsed > 120:
-            return {"result": False, "error": "Timeout waiting for fill to start."}
+            return {
+                "result": False,
+                "pk": None,
+                "error": "Timeout waiting for fill to start",
+            }
 
-    return data
+    await asyncio.sleep(3)
+
+    db_data = await get_fill_list()
+    pk = max(db_data.keys())
+
+    return {"result": True, "pk": pk, "error": None}
