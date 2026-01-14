@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### 🚀 New
+
+* Allow manual LN2 fills via the `lvmcryo` web server.
+
+
 ## 0.2.19 - 2025-12-26
 
 ### ✨ Improved

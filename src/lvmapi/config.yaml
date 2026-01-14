@@ -87,3 +87,9 @@ night_logs:
   email_server: smtp-02.lco.cl
   email_from: LVM Night Log <lvm-nightlog@lco.cl>
   email_reply_to: lvm-operations@sdss.org
+
+lvmcryo_server:
+  host: 10.43.162.145 # Kubernetes Cluster IP
+  port: 8084
+  # host: localhost # Test server
+  # port: 7777

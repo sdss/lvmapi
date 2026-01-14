@@ -615,7 +615,7 @@ async def retrieve_fill_metadata(
     )
 
 
-async def get_fill_list():
+async def get_fill_list() -> dict[int, str]:
     """Returns a mapping of LN2 fill PK to start time."""
 
     uri = config["database.uri"]

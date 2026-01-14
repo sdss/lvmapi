@@ -9,19 +9,20 @@
 from __future__ import annotations
 
 import datetime
-import pathlib
 import re
 import warnings
 
 from typing import Annotated, get_args
 
+import httpx
 import polars
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import IonPumpDict
 from lvmopstools.devices.nps import read_nps
 
+from lvmapi import config
 from lvmapi.tools.spectrograph import (
     FillMetadataReturn,
     exposure_etr,
@@ -200,6 +201,18 @@ class RegisterFillPostModel(BaseModel):
     ]
 
 
+class ManualFillRequestBody(BaseModel):
+    """Request body for the manual fill endpoint."""
+
+    password: Annotated[
+        str | None,
+        Field(description="Password for manual fill"),
+    ] = None
+    clear_lock: Annotated[
+        bool,
+        Field(description="If true, clears any existing lock before starting the fill."),
+    ] = True
+
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
 
 
@@ -345,7 +358,16 @@ async def route_get_cryostats():
 async def route_get_fills_running() -> bool:
     """Returns whether an LN2 fill is currently running."""
 
-    return pathlib.Path("/data/lvmcryo.lock").exists()
+    lvmcryo_server_config = config["lvmcryo_server"]
+    host = lvmcryo_server_config["host"]
+    port = lvmcryo_server_config["port"]
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"http://{host}:{port}/filling")
+        response.raise_for_status()
+        data = response.json()
+
+    return data.get("filling", False)
 
 
 @router.get("/fills/measurements", summary="Cryostat fill measurements")
@@ -381,6 +403,46 @@ async def route_get_fills_list() -> dict[int, str]:
     """Returns a mapping of LN2 fill PK to start time."""
 
     return await get_fill_list()
+
+
+@router.get(
+    "/fills/abort",
+    summary="Aborts any ongoing LN2 fills and closes the valves",
+)
+async def route_get_fills_abort() -> bool:
+    """Aborts any ongoing LN2 fills and closes the valves."""
+
+    lvmcryo_server_config = config["lvmcryo_server"]
+    host = lvmcryo_server_config["host"]
+    port = lvmcryo_server_config["port"]
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"http://{host}:{port}/abort")
+        response.raise_for_status()
+
+    return True
+
+
+@router.post("/fills/manual-fill", summary="Starts a manual fill")
+async def route_get_fills_manual_fill(
+    data: Annotated[
+        ManualFillRequestBody,
+        Body(description="Request body for manual fill"),
+    ],
+) -> str:
+    """Starts a manual fill.
+
+    This route starts a task that schedules a manual fill. The task completes when the
+    fill has been started, which is defined as the moment when the new DB
+    entry is created.
+
+    """
+
+    from lvmapi.tasks import ln2_manual_fill
+
+    task = await ln2_manual_fill.kiq(password=data.password, clear_lock=data.clear_lock)
+
+    return task.task_id
 
 
 @router.get("/fills/{pk}/metadata", summary="Get LN2 fill metadata")

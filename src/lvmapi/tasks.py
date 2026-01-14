@@ -13,7 +13,11 @@ import pathlib
 
 from typing import Literal, Sequence
 
+import httpx
+
+from lvmapi import config
 from lvmapi.app import broker
+from lvmapi.tools import get_fill_list
 from lvmapi.tools.gort import get_gort_client
 from lvmapi.tools.rabbitmq import CluClient
 
@@ -181,3 +185,52 @@ async def power_cycle_ag_cameras(
             await gort.ags.reconnect()
 
     return {"result": len(errors) == 0, "errors": errors}
+
+
+@broker.task()
+async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
+    """Starts a manual LN2 fill.
+
+    Returns after the fill has started, which is defined as the moment when the
+    new DB entry is created.
+
+    Parameters
+    ----------
+    password
+        The password to authorize the manual fill.
+    clear_lock
+        Whether to clear any existing fill lock before starting the fill.
+
+    """
+
+    # Get initial number of DB entries
+    fills_db_before = await get_fill_list()
+
+    lvmcryo_server_config = config["lvmcryo_server"]
+    host = lvmcryo_server_config["host"]
+    port = lvmcryo_server_config["port"]
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"http://{host}:{port}/manual-fill?clear_lock={int(clear_lock)}",
+                json={"password": password},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPError as err:
+        return {"result": False, "error": str(err)}
+
+    elapsed: float = 0
+    while True:
+        fills_db_after = await get_fill_list()
+        if len(fills_db_after) > len(fills_db_before):
+            break
+
+        await asyncio.sleep(5)
+        elapsed += 5
+
+        if elapsed > 120:
+            return {"result": False, "error": "Timeout waiting for fill to start."}
+
+    return data
