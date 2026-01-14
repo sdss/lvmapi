@@ -16,13 +16,14 @@ from typing import Annotated, get_args
 
 import httpx
 import polars
-from fastapi import APIRouter, Body, HTTPException, Path, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from lvmopstools.devices.ion import IonPumpDict
 from lvmopstools.devices.nps import read_nps
 
 from lvmapi import config
+from lvmapi.auth import validate_token
 from lvmapi.tools.spectrograph import (
     FillMetadataReturn,
     exposure_etr,
@@ -426,7 +427,11 @@ async def route_get_fills_abort() -> bool:
     return True
 
 
-@router.post("/fills/manual-fill", summary="Starts a manual fill")
+@router.post(
+    "/fills/manual-fill",
+    summary="Starts a manual fill",
+    dependencies=[Depends(validate_token)],
+)
 async def route_get_fills_manual_fill(
     data: Annotated[
         ManualFillRequestBody,
