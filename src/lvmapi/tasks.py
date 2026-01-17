@@ -188,7 +188,11 @@ async def power_cycle_ag_cameras(
 
 
 @broker.task()
-async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
+async def ln2_manual_fill(
+    password: str | None,
+    clear_lock: bool = True,
+    dry_run: bool = False,
+):
     """Starts a manual LN2 fill.
 
     Returns after the fill has started, which is defined as the moment when the
@@ -200,6 +204,8 @@ async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
         The password to authorize the manual fill.
     clear_lock
         Whether to clear any existing fill lock before starting the fill.
+    dry_run
+        If true, performs a dry run without actually filling.
 
     """
 
@@ -213,7 +219,8 @@ async def ln2_manual_fill(password: str | None, clear_lock: bool = True):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"http://{host}:{port}/manual-fill?clear_lock={int(clear_lock)}",
+                f"http://{host}:{port}/manual-fill",
+                params={"clear_lock": clear_lock, "dry_run": dry_run},
                 json={"password": password},
             )
             response.raise_for_status()

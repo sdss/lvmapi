@@ -215,6 +215,10 @@ class ManualFillRequestBody(BaseModel):
             description="If true, clears any existing lock before starting the fill."
         ),
     ] = True
+    dry_run: Annotated[
+        bool,
+        Field(description="If true, performs a dry run without actually filling."),
+    ] = False
 
 
 router = APIRouter(prefix="/spectrographs", tags=["spectrographs"])
@@ -448,7 +452,11 @@ async def route_get_fills_manual_fill(
 
     from lvmapi.tasks import ln2_manual_fill
 
-    task = await ln2_manual_fill.kiq(password=data.password, clear_lock=data.clear_lock)
+    task = await ln2_manual_fill.kiq(
+        password=data.password,
+        clear_lock=data.clear_lock,
+        dry_run=data.dry_run,
+    )
 
     return task.task_id
 

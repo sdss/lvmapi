@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Allow dry-run option for manual LN2 fills.
+
+
 ## 0.2.20 - 2026-01-16
 
 ### 🚀 New
