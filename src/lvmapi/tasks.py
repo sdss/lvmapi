@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import pathlib
 
 from typing import Literal, Sequence
@@ -208,6 +209,16 @@ async def ln2_manual_fill(
         If true, performs a dry run without actually filling.
 
     """
+
+    # If we are in development mode, just return False because the
+    # lvmcryo server is not accessible.
+    environment = os.getenv("LVMAPI_ENVIRONMENT", "production")
+    if environment == "development":
+        return {
+            "result": False,
+            "pk": None,
+            "error": "lvmcryo server not available in development mode",
+        }
 
     # Get initial number of DB entries
     fills_db_before = await get_fill_list()

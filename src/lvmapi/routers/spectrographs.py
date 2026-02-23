@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 import re
 import warnings
 
@@ -365,6 +366,12 @@ async def route_get_cryostats():
 @router.get("/fills/running", summary="Is a fill currently running?")
 async def route_get_fills_running() -> bool:
     """Returns whether an LN2 fill is currently running."""
+
+    # If we are in development mode, just return False because the
+    # lvmcryo server is not accessible.
+    environment = os.getenv("LVMAPI_ENVIRONMENT", "production")
+    if environment == "development":
+        return False
 
     lvmcryo_server_config = config["lvmcryo_server"]
     host = lvmcryo_server_config["host"]
