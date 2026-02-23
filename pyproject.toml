@@ -68,7 +68,7 @@ default-groups = ["dev"]
 
 [tool.poe.tasks.dev]
 shell = "fastapi dev --host 0.0.0.0 --port $port --reload src/lvmapi/app.py"
-env.LVMAPI_PASSWORD = "$argon2id$v=19$m=65536,t=3,p=4$qAW+D2Dl0nY+tmshrArcuQ$u19PDfr1GgbuuXBQjtEMJa/j4OP9JAMv4rzEnul8fNY"  # "12345"
+env.LVMAPI_PASSWORD = "$argon2id$v=19$m=65536,t=3,p=4$oZf8o2lTX2C6K1GygfuOLw$3sY4meeZNIe1apD5x7w0aRsz37sZOGrhHmZ3kqCnmgg"  # "12345"
 env.SECRET_KEY = "33744caf930b8c695ec39221dd158e9c5fda13d0d19d1417ec71cf189aad6508"
 env.LVMAPI_ENVIRONMENT = "development"
 args = [
