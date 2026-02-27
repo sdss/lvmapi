@@ -191,7 +191,7 @@ async def route_get_exposures_data(
         Query(description="Whether to schedule this as a task."),
     ] = False,
 ):
-    """Returns a log of exposures for an MJD.."""
+    """Returns a log of exposures for an MJD."""
 
     if as_task is False:
         executor = asyncio.get_event_loop().run_in_executor
