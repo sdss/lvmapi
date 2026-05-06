@@ -2,6 +2,10 @@
 
 ## Next release
 
+### ✨ Improved
+
+* Modify broker code to support breaking changes in `taskiq-aio-pika`.
+
 ### 🔧 Fixed
 
 * Do not attempt to reach the `lvmcryo` server when running in development mode.
