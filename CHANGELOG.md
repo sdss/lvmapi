@@ -9,6 +9,7 @@
 ### 🔧 Fixed
 
 * Do not attempt to reach the `lvmcryo` server when running in development mode.
+* Update dependency versions to fix security vulnerabilities.
 
 
 ## 0.2.21 - 2026-02-23
