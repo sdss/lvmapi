@@ -261,12 +261,12 @@ async def route_get_etr():
 async def route_get_temperatures(
     start: Annotated[
         str,
-        Query("-30m", description="Flux-compatible start time"),
-    ],
+        Query(description="Flux-compatible start time"),
+    ] = "-30m",
     stop: Annotated[
         str,
-        Query("now()", description="Flux-compatible stop time"),
-    ],
+        Query(description="Flux-compatible stop time"),
+    ] = "now()",
     camera: Annotated[
         CamSpec | None,
         Query(description="Camera to return, or all"),
@@ -277,7 +277,7 @@ async def route_get_temperatures(
     ] = None,
     last: Annotated[
         bool,
-        Query(False, description="Return only the last set of temperatures"),
+        Query(description="Return only the last set of temperatures"),
     ] = False,
 ) -> list[dict]:
     """Returns the temperatures of one or multiple cryostats."""
@@ -309,7 +309,7 @@ async def route_get_thermistors(
     thermistor: str | None = None,
     interval: Annotated[
         float | None,
-        Query(None, description="Interval in seconds"),
+        Query(description="Interval in seconds"),
     ] = None,
 ):
     """Reads the thermistors and returns their states."""
@@ -518,7 +518,7 @@ async def route_get_summary(
     spectrograph: Spectrographs,
     mechs: Annotated[
         bool,
-        Query(False, description="Return mechanics information?"),
+        Query(description="Return mechanics information?"),
     ] = False,
 ) -> dict[str, float | str | None]:
     """Retrieves current spectrograph information (temperature, pressure, etc.)"""
