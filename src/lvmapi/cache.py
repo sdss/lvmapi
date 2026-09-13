@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from starlette.responses import Response
 
 
-__all__ = ["valis_cache_key_builder", "lvmapi_cache"]
+__all__ = ["lvmapi_cache", "valis_cache_key_builder"]
 
 
 lvmapi_cache = partial(cache, namespace="lvmapi")
@@ -56,8 +56,7 @@ async def valis_cache_key_builder(
     params_hash = hash.hexdigest()[0:8]
 
     url = request.url.path.replace("/", "_") if request else ""
-    if url.startswith("_"):
-        url = url[1:]
+    url = url.removeprefix("_")
 
     chunks = [
         namespace,

@@ -53,7 +53,4 @@ def is_telescope_parked(data: dict[str, Any]):
     alt_diff = abs(data["alt"] - park_position[0])
     az_diff = abs(data["az"] - park_position[1])
 
-    if alt_diff > 5 or az_diff > 5:
-        return False
-
-    return True
+    return not (alt_diff > 5 or az_diff > 5)

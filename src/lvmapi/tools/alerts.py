@@ -12,7 +12,7 @@ from lvmapi.tools.rabbitmq import CluClient
 from lvmapi.tools.spectrograph import spectrograph_temperatures_history
 
 
-__all__ = ["spec_temperature_alerts", "enclosure_alerts"]
+__all__ = ["enclosure_alerts", "spec_temperature_alerts"]
 
 
 async def spec_temperature_alerts(

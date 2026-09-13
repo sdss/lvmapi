@@ -99,8 +99,6 @@ async def route_post_message(message: Message) -> None:
     except Exception as err:
         raise HTTPException(500, detail=str(err))
 
-    return None
-
 
 @router.get("/message", summary="Send a simple text message to Slack")
 async def route_get_message(
@@ -134,8 +132,6 @@ async def route_get_message(
             attachments=attachments,
         )
     )
-
-    return None
 
 
 @router.get("/user_id/{user}", summary="Gets the userID for a user name")

@@ -11,9 +11,11 @@ from __future__ import annotations
 import asyncio
 import os
 import pathlib
+from collections.abc import Sequence
 
-from typing import Literal, Sequence
+from typing import Literal
 
+import anyio
 import httpx
 
 from lvmapi import config
@@ -103,11 +105,11 @@ async def get_gort_log_task(logfile: str, n_lines: int | None = None):
     if not (PATH / logfile).exists():
         return ""
 
-    with open(PATH / logfile, "r") as file:
+    async with await anyio.open_file(PATH / logfile, "r") as file:
         if n_lines is None:
-            return file.read()
+            return await file.read()
 
-        data = file.read().splitlines()[-n_lines:]
+        data = (await file.read()).splitlines()[-n_lines:]
         return "\n".join(data)
 
 

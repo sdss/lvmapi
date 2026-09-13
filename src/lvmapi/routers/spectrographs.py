@@ -259,11 +259,26 @@ async def route_get_etr():
 
 @router.get("/temperatures", summary="Cryostat temperatures")
 async def route_get_temperatures(
-    start: str = Query("-30m", description="Flux-compatible start time"),
-    stop: str = Query("now()", description="Flux-compatible stop time"),
-    camera: CamSpec | None = Query(None, description="Camera to return, or all"),
-    sensor: Sensors | None = Query(None, description="Sensor to return, or all"),
-    last: bool = Query(False, description="Return only the last set of temperatures"),
+    start: Annotated[
+        str,
+        Query("-30m", description="Flux-compatible start time"),
+    ],
+    stop: Annotated[
+        str,
+        Query("now()", description="Flux-compatible stop time"),
+    ],
+    camera: Annotated[
+        CamSpec | None,
+        Query(description="Camera to return, or all"),
+    ] = None,
+    sensor: Annotated[
+        Sensors | None,
+        Query(description="Sensor to return, or all"),
+    ] = None,
+    last: Annotated[
+        bool,
+        Query(False, description="Return only the last set of temperatures"),
+    ] = False,
 ) -> list[dict]:
     """Returns the temperatures of one or multiple cryostats."""
 
@@ -292,7 +307,10 @@ async def route_get_temperatures(
 )
 async def route_get_thermistors(
     thermistor: str | None = None,
-    interval: float | None = Query(None, description="Interval in seconds"),
+    interval: Annotated[
+        float | None,
+        Query(None, description="Interval in seconds"),
+    ] = None,
 ):
     """Reads the thermistors and returns their states."""
 
@@ -498,7 +516,10 @@ async def route_get_fills_metadata(
 @router.get("/{spectrograph}/summary", summary="Cryostat basic information")
 async def route_get_summary(
     spectrograph: Spectrographs,
-    mechs: bool = Query(False, description="Return mechanics information?"),
+    mechs: Annotated[
+        bool,
+        Query(False, description="Return mechanics information?"),
+    ] = False,
 ) -> dict[str, float | str | None]:
     """Retrieves current spectrograph information (temperature, pressure, etc.)"""
 

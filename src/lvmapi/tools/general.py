@@ -79,8 +79,7 @@ async def insert_to_database(
         *columns_sql,
     )
 
-    async with await get_db_connection() as aconn:
-        async with aconn.cursor() as acursor:
-            for row in data:
-                values = [row.get(col, None) for col in columns]
-                await acursor.execute(query, values)
+    async with await get_db_connection() as aconn, aconn.cursor() as acursor:
+        for row in data:
+            values = [row.get(col, None) for col in columns]
+            await acursor.execute(query, values)

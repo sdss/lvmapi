@@ -117,8 +117,8 @@ class Lights(enum.Enum):
 LightsStatus: type[BaseModel] = create_model(
     "LightsStatus",
     __doc__="Model of lights status",
-    **{light: (bool, False) for light in Lights.__members__ if light != "all"},  # type: ignore
-)
+    **{light: (bool, False) for light in Lights.__members__ if light != "all"},
+)  # ty: ignore[no-matching-overload]
 
 
 class NPSBody(BaseModel):
@@ -322,8 +322,8 @@ async def route_get_emode_enable(
     """Enables the engineering mode or bypasses."""
 
     command_parts = ["lvmecp", "engineering-mode", "enable"]
-    if time_limit:
-        command_parts += ["-t", time_limit]
+    if time_limit is not None:
+        command_parts += ["-t", str(time_limit)]
     if hardware_bypass:
         command_parts += ["--hardware-bypass"]
     if software_bypass:

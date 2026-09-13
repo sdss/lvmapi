@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ⚙️ Engineering
+
+* Use mostly standard Ruff linter settings, which caused signficiantly more warninings. Most of them have been fixed or explicitly ignored.
+
+
 ## 0.2.22 - 2026-05-12
 
 ### ✨ Improved

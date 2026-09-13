@@ -160,8 +160,8 @@ async def route_get_parked() -> dict[Telescopes, bool | None]:
     status = await route_get_telescope_status()
 
     response: dict[Telescopes, bool | None] = {}
-    for telescope, status in status.items():
-        response[telescope] = is_telescope_parked(status.model_dump())
+    for telescope, status_item in status.items():
+        response[telescope] = is_telescope_parked(status_item.model_dump())
 
     return response
 
@@ -179,10 +179,9 @@ async def route_park_telescopes() -> str:
 async def route_connect_telescopes() -> bool:
     """Connects all telescopes."""
 
-    async with CluClient() as client:
-        async with GatheringTaskGroup() as gr:
-            for tel in get_args(Telescopes):
-                gr.create_task(client.send_command(f"lvm.{tel}.pwi", "setConnected 1"))
+    async with CluClient() as client, GatheringTaskGroup() as gr:
+        for tel in get_args(Telescopes):
+            gr.create_task(client.send_command(f"lvm.{tel}.pwi", "setConnected 1"))
 
     for cmd in gr.results():
         if cmd.status.did_fail:

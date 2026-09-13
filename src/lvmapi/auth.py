@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import ipaddress
 import os
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
-from typing import Annotated, Sequence
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -23,7 +24,7 @@ from pwdlib import PasswordHash
 from pydantic import BaseModel
 
 
-__all__ = ["validate_token", "Token", "AuthDependency"]
+__all__ = ["AuthDependency", "Token", "validate_token"]
 
 
 # Adapted from https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
@@ -75,10 +76,7 @@ def get_password_hash(password: str):
 def authenticate(password: str):
     """Authenticates the user."""
 
-    if not verify_password(password):
-        return False
-
-    return True
+    return verify_password(password)
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):

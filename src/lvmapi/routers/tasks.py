@@ -54,4 +54,6 @@ async def task_result(task_id: str):
 
     error = result.error if result.error is None else str(result.error)
 
-    return TaskResult(is_ready=True, **result.dict(exclude={"error"}), error=error)
+    return TaskResult(
+        is_ready=True, **result.model_dump(exclude={"error"}), error=error
+    )

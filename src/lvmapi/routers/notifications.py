@@ -9,8 +9,9 @@
 from __future__ import annotations
 
 import datetime
+from collections.abc import Sequence
 
-from typing import Annotated, Any, Sequence
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Path
 from pydantic import BaseModel, Field

@@ -176,12 +176,11 @@ async def get_overwatcher():
 async def get_overwatcher_status() -> OverwatcherStatusModel:
     """Returns the status of the overwatcher."""
 
-    status: dict[str, bool]
     async with CluClient() as clu:
         status_cmd = await clu.send_command("lvm.overwatcher", "status")
 
         try:
-            status = status_cmd.replies.get("status")
+            status: dict[str, bool] = status_cmd.replies.get("status")
         except KeyError:
             status = {"running": False}
 
@@ -196,7 +195,7 @@ async def get_overwatcher_status() -> OverwatcherStatusModel:
     running_cal = await route_get_calibrations_current()
 
     return OverwatcherStatusModel(
-        **status,
+        **status,  # ty: ignore[invalid-argument-type]
         **observer_status,
         running_calibration=running_cal,
     )
@@ -237,12 +236,11 @@ async def put_overwatcher_enabled(
             400,
             "now and close_dome can only be used with /overwatcher/status/enable",
         )
-    elif mode == "disable":
-        if close_dome and not now:
-            raise HTTPException(
-                400,
-                "close_dome=true requires now=true.",
-            )
+    elif mode == "disable" and close_dome and not now:
+        raise HTTPException(
+            400,
+            "close_dome=true requires now=true.",
+        )
 
     cmd_parts: list[str] = [mode]
     if mode == "disable" and now:

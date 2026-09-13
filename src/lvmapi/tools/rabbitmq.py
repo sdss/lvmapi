@@ -10,19 +10,13 @@ from __future__ import annotations
 
 import uuid
 
-from typing import TYPE_CHECKING
-
 from lvmopstools.clu import CluClient, send_clu_command
 from sdsstools.utils import GatheringTaskGroup
 
 from lvmapi import config
 
 
-if TYPE_CHECKING:
-    pass
-
-
-__all__ = ["CluClient", "send_clu_command", "ping_actors"]
+__all__ = ["CluClient", "ping_actors", "send_clu_command"]
 
 
 # CluClient is a singleton. Create a client with lvmapi name.
@@ -35,10 +29,9 @@ async def ping_actors(actors: list[str] | None = None):
     actors = actors or config["actors"]["list"]
     assert actors is not None
 
-    async with CluClient() as client:
-        async with GatheringTaskGroup() as group:
-            for actor in actors:
-                group.create_task(client.send_command(actor, "ping"))
+    async with CluClient() as client, GatheringTaskGroup() as group:
+        for actor in actors:
+            group.create_task(client.send_command(actor, "ping"))
 
     results = group.results()
 

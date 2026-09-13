@@ -11,8 +11,9 @@ from __future__ import annotations
 import datetime
 import json
 import re
+from collections.abc import Sequence
 
-from typing import Any, Sequence
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
@@ -25,7 +26,7 @@ from lvmapi import config
 from lvmapi.tools.general import insert_to_database
 
 
-__all__ = ["fill_notifications_mjd", "get_notifications", "create_notification"]
+__all__ = ["create_notification", "fill_notifications_mjd", "get_notifications"]
 
 
 async def fill_notifications_mjd():
@@ -41,18 +42,22 @@ async def fill_notifications_mjd():
 
     # Start by getting a list of records with null MJD.
     query = SQL("SELECT pk, date FROM {table} WHERE mjd IS NULL").format(table=table)
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            await acursor.execute(query)
-            records = await acursor.fetchall()
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acursor,
+    ):
+        await acursor.execute(query)
+        records = await acursor.fetchall()
 
     for pk, date in records:
         sjd = get_sjd("LCO", date=date)
         query = SQL("UPDATE {table} SET mjd = %s WHERE pk = %s").format(table=table)
-        async with await psycopg.AsyncConnection.connect(uri) as aconn:
-            async with aconn.cursor() as acursor:
-                await acursor.execute(query, (sjd, pk))
-                await aconn.commit()
+        async with (
+            await psycopg.AsyncConnection.connect(uri) as aconn,
+            aconn.cursor() as acursor,
+        ):
+            await acursor.execute(query, (sjd, pk))
+            await aconn.commit()
 
 
 async def get_notifications(sjd: int | None = None):
@@ -68,10 +73,12 @@ async def get_notifications(sjd: int | None = None):
         WHERE mjd = %s AND message != %s ORDER BY date ASC
     """)
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor(row_factory=dict_row) as acursor:
-            await acursor.execute(query.format(table=table), (sjd, "I am alive!"))
-            notifications = await acursor.fetchall()
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor(row_factory=dict_row) as acursor,
+    ):
+        await acursor.execute(query.format(table=table), (sjd, "I am alive!"))
+        notifications = await acursor.fetchall()
 
     return notifications
 
@@ -97,13 +104,13 @@ def format_message_for_db(message: str) -> str:
 
 async def create_notification(
     message: str,
-    payload: dict[str, Any] = {},
+    payload: dict[str, Any] | None = None,
     level: NotificationLevel | str = NotificationLevel.INFO,
     slack: bool = True,
     slack_channels: str | Sequence[str] | None = None,
     email_on_critical: bool = True,
-    slack_extra_params: dict[str, Any] = {},
-    email_params: dict[str, Any] = {},
+    slack_extra_params: dict[str, Any] | None = None,
+    email_params: dict[str, Any] | None = None,
     write_to_database: bool = True,
 ):
     """Creates a new notification.
@@ -139,12 +146,16 @@ async def create_notification(
 
     """
 
+    payload = payload or {}
+    slack_extra_params = slack_extra_params or {}
+    email_params = email_params or {}
+
     if isinstance(level, str):
         level = NotificationLevel(level.upper())
     else:
         level = NotificationLevel(level)
 
-    date = datetime.datetime.now()
+    date = datetime.datetime.now(tz=datetime.UTC)
     payload_str = json.dumps(payload)
 
     table = config["database.tables.notification"]

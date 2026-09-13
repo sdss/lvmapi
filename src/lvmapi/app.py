@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-
-from typing import AsyncIterator
 
 import sentry_sdk
 import taskiq_fastapi
@@ -118,7 +117,7 @@ async def get_id_route(request: Request):
 taskiq_fastapi.init(broker, "lvmapi.app:app")
 
 # Add kubernetes API instance to state. Ignore when running tests in GitHub Actions.
-if not os.getenv("GITHUB_ACTIONS", False):
+if os.getenv("GITHUB_ACTIONS", "0") not in ["1", "true", "True"]:
     app.state.kubernetes = Kubernetes(
         deployments_path=config["kubernetes.deployments_path"]
     )

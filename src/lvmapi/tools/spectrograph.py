@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 
 from typing import Annotated, get_args, overload
 
+import anyio
 import polars
 import psycopg
 import psycopg.rows
@@ -39,24 +40,24 @@ from lvmapi.types import Cameras, Sensors, SpecStatus, Spectrographs
 
 
 __all__ = [
-    "spectrograph_temperature_label",
-    "spectrograph_temperatures",
-    "spectrograph_temperatures_history",
-    "spectrograph_pressures",
-    "spectrograph_mechanics",
-    "spectrograph_status",
-    "read_thermistors",
-    "read_thermistors_influxdb",
-    "read_ion_pumps",
-    "toggle_ion_pump",
-    "exposure_etr",
-    "retrieve_fill_measurements",
-    "register_ln2_fill",
-    "retrieve_fill_metadata",
     "FillMetadataModel",
     "FillMetadataReturn",
     "SpecToStatus",
+    "exposure_etr",
     "get_fill_list",
+    "read_ion_pumps",
+    "read_thermistors",
+    "read_thermistors_influxdb",
+    "register_ln2_fill",
+    "retrieve_fill_measurements",
+    "retrieve_fill_metadata",
+    "spectrograph_mechanics",
+    "spectrograph_pressures",
+    "spectrograph_status",
+    "spectrograph_temperature_label",
+    "spectrograph_temperatures",
+    "spectrograph_temperatures_history",
+    "toggle_ion_pump",
 ]
 
 
@@ -258,7 +259,7 @@ async def retrieve_fill_measurements(
                              (r["_measurement"] == "pressure" and r["_field"] == "cmb"))
         |> aggregateWindow(every: 1s, fn: mean, createEmpty: false)
         |> yield(name: "mean")
-    """  # noqa: E501
+    """
 
     data_cryo = await query_influxdb(
         config["influxdb.url"],
@@ -423,11 +424,10 @@ configuration, log_data, plot_paths, valve_times, complete)"""
         )
         params["pk"] = pk
 
-    async with await get_db_connection() as aconn:
-        async with aconn.cursor() as acur:
-            await acur.execute(query, params)
-            await aconn.commit()
-            returned = await acur.fetchone()
+    async with await get_db_connection() as aconn, aconn.cursor() as acur:
+        await acur.execute(query, params)
+        await aconn.commit()
+        returned = await acur.fetchone()
 
     if returned is None:
         raise ValueError("Could not retrieve primary key.")
@@ -546,15 +546,17 @@ async def retrieve_fill_metadata(
     uri = config["database.uri"]
     table: list[str] = config["database.tables.ln2_fill"].split(".")
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor(row_factory=psycopg.rows.dict_row) as acur:
-            await acur.execute(
-                psycopg.sql.SQL("SELECT * FROM {} WHERE pk = (%s)").format(
-                    psycopg.sql.Identifier(*table)
-                ),
-                (pk,),
-            )
-            db_data = await acur.fetchone()
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor(row_factory=psycopg.rows.dict_row) as acur,
+    ):
+        await acur.execute(
+            psycopg.sql.SQL("SELECT * FROM {} WHERE pk = (%s)").format(
+                psycopg.sql.Identifier(*table)
+            ),
+            (pk,),
+        )
+        db_data = await acur.fetchone()
 
     if db_data is None:
         raise ValueError(f"Cannot find LN2 fill with pk={pk}.")
@@ -588,8 +590,8 @@ async def retrieve_fill_metadata(
                     continue
 
                 if as_base64:
-                    with open(path, "rb") as f:
-                        plot_data[key] = base64.b64encode(f.read())
+                    async with await anyio.open_file(path, "rb") as f:
+                        plot_data[key] = base64.b64encode(await f.read())
                 else:
                     plot_data[key] = str(path.absolute())
 
@@ -621,14 +623,16 @@ async def get_fill_list() -> dict[int, str]:
     uri = config["database.uri"]
     table: list[str] = config["database.tables.ln2_fill"].split(".")
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acur:
-            await acur.execute(
-                psycopg.sql.SQL("SELECT pk, start_time FROM {}").format(
-                    psycopg.sql.Identifier(*table)
-                )
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acur,
+    ):
+        await acur.execute(
+            psycopg.sql.SQL("SELECT pk, start_time FROM {}").format(
+                psycopg.sql.Identifier(*table)
             )
-            db_data = await acur.fetchall()
+        )
+        db_data = await acur.fetchall()
 
     result: dict[int, str] = {}
     for row in db_data:

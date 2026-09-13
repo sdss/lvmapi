@@ -302,34 +302,36 @@ async def create_night_log_entry(mjd: int | None = None):
 
     mjd = mjd or get_sjd("LCO")
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            # Insert new MJD or do nothing if already exists.
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acursor,
+    ):
+        # Insert new MJD or do nothing if already exists.
+        await acursor.execute(
+            SQL(
+                "INSERT INTO {table_night_log} (mjd, sent) VALUES (%s, false) "
+                "ON CONFLICT DO NOTHING RETURNING pk;"
+            ).format(table_night_log=table_night_log),
+            (mjd,),
+        )
+        is_new = (await acursor.fetchone()) is not None
+
+        # Add a placeholder for the observers.
+        if is_new:
             await acursor.execute(
                 SQL(
-                    "INSERT INTO {table_night_log} (mjd, sent) VALUES (%s, false) "
-                    "ON CONFLICT DO NOTHING RETURNING pk;"
-                ).format(table_night_log=table_night_log),
-                (mjd,),
-            )
-            is_new = (await acursor.fetchone()) is not None
-
-            # Add a placeholder for the observers.
-            if is_new:
-                await acursor.execute(
-                    SQL(
-                        """
+                    """
             INSERT INTO {table_comment} (night_log_pk, time, category, comment)
             VALUES ((SELECT pk FROM {table_night_log} WHERE mjd = %s), %s, %s, %s)
             """
-                    ).format(
-                        table_comment=table_comment,
-                        table_night_log=table_night_log,
-                    ),
-                    (mjd, datetime.now(UTC), "observers", "Overwatcher"),
-                )
+                ).format(
+                    table_comment=table_comment,
+                    table_night_log=table_night_log,
+                ),
+                (mjd, datetime.now(UTC), "observers", "Overwatcher"),
+            )
 
-            await aconn.commit()
+        await aconn.commit()
 
     return mjd
 
@@ -359,73 +361,75 @@ async def add_night_log_comment(
         raise ValueError(f"Invalid night log category {category!r}.")
 
     # Get a connection and cursor.
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            # Check if there is already an entry for this SJD in night_log.
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acursor,
+    ):
+        # Check if there is already an entry for this SJD in night_log.
+        result = await acursor.execute(
+            SQL("SELECT pk FROM {night_log_table} WHERE mjd = %s").format(
+                night_log_table=table_night_log
+            ),
+            (sjd,),
+        )
+
+        night_log_pk = await result.fetchone()
+        if night_log_pk is not None:
+            night_log_pk = night_log_pk[0]
+        else:
+            # Insert a new entry in night_log.
             result = await acursor.execute(
-                SQL("SELECT pk FROM {night_log_table} WHERE mjd = %s").format(
-                    night_log_table=table_night_log
-                ),
+                SQL(
+                    "INSERT INTO {table_night_log} (mjd, sent) "
+                    "VALUES (%s, false) RETURNING pk"
+                ).format(table_night_log=table_night_log),
                 (sjd,),
             )
 
-            night_log_pk = await result.fetchone()
-            if night_log_pk is not None:
-                night_log_pk = night_log_pk[0]
-            else:
-                # Insert a new entry in night_log.
-                result = await acursor.execute(
-                    SQL(
-                        "INSERT INTO {table_night_log} (mjd, sent) "
-                        "VALUES (%s, false) RETURNING pk"
-                    ).format(table_night_log=table_night_log),
-                    (sjd,),
-                )
+            fetch_night_log_pk = await result.fetchone()
+            if not fetch_night_log_pk:
+                raise RuntimeError("Failed to insert new entry in night_log.")
 
-                fetch_night_log_pk = await result.fetchone()
-                if not fetch_night_log_pk:
-                    raise RuntimeError("Failed to insert new entry in night_log.")
+            night_log_pk = fetch_night_log_pk[0]
+            await aconn.commit()
 
-                night_log_pk = fetch_night_log_pk[0]
-                await aconn.commit()
+        # The observers category should have a single comment.
+        if category == "observers":
+            await acursor.execute(
+                SQL(
+                    "DELETE FROM {table_comment} WHERE night_log_pk = %s "
+                    "AND category = %s"
+                ).format(table_comment=table_comment),
+                (night_log_pk, "observers"),
+            )
 
-            # The observers category should have a single comment.
-            if category == "observers":
-                await acursor.execute(
-                    SQL(
-                        "DELETE FROM {table_comment} WHERE night_log_pk = %s "
-                        "AND category = %s"
-                    ).format(table_comment=table_comment),
-                    (night_log_pk, "observers"),
-                )
-
-            # Depending on whether we are updating or adding a new comment,
-            # we use different queries.
-            if comment_pk is None:
-                query = """
+        # Depending on whether we are updating or adding a new comment,
+        # we use different queries.
+        if comment_pk is None:
+            query = """
                         INSERT INTO {table_comment}
                         (night_log_pk, time, category, comment)
                         VALUES (%s, %s, %s, %s);
                         """
-                params = (night_log_pk, datetime.now(UTC), category, comment)
-            else:
-                query = """
+            params = (night_log_pk, datetime.now(UTC), category, comment)
+        else:
+            query = """
                         UPDATE {table_comment}
                         SET time = %s, comment = %s
                         WHERE pk = %s;
                         """
-                params = (datetime.now(UTC), comment, comment_pk)
+            params = (datetime.now(UTC), comment, comment_pk)
 
-            # Run the query.
-            try:
-                await acursor.execute(
-                    SQL(query).format(table_comment=table_comment),
-                    params,
-                )
-            except Exception as ee:
-                raise RuntimeError(f"Failed to insert comment: {ee}")
+        # Run the query.
+        try:
+            await acursor.execute(
+                SQL(query).format(table_comment=table_comment),
+                params,
+            )
+        except Exception as ee:
+            raise RuntimeError(f"Failed to insert comment: {ee}")
 
-            await aconn.commit()
+        await aconn.commit()
 
     return comment_pk
 
@@ -436,15 +440,17 @@ async def delete_night_log_comment(pk: int):
     uri = config["database.uri"]
     table_comment = Identifier(*config["database.tables.night_log_comment"].split("."))
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            await acursor.execute(
-                SQL("DELETE FROM {table_comment} WHERE pk = %s").format(
-                    table_comment=table_comment
-                ),
-                (pk,),
-            )
-            await aconn.commit()
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acursor,
+    ):
+        await acursor.execute(
+            SQL("DELETE FROM {table_comment} WHERE pk = %s").format(
+                table_comment=table_comment
+            ),
+            (pk,),
+        )
+        await aconn.commit()
 
     return True
 
@@ -478,24 +484,26 @@ async def get_night_log_data(sjd: int | None = None) -> NightLogDataDict:
             ORDER BY nlc.time
     """
 
-    async with await psycopg.AsyncConnection.connect(uri) as aconn:
-        async with aconn.cursor() as acursor:
-            # Get the night log entry for the SJD.
-            nl = await acursor.execute(
-                SQL(query1).format(night_log_table=table_night_log),
-                (sjd,),
-            )
-            night_log = await nl.fetchone()
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor() as acursor,
+    ):
+        # Get the night log entry for the SJD.
+        nl = await acursor.execute(
+            SQL(query1).format(night_log_table=table_night_log),
+            (sjd,),
+        )
+        night_log = await nl.fetchone()
 
-            # And the comments
-            nlc = await acursor.execute(
-                SQL(query2).format(
-                    night_log_table=table_night_log,
-                    table_comment=table_comment,
-                ),
-                (sjd,),
-            )
-            comments = await nlc.fetchall()
+        # And the comments
+        nlc = await acursor.execute(
+            SQL(query2).format(
+                night_log_table=table_night_log,
+                table_comment=table_comment,
+            ),
+            (sjd,),
+        )
+        comments = await nlc.fetchall()
 
     if night_log is None:
         return {
@@ -799,10 +807,12 @@ async def email_night_log(
         table = Identifier(*config["database.tables.night_log"].split("."))
         query1 = "UPDATE {table} SET sent = true WHERE mjd = %s"
 
-        async with await psycopg.AsyncConnection.connect(uri) as aconn:
-            async with aconn.cursor() as acursor:
-                await acursor.execute(SQL(query1).format(table=table), (sjd,))
-                await aconn.commit()
+        async with (
+            await psycopg.AsyncConnection.connect(uri) as aconn,
+            aconn.cursor() as acursor,
+        ):
+            await acursor.execute(SQL(query1).format(table=table), (sjd,))
+            await aconn.commit()
 
     if send_slack_notification:
         await create_notification(
@@ -904,7 +914,7 @@ def get_night_metrics(sjd: int | None = None) -> NightMetricsDict:
     )
 
     n_exp = exposures.height
-    total_exp_time = exposures["exposure_time"].sum()
+    total_exp_time = float(exposures["exposure_time"].sum())
 
     # Efficiency with and without taking into account readout.
     eff_no_readout = total_exp_time / current_night_length

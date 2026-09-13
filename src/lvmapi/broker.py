@@ -15,7 +15,7 @@ from taskiq_aio_pika import AioPikaBroker, Exchange, Queue
 from taskiq_redis import RedisAsyncResultBackend
 
 
-__all__ = ["broker_startup", "broker_shutdown", "broker"]
+__all__ = ["broker", "broker_shutdown", "broker_startup"]
 
 
 async def broker_startup():
