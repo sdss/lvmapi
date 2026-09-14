@@ -29,6 +29,7 @@ from lvmapi.tools.spectrograph import (
     FillMetadataReturn,
     exposure_etr,
     get_fill_list,
+    get_last_fill,
     read_ion_pumps,
     read_thermistors,
     read_thermistors_influxdb,
@@ -486,7 +487,27 @@ async def route_get_fills_manual_fill(
     return task.task_id
 
 
-@router.get("/fills/{pk}/metadata", summary="Get LN2 fill metadata")
+@router.get(
+    "/fills/metadata/last",
+    summary="Get LN2 fill metadata for the last fill",
+)
+async def route_get_fills_metadata_last(
+    complete: Annotated[
+        bool,
+        Query(description="Return only complete fills?"),
+    ] = False,
+) -> FillMetadataReturn:
+    """Returns the metadata for the last LN2 fill."""
+
+    last_fill = await get_last_fill(complete=complete)
+
+    if last_fill is None:
+        raise HTTPException(400, detail="Cannot find last LN2 fill.")
+
+    return last_fill
+
+
+@router.get("/fills/metadata/{pk}", summary="Get LN2 fill metadata")
 async def route_get_fills_metadata(
     pk: Annotated[int, Path(description="Primary key of the LN2 fill record")],
     transparent_plots: Annotated[

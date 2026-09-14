@@ -2,6 +2,14 @@
 
 ## Next release
 
+### 🔥 Breaking changes
+
+* The route `/fills/{pk}/metadata` has been renamed to `/fills/metadata/{pk}`.
+
+### 🚀 New
+
+* Add `/fills/metadata/last` route to retrieve the last LN2 fill metadata.
+
 ### ⚙️ Engineering
 
 * Use mostly standard Ruff linter settings, which caused signficiantly more warninings. Most of them have been fixed or explicitly ignored.

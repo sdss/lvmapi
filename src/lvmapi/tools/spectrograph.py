@@ -45,6 +45,7 @@ __all__ = [
     "SpecToStatus",
     "exposure_etr",
     "get_fill_list",
+    "get_last_fill",
     "read_ion_pumps",
     "read_thermistors",
     "read_thermistors_influxdb",
@@ -540,7 +541,7 @@ async def retrieve_fill_metadata(
     pk: int,
     transparent_plots: bool = False,
     as_base64: bool = False,
-):
+) -> FillMetadataReturn:
     """Retrieves metadata for a given LN2 fill from the database."""
 
     uri = config["database.uri"]
@@ -639,3 +640,29 @@ async def get_fill_list() -> dict[int, str]:
         result[row[0]] = row[1].strftime("%Y-%m-%d %H:%M:%S")
 
     return result
+
+
+async def get_last_fill(complete: bool = False) -> FillMetadataReturn | None:
+    """Returns the last LN2 fill metadata."""
+
+    uri = config["database.uri"]
+    table: list[str] = config["database.tables.ln2_fill"].split(".")
+
+    query = "SELECT * FROM {}"
+    if complete:
+        query += " WHERE complete = TRUE"
+    query += " ORDER BY start_time DESC LIMIT 1;"
+
+    async with (
+        await psycopg.AsyncConnection.connect(uri) as aconn,
+        aconn.cursor(row_factory=psycopg.rows.dict_row) as acur,
+    ):
+        await acur.execute(
+            psycopg.sql.SQL(query).format(psycopg.sql.Identifier(*table))
+        )
+        db_data = await acur.fetchone()
+
+    if db_data is None:
+        return None
+
+    return await retrieve_fill_metadata(db_data["pk"])
