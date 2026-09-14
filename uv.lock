@@ -3,10 +3,10 @@ revision = 3
 requires-python = ">=3.12, <4"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform != 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin'",
-    "python_full_version < '3.13' and sys_platform != 'darwin'",
     "python_full_version >= '3.14' and sys_platform == 'darwin'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin'",
     "python_full_version == '3.13.*' and sys_platform == 'darwin'",
+    "python_full_version < '3.13' and sys_platform != 'darwin'",
     "python_full_version < '3.13' and sys_platform == 'darwin'",
 ]
 
@@ -1646,7 +1646,7 @@ wheels = [
 
 [[package]]
 name = "lvmapi"
-version = "0.2.23a1"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
@@ -3632,8 +3632,8 @@ wheels = [
 
 [package.optional-dependencies]
 reload = [
-    { name = "gitignore-parser", marker = "sys_platform != 'darwin'" },
-    { name = "watchdog", marker = "sys_platform != 'darwin'" },
+    { name = "gitignore-parser" },
+    { name = "watchdog" },
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## 0.3.0 - 2026-09-14
 
 ### 🔥 Breaking changes
 
